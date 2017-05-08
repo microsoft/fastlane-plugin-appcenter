@@ -1,4 +1,4 @@
-# load variables from .env file if it exists
+# load variables from .env file in the root if it exists
 if File.exist?('../.env')
   open('../.env', 'r').readlines.each do |l|
     kv = l.split('=')
@@ -7,6 +7,7 @@ if File.exist?('../.env')
 end
 
 lane :test do
+  # mobile_center_upload will readrelease_notes from FL_CHANGELOG
   Actions.lane_context[SharedValues::FL_CHANGELOG] = 'shared changelog'
 
   UI.message("\n\n\n=====================================\n uploading android\n=====================================")
@@ -40,24 +41,4 @@ lane :test do
     dsym: "./fastlane/Themoji.dSYM",
     release_notes: ENV["TEST_MOBILE_CENTER_DISTRIBUTE_RELEASE_NOTES"]
   )
-
-  UI.message("\n\n\n=====================================\n showing uploaded dSYM files \n=====================================")
-  require 'faraday'
-  connection = Faraday.new(url: 'https://api.mobile.azure.com') do |builder|
-    builder.request :json
-    builder.response :json, content_type: /\bjson$/
-    builder.adapter :net_http
-  end
-
-  response = connection.get do |req|
-    req.url("/v0.1/apps/#{ENV['TEST_MOBILE_CENTER_OWNER_NAME']}/MyApplication-01/symbol_uploads")
-    req.headers['X-API-Token'] = ENV['TEST_MOBILE_CENTER_API_TOKEN']
-  end
-
-  UI.message("\n#{Terminal::Table.new(rows: response.body.map!(&:values),
-                                      headings: %w[symbol_upload_id app_id origin status symbol_type])}")
-
-  UI.message("\n\n\n=====================================\n testing shared values\n=====================================")
-  UI.message("MOBILE_CENTER_DOWNLOAD_LINK = #{Actions.lane_context[SharedValues::MOBILE_CENTER_DOWNLOAD_LINK]}")
-  UI.message("MOBILE_CENTER_BUILD_INFORMATION = #{JSON.pretty_generate(Actions.lane_context[SharedValues::MOBILE_CENTER_BUILD_INFORMATION])}")
 end

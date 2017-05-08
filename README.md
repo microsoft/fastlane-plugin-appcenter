@@ -14,7 +14,7 @@ fastlane add_plugin mobile_center
 
 Distribute new release to Mobile Center
 
-**Note to author:** Add a more detailed description about this plugin here. If your plugin contains multiple actions, make sure to mention them here.
+
 
 ## Example
 
