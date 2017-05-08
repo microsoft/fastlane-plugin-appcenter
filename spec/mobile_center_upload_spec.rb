@@ -49,7 +49,7 @@ def stub_add_to_group(status)
     .to_return(status: status, body: "{\"short_version\":\"1.0\",\"download_link\":\"https://download.link\"}", headers: { 'Content-Type' => 'application/json' })
 end
 
-describe Fastlane::Actions::MobileCenterAction do
+describe Fastlane::Actions::MobileCenterUploadAction do
   describe '#run' do
     before :each do
       allow(FastlaneCore::FastlaneFolder).to receive(:path).and_return(nil)

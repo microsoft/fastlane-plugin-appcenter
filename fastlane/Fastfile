@@ -15,9 +15,7 @@ lane :test do
     api_token: ENV["TEST_MOBILE_CENTER_API_TOKEN"],
     owner_name: ENV["TEST_MOBILE_CENTER_OWNER_NAME"],
     app_name: "MyApplication",
-    apk: "./fastlane/app-release.apk",
-    group: ENV["TEST_MOBILE_CENTER_DISTRIBUTE_GROUP"],
-    release_notes: ENV["TEST_MOBILE_CENTER_DISTRIBUTE_RELEASE_NOTES"]
+    apk: "./fastlane/app-release.apk"
   )
 
   UI.message("\n\n\n=====================================\n uploading ios with dSYM files (not zipped) \n=====================================")
@@ -58,14 +56,6 @@ lane :test do
 
   UI.message("\n#{Terminal::Table.new(rows: response.body.map!(&:values),
                                       headings: %w[symbol_upload_id app_id origin status symbol_type])}")
-
-  # use it for deleting all dSYM uploads
-  # response.body.map! do |item|
-  #   connection.delete do |req|
-  #     req.url("/v0.1/apps/#{ENV['TEST_MOBILE_CENTER_OWNER_NAME']}/MyApplication-01/symbol_uploads/#{item[0]}")
-  #     req.headers['X-API-Token'] = ENV['TEST_MOBILE_CENTER_API_TOKEN']
-  #   end
-  # end
 
   UI.message("\n\n\n=====================================\n testing shared values\n=====================================")
   UI.message("MOBILE_CENTER_DOWNLOAD_LINK = #{Actions.lane_context[SharedValues::MOBILE_CENTER_DOWNLOAD_LINK]}")
