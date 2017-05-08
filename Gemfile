@@ -1,5 +1,7 @@
 source 'https://rubygems.org'
 
+gem "webmock"
+
 gemspec
 
 plugins_path = File.join(File.dirname(__FILE__), 'fastlane', 'Pluginfile')

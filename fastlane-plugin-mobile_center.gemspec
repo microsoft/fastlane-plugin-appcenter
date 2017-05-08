@@ -1,4 +1,5 @@
 # coding: utf-8
+
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'fastlane/plugin/mobile_center/version'
@@ -6,10 +7,10 @@ require 'fastlane/plugin/mobile_center/version'
 Gem::Specification.new do |spec|
   spec.name          = 'fastlane-plugin-mobile_center'
   spec.version       = Fastlane::MobileCenter::VERSION
-  spec.author        = %q{Evgeniy Khramkov}
-  spec.email         = %q{v-evkhra@microsoft.com}
+  spec.author        = 'Evgeniy Khramkov'
+  spec.email         = 'v-evkhra@microsoft.com'
 
-  spec.summary       = %q{Distribute new release to Mobile Center}
+  spec.summary       = 'Distribute new release to Mobile Center'
   # spec.homepage      = "https://github.com/<GITHUB_USERNAME>/fastlane-plugin-mobile_center"
   spec.license       = "MIT"
 
