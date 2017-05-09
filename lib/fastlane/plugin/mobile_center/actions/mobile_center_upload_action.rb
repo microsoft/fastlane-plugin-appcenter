@@ -331,7 +331,7 @@ module Fastlane
       end
 
       def self.authors
-        ["evkhramkov"]
+        ["Microsoft"]
       end
 
       def self.details
