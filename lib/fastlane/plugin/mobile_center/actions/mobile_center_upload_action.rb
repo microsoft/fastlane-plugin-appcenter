@@ -45,9 +45,7 @@ module Fastlane
 
         case response.status
         when 200...300
-          if ENV['DEBUG']
-            UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n")
-          end
+          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
           response.body
         when 401
           UI.user_error!("Auth Error, provided invalid token")
@@ -80,9 +78,7 @@ module Fastlane
 
         case response.status
         when 200...300
-          if ENV['DEBUG']
-            UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n")
-          end
+          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
           response.body
         when 401
           UI.user_error!("Auth Error, provided invalid token")
@@ -111,9 +107,7 @@ module Fastlane
 
         case response.status
         when 200...300
-          if ENV['DEBUG']
-            UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n")
-          end
+          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
           response.body
         else
           UI.error("Error #{response.status}: #{response.body}")
@@ -131,7 +125,7 @@ module Fastlane
           req.headers['x-ms-blob-type'] = "BlockBlob"
           req.headers['Content-Length'] = File.size(dsym).to_s
           req.headers['internal-request-source'] = "fastlane"
-          req.body = Faraday::UploadIO.new(dsym, 'application/octet-stream') if dsym and File.exist?(dsym)
+          req.body = Faraday::UploadIO.new(dsym, 'application/octet-stream') if dsym && File.exist?(dsym)
         end
 
         case response.status
@@ -155,7 +149,7 @@ module Fastlane
         options = {}
         options[:upload_id] = upload_id
         # ipa field is used both for .apk and .ipa files
-        options[:ipa] = Faraday::UploadIO.new(file, 'application/octet-stream') if file and File.exist?(file)
+        options[:ipa] = Faraday::UploadIO.new(file, 'application/octet-stream') if file && File.exist?(file)
 
         response = connection.post do |req|
           req.headers['internal-request-source'] = "fastlane"
@@ -189,9 +183,7 @@ module Fastlane
 
         case response.status
         when 200...300
-          if ENV['DEBUG']
-            UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n")
-          end
+          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
           response.body
         else
           UI.error("Error #{response.status}: #{response.body}")
@@ -218,9 +210,7 @@ module Fastlane
           release = response.body
           download_url = release['download_url']
 
-          if ENV['DEBUG']
-            UI.message("DEBUG: #{JSON.pretty_generate(release)}")
-          end
+          UI.message("DEBUG: #{JSON.pretty_generate(release)}") if ENV['DEBUG']
 
           Actions.lane_context[SharedValues::MOBILE_CENTER_DOWNLOAD_LINK] = download_url
           Actions.lane_context[SharedValues::MOBILE_CENTER_BUILD_INFORMATION] = release
@@ -250,19 +240,17 @@ module Fastlane
         dsym_path = nil
         if dsym
           # we can use dsym parameter only if build file is ipa
-          if !file or File.extname(file) == '.ipa'
-            dsym_path = dsym
-          end
+          dsym_path = dsym if !file || File.extname(file) == '.ipa'
         else
           # if dsym is note set, but build is ipa - check default path
-          if file and File.exist?(file) and File.extname(file) == '.ipa'
+          if file && File.exist?(file) && File.extname(file) == '.ipa'
             dsym_path = file.to_s.gsub('.ipa', '.dSYM.zip')
             UI.message("dSYM is found")
           end
         end
 
         # if we provided valid dsym path, or <ipa_path>.dSYM.zip was found, start dSYM upload
-        if dsym_path and File.exist?(dsym_path)
+        if dsym_path && File.exist?(dsym_path)
           if File.directory?(dsym_path)
             UI.message("dSYM path is folder, zipping...")
             dsym_path = Actions::ZipAction.run(path: dsym, output_path: dsym + ".zip")
@@ -296,8 +284,8 @@ module Fastlane
           params[:apk]
         ].detect { |e| !e.to_s.empty? }
 
-        UI.user_error!("Couldn't find build file at path '#{file}'") unless file and File.exist?(file)
-        UI.user_error!("No Distribute Group given, pass using `group: 'group name'`") unless group and !group.empty?
+        UI.user_error!("Couldn't find build file at path '#{file}'") unless file && File.exist?(file)
+        UI.user_error!("No Distribute Group given, pass using `group: 'group name'`") unless group && !group.empty?
 
         UI.message("Starting release upload...")
         upload_details = self.create_release_upload(api_token, owner_name, app_name)
@@ -348,7 +336,7 @@ module Fastlane
                                   optional: false,
                                       type: String,
                               verify_block: proc do |value|
-                                UI.user_error!("No API token for Mobile Center given, pass using `api_token: 'token'`") unless value and !value.empty?
+                                UI.user_error!("No API token for Mobile Center given, pass using `api_token: 'token'`") unless value && !value.empty?
                               end),
 
           FastlaneCore::ConfigItem.new(key: :owner_name,
@@ -357,7 +345,7 @@ module Fastlane
                                   optional: false,
                                       type: String,
                               verify_block: proc do |value|
-                                UI.user_error!("No Owner name for Mobile Center given, pass using `owner_name: 'name'`") unless value and !value.empty?
+                                UI.user_error!("No Owner name for Mobile Center given, pass using `owner_name: 'name'`") unless value && !value.empty?
                               end),
 
           FastlaneCore::ConfigItem.new(key: :app_name,
@@ -366,7 +354,7 @@ module Fastlane
                                   optional: false,
                                       type: String,
                               verify_block: proc do |value|
-                                UI.user_error!("No App name given, pass using `app_name: 'app name'`") unless value and !value.empty?
+                                UI.user_error!("No App name given, pass using `app_name: 'app name'`") unless value && !value.empty?
                               end),
 
           FastlaneCore::ConfigItem.new(key: :apk,

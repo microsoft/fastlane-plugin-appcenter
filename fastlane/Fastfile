@@ -27,7 +27,6 @@ lane :test do
     app_name: "MyApplication-01",
     ipa: "./fastlane/app-release.ipa",
     group: ENV["TEST_MOBILE_CENTER_DISTRIBUTE_GROUP"],
-    dsym: "./fastlane/Themoji.dSYM",
     release_notes: ENV["TEST_MOBILE_CENTER_DISTRIBUTE_RELEASE_NOTES"]
   )
 
