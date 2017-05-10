@@ -1,6 +1,7 @@
 # mobile_center plugin
 
 [![fastlane Plugin Badge](https://rawcdn.githack.com/fastlane/fastlane/master/fastlane/assets/plugin-badge.svg)](https://rubygems.org/gems/fastlane-plugin-mobile_center)
+[![Gem Version](https://badge.fury.io/rb/fastlane-plugin-mobile_center.svg)](https://badge.fury.io/rb/fastlane-plugin-mobile_center)
 
 ## Getting Started
 
