@@ -6,8 +6,18 @@ if File.exist?('../.env')
   end
 end
 
+lane :test_autocreation do
+  # app should be autocreated if not found
+  mobile_center_upload(
+    api_token: ENV["TEST_MOBILE_CENTER_API_TOKEN"],
+    owner_name: ENV["TEST_MOBILE_CENTER_OWNER_NAME"],
+    app_name: "MyApplication-notfound-2",
+    apk: "./fastlane/app-release.apk"
+  )
+end
+
 lane :test do
-  # mobile_center_upload will readrelease_notes from FL_CHANGELOG
+  # mobile_center_upload will read release_notes from FL_CHANGELOG
   Actions.lane_context[SharedValues::FL_CHANGELOG] = 'shared changelog'
 
   UI.message("\n\n\n=====================================\n uploading android\n=====================================")

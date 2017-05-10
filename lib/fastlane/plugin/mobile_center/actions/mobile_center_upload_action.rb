@@ -304,12 +304,88 @@ module Fastlane
         end
       end
 
+      # returns true if app exists, false in case of 404 and error otherwise
+      def self.get_app(api_token, owner_name, app_name)
+        connection = self.connection
+
+        response = connection.get do |req|
+          req.url("/v0.1/apps/#{owner_name}/#{app_name}")
+          req.headers['X-API-Token'] = api_token
+          req.headers['internal-request-source'] = "fastlane"
+        end
+
+        case response.status
+        when 200...300
+          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+          true
+        when 404
+          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+          false
+        else
+          UI.error("Error #{response.status}: #{response.body}")
+          false
+        end
+      end
+
+      # checks app existance, if ther is no such - creates it
+      def self.get_or_create_app(params)
+        api_token = params[:api_token]
+        owner_name = params[:owner_name]
+        app_name = params[:app_name]
+
+        platforms = {
+          "Android" => ['Java', 'React-Native', 'Xamarin'],
+          "iOS" => ['Objective-C-Swift', 'React-Native', 'Xamarin']
+        }
+
+        if self.get_app(api_token, owner_name, app_name)
+          app_name
+        else
+          if Helper.test? || UI.confirm("App with name #{app_name} not found, create one?")
+            connection = self.connection
+
+            os = Helper.test? ? "Android" : UI.select("Select OS", ["Android", "iOS"])
+
+            platform = Helper.test? ? "Java" : UI.select("Select Platform", platforms[os])
+
+            response = connection.post do |req|
+              req.url("/v0.1/apps")
+              req.headers['X-API-Token'] = api_token
+              req.headers['internal-request-source'] = "fastlane"
+              req.body = {
+                "display_name" => app_name,
+                "name" => app_name,
+                "os" => os,
+                "platform" => platform
+              }
+            end
+
+            case response.status
+            when 200...300
+              created = response.body
+              UI.message("DEBUG: #{JSON.pretty_generate(created)}") if ENV['DEBUG']
+              UI.success("Created #{os}/#{platform} app with name \"#{created['name']}\"")
+              true
+            else
+              UI.error("Error creating app #{response.status}: #{response.body}")
+              false
+            end
+          else
+            UI.error("Lane aborted")
+            false
+          end
+        end
+      end
+
       def self.run(params)
         values = params.values
         upload_dsym_only = params[:upload_dsym_only]
 
-        self.run_release_upload(params) unless upload_dsym_only
-        self.run_dsym_upload(params)
+        # if app found or successfully created
+        if self.get_or_create_app(params)
+          self.run_release_upload(params) unless upload_dsym_only
+          self.run_dsym_upload(params)
+        end
 
         return values if Helper.test?
       end
@@ -350,7 +426,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :app_name,
                                   env_name: "MOBILE_CENTER_APP_NAME",
-                               description: "App name",
+                               description: "App name. If there is no app with such name, you will be prompted to create one",
                                   optional: false,
                                       type: String,
                               verify_block: proc do |value|

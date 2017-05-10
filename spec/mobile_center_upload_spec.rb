@@ -1,3 +1,20 @@
+def stub_check_app(status)
+  stub_request(:get, "https://api.mobile.azure.com/v0.1/apps/owner/app")
+    .to_return(
+      status: status,
+      headers: { 'Content-Type' => 'application/json' }
+    )
+end
+
+def stub_create_app(status)
+  stub_request(:post, "https://api.mobile.azure.com/v0.1/apps")
+    .to_return(
+      status: status,
+      body: "{\"name\":\"app\"}",
+      headers: { 'Content-Type' => 'application/json' }
+    )
+end
+
 def stub_create_release_upload(status)
   stub_request(:post, "https://api.mobile.azure.com/v0.1/apps/owner/app/release_uploads")
     .with(body: "{}")
@@ -96,6 +113,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
 
     it "raises an error if no build file was given" do
       expect do
+        stub_check_app(200)      
         Fastlane::FastFile.new.parse("lane :test do
           mobile_center_upload({
             api_token: 'xxx',
@@ -109,6 +127,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
 
     it "raises an error if given apk was not found" do
       expect do
+        stub_check_app(200)        
         Fastlane::FastFile.new.parse("lane :test do
           mobile_center_upload({
             api_token: 'xxx',
@@ -123,6 +142,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
 
     it "raises an error if given ipa was not found" do
       expect do
+        stub_check_app(200)      
         Fastlane::FastFile.new.parse("lane :test do
           mobile_center_upload({
             api_token: 'xxx',
@@ -179,6 +199,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
     end
 
     it "handles upload build error" do
+      stub_check_app(200)
       stub_create_release_upload(200)
       stub_upload_build(400)
       stub_update_release_upload(200, 'aborted')
@@ -195,6 +216,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
     end
 
     it "handles not found owner or app error" do
+      stub_check_app(200)
       stub_create_release_upload(404)
 
       Fastlane::FastFile.new.parse("lane :test do
@@ -209,6 +231,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
     end
 
     it "handles not found distribution group" do
+      stub_check_app(200)
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
@@ -226,6 +249,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
     end
 
     it "can use a generated changelog as release notes" do
+      stub_check_app(200)
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
@@ -247,6 +271,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
     end
 
     it "works with valid parameters for android" do
+      stub_check_app(200)
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
@@ -264,6 +289,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
     end
 
     it "uses GRADLE_APK_OUTPUT_PATH as default for apk" do
+      stub_check_app(200)
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
@@ -284,6 +310,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
     end
 
     it "uses IPA_OUTPUT_PATH as default for ipa" do
+      stub_check_app(200)
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
@@ -304,6 +331,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
     end
 
     it "works with valid parameters for ios" do
+      stub_check_app(200)
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
@@ -324,7 +352,42 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       end").runner.execute(:test)
     end
 
+    it "creates app if it was not found" do
+      stub_check_app(404)
+      stub_create_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_add_to_group(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        mobile_center_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          group: 'Testers'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "handles app creation error" do
+      stub_check_app(404)
+      stub_create_app(500)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        mobile_center_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          group: 'Testers'
+        })
+      end").runner.execute(:test)
+    end
+
     it "zips dSYM files if dsym parameter is folder" do
+      stub_check_app(200)
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
@@ -348,6 +411,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
     end
 
     it "allows to send a dsym only" do
+      stub_check_app(200)
       stub_create_dsym_upload(200)
       stub_upload_dsym(200)
       stub_update_dsym_upload(200, "committed")
@@ -364,6 +428,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
     end
 
     it "uses DSYM_OUTPUT_PATH as default for dsym" do
+      stub_check_app(200)
       stub_create_dsym_upload(200)
       stub_upload_dsym(200)
       stub_update_dsym_upload(200, "committed")
@@ -384,6 +449,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
 
     it "handles invalid token error" do
       expect do
+        stub_check_app(200)
         stub_create_release_upload(401)
 
         Fastlane::FastFile.new.parse("lane :test do
@@ -400,6 +466,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
 
     it "handles invalid token error in dSYM upload" do
       expect do
+        stub_check_app(200)
         stub_create_dsym_upload(401)
 
         Fastlane::FastFile.new.parse("lane :test do
@@ -415,6 +482,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
     end
 
     it "handles upload dSYM error" do
+      stub_check_app(200)
       stub_create_dsym_upload(200)
       stub_upload_dsym(400)
       stub_update_dsym_upload(200, 'aborted')
