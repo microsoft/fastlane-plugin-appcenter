@@ -339,13 +339,12 @@ module Fastlane
         }
 
         if self.get_app(api_token, owner_name, app_name)
-          app_name
+          true
         else
           if Helper.test? || UI.confirm("App with name #{app_name} not found, create one?")
             connection = self.connection
 
             os = Helper.test? ? "Android" : UI.select("Select OS", ["Android", "iOS"])
-
             platform = Helper.test? ? "Java" : UI.select("Select Platform", platforms[os])
 
             response = connection.post do |req|

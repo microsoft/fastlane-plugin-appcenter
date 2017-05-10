@@ -171,6 +171,9 @@ Metrics/ParameterLists:
 Metrics/PerceivedComplexity:
   Max: 18
 
+BlockNesting:
+  Max: 4
+
 # Sometimes it's easier to read without guards
 Style/GuardClause:
   Enabled: false

@@ -113,7 +113,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
 
     it "raises an error if no build file was given" do
       expect do
-        stub_check_app(200)      
+        stub_check_app(200)
         Fastlane::FastFile.new.parse("lane :test do
           mobile_center_upload({
             api_token: 'xxx',
@@ -127,7 +127,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
 
     it "raises an error if given apk was not found" do
       expect do
-        stub_check_app(200)        
+        stub_check_app(200)
         Fastlane::FastFile.new.parse("lane :test do
           mobile_center_upload({
             api_token: 'xxx',
@@ -142,7 +142,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
 
     it "raises an error if given ipa was not found" do
       expect do
-        stub_check_app(200)      
+        stub_check_app(200)
         Fastlane::FastFile.new.parse("lane :test do
           mobile_center_upload({
             api_token: 'xxx',
