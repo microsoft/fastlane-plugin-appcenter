@@ -12,7 +12,7 @@ fastlane add_plugin mobile_center
 
 ## About mobile_center
 
-Plugin for [https://mobile.azure.com](https://mobile.azure.com). Provides `mobile_center_upload` action for [release distribution](https://docs.microsoft.com/en-us/mobile-center/distribution/uploading) and [dSYM uploads](https://docs.microsoft.com/en-us/mobile-center/crashes/ios)
+Plugin for [Mobile Center](https://mobile.azure.com). Provides `mobile_center_upload` action for [release distribution](https://docs.microsoft.com/en-us/mobile-center/distribution/uploading) and [dSYM uploads](https://docs.microsoft.com/en-us/mobile-center/crashes/ios)
 
 ## Usage
 
@@ -75,8 +75,8 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
 ### Intercom
 
-If you have further questions, want to provide feedback or you are running into issues, log in to the Mobile Center portal and use the blue Intercom button on the bottom right to start a conversation with us.
+If you have further questions, want to provide feedback or you are running into issues, log in to the [Mobile Center](https://mobile.azure.com) portal and use the blue Intercom button on the bottom right to start a conversation with us.
 
 ### Twitter
 
-We're on Twitter as @mobilecenter.
+We're on Twitter as [@mobilecenter](https://www.twitter.com/mobilecenter).
