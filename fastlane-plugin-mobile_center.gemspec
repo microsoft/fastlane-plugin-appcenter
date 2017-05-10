@@ -7,10 +7,9 @@ require 'fastlane/plugin/mobile_center/version'
 Gem::Specification.new do |spec|
   spec.name          = 'fastlane-plugin-mobile_center'
   spec.version       = Fastlane::MobileCenter::VERSION
-  spec.author        = 'Microsoft'
-  spec.email         = ''
+  spec.author        = 'Microsoft Corporation'
 
-  spec.summary       = 'Distribute new release to Mobile Center'
+  spec.summary       = 'Fastlane plugin for Mobile Center'
   # spec.homepage      = "https://github.com/<GITHUB_USERNAME>/fastlane-plugin-mobile_center"
   spec.license       = "MIT"
 
