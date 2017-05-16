@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.author        = 'Microsoft Corporation'
 
   spec.summary       = 'Fastlane plugin for Mobile Center'
-  spec.homepage      = "https://github.com/Microsoft/mobile-center-plugin-fastlane"
+  spec.homepage      = "https://github.com/Microsoft/fastlane-plugin-mobile_center"
   spec.license       = "MIT"
 
   spec.files         = Dir["lib/**/*"] + %w(README.md LICENSE)
