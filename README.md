@@ -20,12 +20,12 @@ Plugin for [Mobile Center](https://mobile.azure.com). Provides `mobile_center_up
 
 Obtain an [API token](https://docs.microsoft.com/en-us/mobile-center/api-docs/). API Token is used for authentication for all Mobile Center API calls.
 
-```
+```ruby
 mobile_center_upload(
-  api_token: <mobile center token>,
-  owner_name: <your mobile center account name>,
-  app_name: <your app name>,
-  apk: <path to android build binary>
+  api_token: "<mobile center token>",
+  owner_name: "<your mobile center account name>",
+  app_name: "<your app name>",
+  apk: "<path to android build binary">
 )
 ```
 
