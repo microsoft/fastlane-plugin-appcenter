@@ -25,7 +25,7 @@ mobile_center_upload(
   api_token: "<mobile center token>",
   owner_name: "<your mobile center account name>",
   app_name: "<your app name>",
-  apk: "<path to android build binary">
+  apk: "<path to android build binary>"
 )
 ```
 
