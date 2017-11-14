@@ -1,5 +1,5 @@
 def stub_check_app(status)
-  stub_request(:get, "https://api.mobile.azure.com/v0.1/apps/owner/app")
+  stub_request(:get, "https://api.appcenter.mc/v0.1/apps/owner/app")
     .to_return(
       status: status,
       headers: { 'Content-Type' => 'application/json' }
@@ -7,7 +7,7 @@ def stub_check_app(status)
 end
 
 def stub_create_app(status)
-  stub_request(:post, "https://api.mobile.azure.com/v0.1/apps")
+  stub_request(:post, "https://api.appcenter.mc/v0.1/apps")
     .to_return(
       status: status,
       body: "{\"name\":\"app\"}",
@@ -16,7 +16,7 @@ def stub_create_app(status)
 end
 
 def stub_create_release_upload(status)
-  stub_request(:post, "https://api.mobile.azure.com/v0.1/apps/owner/app/release_uploads")
+  stub_request(:post, "https://api.appcenter.mc/v0.1/apps/owner/app/release_uploads")
     .with(body: "{}")
     .to_return(
       status: status,
@@ -26,7 +26,7 @@ def stub_create_release_upload(status)
 end
 
 def stub_create_dsym_upload(status)
-  stub_request(:post, "https://api.mobile.azure.com/v0.1/apps/owner/app/symbol_uploads")
+  stub_request(:post, "https://api.appcenter.mc/v0.1/apps/owner/app/symbol_uploads")
     .with(body: "{\"symbol_type\":\"Apple\"}")
     .to_return(
       status: status,
@@ -46,7 +46,7 @@ def stub_upload_dsym(status)
 end
 
 def stub_update_release_upload(status, release_status)
-  stub_request(:patch, "https://api.mobile.azure.com/v0.1/apps/owner/app/release_uploads/upload_id")
+  stub_request(:patch, "https://api.appcenter.mc/v0.1/apps/owner/app/release_uploads/upload_id")
     .with(
       body: "{\"status\":\"#{release_status}\"}"
     )
@@ -54,7 +54,7 @@ def stub_update_release_upload(status, release_status)
 end
 
 def stub_update_dsym_upload(status, release_status)
-  stub_request(:patch, "https://api.mobile.azure.com/v0.1/apps/owner/app/symbol_uploads/symbol_upload_id")
+  stub_request(:patch, "https://api.appcenter.mc/v0.1/apps/owner/app/symbol_uploads/symbol_upload_id")
     .with(
       body: "{\"status\":\"#{release_status}\"}"
     )
@@ -62,11 +62,11 @@ def stub_update_dsym_upload(status, release_status)
 end
 
 def stub_add_to_group(status)
-  stub_request(:patch, "https://api.mobile.azure.com/release_url")
+  stub_request(:patch, "https://api.appcenter.mc/release_url")
     .to_return(status: status, body: "{\"short_version\":\"1.0\",\"download_link\":\"https://download.link\"}", headers: { 'Content-Type' => 'application/json' })
 end
 
-describe Fastlane::Actions::MobileCenterUploadAction do
+describe Fastlane::Actions::AppcenterUploadAction do
   describe '#run' do
     before :each do
       allow(FastlaneCore::FastlaneFolder).to receive(:path).and_return(nil)
@@ -75,33 +75,33 @@ describe Fastlane::Actions::MobileCenterUploadAction do
     it "raises an error if no api token was given" do
       expect do
         Fastlane::FastFile.new.parse("lane :test do
-          mobile_center_upload({
+          appcenter_upload({
             owner_name: 'owner',
             app_name: 'app',
             group: 'Testers',
             apk: './spec/fixtures/appfiles/apk_file_empty.apk'
           })
         end").runner.execute(:test)
-      end.to raise_error("No API token for Mobile Center given, pass using `api_token: 'token'`")
+      end.to raise_error("No API token for App Center given, pass using `api_token: 'token'`")
     end
 
     it "raises an error if no owner name was given" do
       expect do
         Fastlane::FastFile.new.parse("lane :test do
-          mobile_center_upload({
+          appcenter_upload({
             api_token: 'xxx',
             app_name: 'app',
             group: 'Testers',
             apk: './spec/fixtures/appfiles/apk_file_empty.apk'
           })
         end").runner.execute(:test)
-      end.to raise_error("No Owner name for Mobile Center given, pass using `owner_name: 'name'`")
+      end.to raise_error("No Owner name for App Center given, pass using `owner_name: 'name'`")
     end
 
     it "raises an error if no app name was given" do
       expect do
         Fastlane::FastFile.new.parse("lane :test do
-          mobile_center_upload({
+          appcenter_upload({
             api_token: 'xxx',
             owner_name: 'owner',
             group: 'Testers',
@@ -115,7 +115,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       expect do
         stub_check_app(200)
         Fastlane::FastFile.new.parse("lane :test do
-          mobile_center_upload({
+          appcenter_upload({
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
@@ -129,7 +129,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       expect do
         stub_check_app(200)
         Fastlane::FastFile.new.parse("lane :test do
-          mobile_center_upload({
+          appcenter_upload({
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
@@ -144,7 +144,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       expect do
         stub_check_app(200)
         Fastlane::FastFile.new.parse("lane :test do
-          mobile_center_upload({
+          appcenter_upload({
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
@@ -158,7 +158,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
     it "raises an error if given file has invalid extension for apk" do
       expect do
         Fastlane::FastFile.new.parse("lane :test do
-          mobile_center_upload({
+          appcenter_upload({
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
@@ -172,7 +172,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
     it "raises an error if given file has invalid extension for ipa" do
       expect do
         Fastlane::FastFile.new.parse("lane :test do
-          mobile_center_upload({
+          appcenter_upload({
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
@@ -186,7 +186,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
     it "raises an error if both ipa and apk provided" do
       expect do
         Fastlane::FastFile.new.parse("lane :test do
-          mobile_center_upload({
+          appcenter_upload({
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
@@ -205,7 +205,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       stub_update_release_upload(200, 'aborted')
 
       Fastlane::FastFile.new.parse("lane :test do
-        mobile_center_upload({
+        appcenter_upload({
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
@@ -220,7 +220,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       stub_create_release_upload(404)
 
       Fastlane::FastFile.new.parse("lane :test do
-        mobile_center_upload({
+        appcenter_upload({
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
@@ -238,7 +238,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       stub_add_to_group(404)
 
       Fastlane::FastFile.new.parse("lane :test do
-        mobile_center_upload({
+        appcenter_upload({
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
@@ -258,7 +258,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       values = Fastlane::FastFile.new.parse("lane :test do
         Actions.lane_context[SharedValues::FL_CHANGELOG] = 'autogenerated changelog'
 
-        mobile_center_upload({
+        appcenter_upload({
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
@@ -278,7 +278,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       stub_add_to_group(200)
 
       Fastlane::FastFile.new.parse("lane :test do
-        mobile_center_upload({
+        appcenter_upload({
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
@@ -298,7 +298,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       values = Fastlane::FastFile.new.parse("lane :test do
         Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH] = './spec/fixtures/appfiles/apk_file_empty.apk'
 
-        mobile_center_upload({
+        appcenter_upload({
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
@@ -319,7 +319,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       values = Fastlane::FastFile.new.parse("lane :test do
         Actions.lane_context[SharedValues::IPA_OUTPUT_PATH] = './spec/fixtures/appfiles/ipa_file_empty.ipa'
 
-        mobile_center_upload({
+        appcenter_upload({
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
@@ -341,7 +341,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       stub_update_dsym_upload(200, "committed")
 
       Fastlane::FastFile.new.parse("lane :test do
-        mobile_center_upload({
+        appcenter_upload({
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
@@ -361,7 +361,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       stub_add_to_group(200)
 
       Fastlane::FastFile.new.parse("lane :test do
-        mobile_center_upload({
+        appcenter_upload({
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
@@ -376,7 +376,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       stub_create_app(500)
 
       Fastlane::FastFile.new.parse("lane :test do
-        mobile_center_upload({
+        appcenter_upload({
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
@@ -397,7 +397,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       stub_update_dsym_upload(200, "committed")
 
       values = Fastlane::FastFile.new.parse("lane :test do
-        mobile_center_upload({
+        appcenter_upload({
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
@@ -417,7 +417,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       stub_update_dsym_upload(200, "committed")
 
       Fastlane::FastFile.new.parse("lane :test do
-        mobile_center_upload({
+        appcenter_upload({
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
@@ -436,7 +436,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       values = Fastlane::FastFile.new.parse("lane :test do
         Actions.lane_context[SharedValues::DSYM_OUTPUT_PATH] = './spec/fixtures/symbols/Themoji.dSYM.zip'
 
-        mobile_center_upload({
+        appcenter_upload({
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
@@ -453,7 +453,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
         stub_create_release_upload(401)
 
         Fastlane::FastFile.new.parse("lane :test do
-          mobile_center_upload({
+          appcenter_upload({
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
@@ -470,7 +470,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
         stub_create_dsym_upload(401)
 
         Fastlane::FastFile.new.parse("lane :test do
-          mobile_center_upload({
+          appcenter_upload({
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
@@ -488,7 +488,7 @@ describe Fastlane::Actions::MobileCenterUploadAction do
       stub_update_dsym_upload(200, 'aborted')
 
       Fastlane::FastFile.new.parse("lane :test do
-        mobile_center_upload({
+        appcenter_upload({
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',

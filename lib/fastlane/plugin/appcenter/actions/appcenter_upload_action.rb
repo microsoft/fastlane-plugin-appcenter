@@ -2,18 +2,18 @@
 module Fastlane
   module Actions
     module SharedValues
-      MOBILE_CENTER_DOWNLOAD_LINK = :MOBILE_CENTER_DOWNLOAD_LINK
-      MOBILE_CENTER_BUILD_INFORMATION = :MOBILE_CENTER_BUILD_INFORMATION
+      APPCENTER_DOWNLOAD_LINK = :APPCENTER_DOWNLOAD_LINK
+      APPCENTER_BUILD_INFORMATION = :APPCENTER_BUILD_INFORMATION
     end
 
-    class MobileCenterUploadAction < Action
+    class AppcenterUploadAction < Action
       # create request
       def self.connection(upload_url = false, dsym = false)
         require 'faraday'
         require 'faraday_middleware'
 
         options = {
-          url: upload_url ? upload_url : "https://api.mobile.azure.com"
+          url: upload_url ? upload_url : "https://api.appcenter.ms"
         }
 
         Faraday.new(options) do |builder|
@@ -59,7 +59,7 @@ module Fastlane
         end
       end
 
-      # creates new dSYM upload in mobile center
+      # creates new dSYM upload in app center
       # returns:
       # symbol_upload_id
       # upload_url
@@ -212,8 +212,8 @@ module Fastlane
 
           UI.message("DEBUG: #{JSON.pretty_generate(release)}") if ENV['DEBUG']
 
-          Actions.lane_context[SharedValues::MOBILE_CENTER_DOWNLOAD_LINK] = download_url
-          Actions.lane_context[SharedValues::MOBILE_CENTER_BUILD_INFORMATION] = release
+          Actions.lane_context[SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
+          Actions.lane_context[SharedValues::APPCENTER_BUILD_INFORMATION] = release
 
           UI.message("Public Download URL: #{download_url}") if download_url
           UI.success("Release #{release['short_version']} was successfully distributed")
@@ -390,7 +390,7 @@ module Fastlane
       end
 
       def self.description
-        "Distribute new release to Mobile Center"
+        "Distribute new release to app Center"
       end
 
       def self.authors
@@ -406,25 +406,25 @@ module Fastlane
       def self.available_options
         [
           FastlaneCore::ConfigItem.new(key: :api_token,
-                                  env_name: "MOBILE_CENTER_API_TOKEN",
-                               description: "API Token for Mobile Center",
+                                  env_name: "APPCENTER_API_TOKEN",
+                               description: "API Token for App Center",
                                   optional: false,
                                       type: String,
                               verify_block: proc do |value|
-                                UI.user_error!("No API token for Mobile Center given, pass using `api_token: 'token'`") unless value && !value.empty?
+                                UI.user_error!("No API token for App Center given, pass using `api_token: 'token'`") unless value && !value.empty?
                               end),
 
           FastlaneCore::ConfigItem.new(key: :owner_name,
-                                  env_name: "MOBILE_CENTER_OWNER_NAME",
+                                  env_name: "APPCENTER_OWNER_NAME",
                                description: "Owner name",
                                   optional: false,
                                       type: String,
                               verify_block: proc do |value|
-                                UI.user_error!("No Owner name for Mobile Center given, pass using `owner_name: 'name'`") unless value && !value.empty?
+                                UI.user_error!("No Owner name for App Center given, pass using `owner_name: 'name'`") unless value && !value.empty?
                               end),
 
           FastlaneCore::ConfigItem.new(key: :app_name,
-                                  env_name: "MOBILE_CENTER_APP_NAME",
+                                  env_name: "APPCENTER_APP_NAME",
                                description: "App name. If there is no app with such name, you will be prompted to create one",
                                   optional: false,
                                       type: String,
@@ -433,7 +433,7 @@ module Fastlane
                               end),
 
           FastlaneCore::ConfigItem.new(key: :apk,
-                                  env_name: "MOBILE_CENTER_DISTRIBUTE_APK",
+                                  env_name: "APPCENTER_DISTRIBUTE_APK",
                                description: "Build release path for android build",
                              default_value: Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH],
                                   optional: true,
@@ -448,7 +448,7 @@ module Fastlane
                               end),
 
           FastlaneCore::ConfigItem.new(key: :ipa,
-                                  env_name: "MOBILE_CENTER_DISTRIBUTE_IPA",
+                                  env_name: "APPCENTER_DISTRIBUTE_IPA",
                                description: "Build release path for ios build",
                              default_value: Actions.lane_context[SharedValues::IPA_OUTPUT_PATH],
                                   optional: true,
@@ -463,7 +463,7 @@ module Fastlane
                               end),
 
           FastlaneCore::ConfigItem.new(key: :dsym,
-                                  env_name: "MOBILE_CENTER_DISTRIBUTE_DSYM",
+                                  env_name: "APPCENTER_DISTRIBUTE_DSYM",
                                description: "Path to your symbols file. For iOS provide path to app.dSYM.zip",
                              default_value: Actions.lane_context[SharedValues::DSYM_OUTPUT_PATH],
                                   optional: true,
@@ -475,21 +475,21 @@ module Fastlane
                               end),
 
           FastlaneCore::ConfigItem.new(key: :upload_dsym_only,
-                                  env_name: "MOBILE_CENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY",
-                               description: "Flag to upload only the dSYM file to Mobile Center",
+                                  env_name: "APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY",
+                               description: "Flag to upload only the dSYM file to App Center",
                                   optional: true,
                                  is_string: false,
                              default_value: false),
 
           FastlaneCore::ConfigItem.new(key: :group,
-                                  env_name: "MOBILE_CENTER_DISTRIBUTE_GROUP",
+                                  env_name: "APPCENTER_DISTRIBUTE_GROUP",
                                description: "Distribute group name",
                              default_value: "Collaborators",
                                   optional: true,
                                       type: String),
 
           FastlaneCore::ConfigItem.new(key: :release_notes,
-                                  env_name: "MOBILE_CENTER_DISTRIBUTE_RELEASE_NOTES",
+                                  env_name: "APPCENTER_DISTRIBUTE_RELEASE_NOTES",
                                description: "Release notes",
                              default_value: Actions.lane_context[SharedValues::FL_CHANGELOG] || "No changelog given",
                                   optional: true,
@@ -499,8 +499,8 @@ module Fastlane
 
       def self.output
         [
-          ['MOBILE_CENTER_DOWNLOAD_LINK', 'The newly generated download link for this build'],
-          ['MOBILE_CENTER_BUILD_INFORMATION', 'contains all keys/values from the Mobile CEnter API']
+          ['APPCENTER_DOWNLOAD_LINK', 'The newly generated download link for this build'],
+          ['APPCENTER_BUILD_INFORMATION', 'contains all keys/values from the App Center API']
         ]
       end
 
@@ -510,17 +510,17 @@ module Fastlane
 
       def self.example_code
         [
-          'mobile_center_upload(
+          'appcenter_upload(
             api_token: "...",
-            owner_name: "mobile_center_owner",
+            owner_name: "appcenter_owner",
             app_name: "testing_app",
             apk: "./app-release.apk",
             group: "Testers",
             release_notes: "release notes"
           )',
-          'mobile_center_upload(
+          'appcenter_upload(
             api_token: "...",
-            owner_name: "mobile_center_owner",
+            owner_name: "appcenter_owner",
             app_name: "testing_app",
             apk: "./app-release.ipa",
             group: "Testers",

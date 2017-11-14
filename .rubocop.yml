@@ -226,7 +226,7 @@ AllCops:
 # They have not to be snake_case
 Style/FileName:
   Exclude:
-    - 'fastlane-plugin-mobile_center.gemspec'
+    - 'fastlane-plugin-appcenter.gemspec'
     - '**/Dangerfile'
     - '**/Brewfile'
     - '**/Gemfile'

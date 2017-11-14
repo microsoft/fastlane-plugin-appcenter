@@ -2,15 +2,15 @@
 
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'fastlane/plugin/mobile_center/version'
+require 'fastlane/plugin/appcenter/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'fastlane-plugin-mobile_center'
-  spec.version       = Fastlane::MobileCenter::VERSION
+  spec.name          = 'fastlane-plugin-appcenter'
+  spec.version       = Fastlane::Appcenter::VERSION
   spec.author        = 'Microsoft Corporation'
 
-  spec.summary       = 'Fastlane plugin for Mobile Center'
-  spec.homepage      = "https://github.com/Microsoft/fastlane-plugin-mobile_center"
+  spec.summary       = 'Fastlane plugin for App Center'
+  spec.homepage      = "https://github.com/Microsoft/fastlane-plugin-appcenter"
   spec.license       = "MIT"
 
   spec.files         = Dir["lib/**/*"] + %w(README.md LICENSE)

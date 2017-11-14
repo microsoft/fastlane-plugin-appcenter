@@ -8,46 +8,46 @@ end
 
 lane :test_autocreation do
   # app should be autocreated if not found
-  mobile_center_upload(
-    api_token: ENV["TEST_MOBILE_CENTER_API_TOKEN"],
-    owner_name: ENV["TEST_MOBILE_CENTER_OWNER_NAME"],
+  appcenter_upload(
+    api_token: ENV["TEST_APPCENTER_API_TOKEN"],
+    owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication-notfound-2",
     apk: "./fastlane/app-release.apk"
   )
 end
 
 lane :test do
-  # mobile_center_upload will read release_notes from FL_CHANGELOG
+  # appcenter_upload will read release_notes from FL_CHANGELOG
   Actions.lane_context[SharedValues::FL_CHANGELOG] = 'shared changelog'
 
   UI.message("\n\n\n=====================================\n uploading android\n=====================================")
 
-  mobile_center_upload(
-    api_token: ENV["TEST_MOBILE_CENTER_API_TOKEN"],
-    owner_name: ENV["TEST_MOBILE_CENTER_OWNER_NAME"],
+  appcenter_upload(
+    api_token: ENV["TEST_APPCENTER_API_TOKEN"],
+    owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication",
     apk: "./fastlane/app-release.apk"
   )
 
   UI.message("\n\n\n=====================================\n uploading ios with dSYM files (not zipped) \n=====================================")
 
-  mobile_center_upload(
-    api_token: ENV["TEST_MOBILE_CENTER_API_TOKEN"],
-    owner_name: ENV["TEST_MOBILE_CENTER_OWNER_NAME"],
+  appcenter_upload(
+    api_token: ENV["TEST_APPCENTER_API_TOKEN"],
+    owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication-01",
     ipa: "./fastlane/app-release.ipa",
-    group: ENV["TEST_MOBILE_CENTER_DISTRIBUTE_GROUP"],
-    release_notes: ENV["TEST_MOBILE_CENTER_DISTRIBUTE_RELEASE_NOTES"]
+    group: ENV["TEST_APPCENTER_DISTRIBUTE_GROUP"],
+    release_notes: ENV["TEST_APPCENTER_DISTRIBUTE_RELEASE_NOTES"]
   )
 
   UI.message("\n\n\n=====================================\n uploading only dSYM files (not zipped) \n=====================================")
 
-  mobile_center_upload(
-    api_token: ENV["TEST_MOBILE_CENTER_API_TOKEN"],
-    owner_name: ENV["TEST_MOBILE_CENTER_OWNER_NAME"],
+  appcenter_upload(
+    api_token: ENV["TEST_APPCENTER_API_TOKEN"],
+    owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication-01",
     upload_dsym_only: true,
     dsym: "./fastlane/Themoji.dSYM",
-    release_notes: ENV["TEST_MOBILE_CENTER_DISTRIBUTE_RELEASE_NOTES"]
+    release_notes: ENV["TEST_APPCENTER_DISTRIBUTE_RELEASE_NOTES"]
   )
 end
