@@ -1,5 +1,5 @@
 def stub_check_app(status)
-  stub_request(:get, "https://api.appcenter.mc/v0.1/apps/owner/app")
+  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/owner/app")
     .to_return(
       status: status,
       headers: { 'Content-Type' => 'application/json' }
@@ -7,7 +7,7 @@ def stub_check_app(status)
 end
 
 def stub_create_app(status)
-  stub_request(:post, "https://api.appcenter.mc/v0.1/apps")
+  stub_request(:post, "https://api.appcenter.ms/v0.1/apps")
     .to_return(
       status: status,
       body: "{\"name\":\"app\"}",
@@ -16,7 +16,7 @@ def stub_create_app(status)
 end
 
 def stub_create_release_upload(status)
-  stub_request(:post, "https://api.appcenter.mc/v0.1/apps/owner/app/release_uploads")
+  stub_request(:post, "https://api.appcenter.ms/v0.1/apps/owner/app/release_uploads")
     .with(body: "{}")
     .to_return(
       status: status,
@@ -26,7 +26,7 @@ def stub_create_release_upload(status)
 end
 
 def stub_create_dsym_upload(status)
-  stub_request(:post, "https://api.appcenter.mc/v0.1/apps/owner/app/symbol_uploads")
+  stub_request(:post, "https://api.appcenter.ms/v0.1/apps/owner/app/symbol_uploads")
     .with(body: "{\"symbol_type\":\"Apple\"}")
     .to_return(
       status: status,
@@ -46,7 +46,7 @@ def stub_upload_dsym(status)
 end
 
 def stub_update_release_upload(status, release_status)
-  stub_request(:patch, "https://api.appcenter.mc/v0.1/apps/owner/app/release_uploads/upload_id")
+  stub_request(:patch, "https://api.appcenter.ms/v0.1/apps/owner/app/release_uploads/upload_id")
     .with(
       body: "{\"status\":\"#{release_status}\"}"
     )
@@ -54,7 +54,7 @@ def stub_update_release_upload(status, release_status)
 end
 
 def stub_update_dsym_upload(status, release_status)
-  stub_request(:patch, "https://api.appcenter.mc/v0.1/apps/owner/app/symbol_uploads/symbol_upload_id")
+  stub_request(:patch, "https://api.appcenter.ms/v0.1/apps/owner/app/symbol_uploads/symbol_upload_id")
     .with(
       body: "{\"status\":\"#{release_status}\"}"
     )
@@ -62,7 +62,7 @@ def stub_update_dsym_upload(status, release_status)
 end
 
 def stub_add_to_group(status)
-  stub_request(:patch, "https://api.appcenter.mc/release_url")
+  stub_request(:patch, "https://api.appcenter.ms/release_url")
     .to_return(status: status, body: "{\"short_version\":\"1.0\",\"download_link\":\"https://download.link\"}", headers: { 'Content-Type' => 'application/json' })
 end
 

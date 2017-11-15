@@ -14,7 +14,7 @@ fastlane add_plugin appcenter
 
 ## About appcenter
 
-Plugin for [App Center](https://appcenter.mc). Provides `appcenter_upload` action for [release distribution](https://docs.microsoft.com/en-us/appcenter/distribution/uploading) and [dSYM uploads](https://docs.microsoft.com/en-us/appcenter/crashes/ios)
+Plugin for [App Center](https://appcenter.ms). Provides `appcenter_upload` action for [release distribution](https://docs.microsoft.com/en-us/appcenter/distribution/uploading) and [dSYM uploads](https://docs.microsoft.com/en-us/appcenter/crashes/ios)
 
 ## Usage
 
@@ -77,7 +77,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
 ### Intercom
 
-If you have further questions, want to provide feedback or you are running into issues, log in to the [App Center](https://appcenter.mc) portal and use the blue Intercom button on the bottom right to start a conversation with us.
+If you have further questions, want to provide feedback or you are running into issues, log in to the [App Center](https://appcenter.ms) portal and use the blue Intercom button on the bottom right to start a conversation with us.
 
 ### Twitter
 
