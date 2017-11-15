@@ -59,7 +59,7 @@ module Fastlane
         end
       end
 
-      # creates new dSYM upload in app center
+      # creates new dSYM upload in appcenter
       # returns:
       # symbol_upload_id
       # upload_url
@@ -390,7 +390,7 @@ module Fastlane
       end
 
       def self.description
-        "Distribute new release to app Center"
+        "Distribute new release to App Center"
       end
 
       def self.authors
