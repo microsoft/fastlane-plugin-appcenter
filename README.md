@@ -1,29 +1,29 @@
-# mobile_center plugin
+# appcenter plugin
 
-[![fastlane Plugin Badge](https://rawcdn.githack.com/fastlane/fastlane/master/fastlane/assets/plugin-badge.svg)](https://rubygems.org/gems/fastlane-plugin-mobile_center)
-[![Gem Version](https://badge.fury.io/rb/fastlane-plugin-mobile_center.svg)](https://badge.fury.io/rb/fastlane-plugin-mobile_center)
-[![Build Status](https://travis-ci.org/Microsoft/fastlane-plugin-mobile_center.svg?branch=master)](https://travis-ci.org/Microsoft/fastlane-plugin-mobile_center)
+[![fastlane Plugin Badge](https://rawcdn.githack.com/fastlane/fastlane/master/fastlane/assets/plugin-badge.svg)](https://rubygems.org/gems/fastlane-plugin-appcenter)
+[![Gem Version](https://badge.fury.io/rb/fastlane-plugin-appcenter.svg)](https://badge.fury.io/rb/fastlane-plugin-appcenter)
+[![Build Status](https://travis-ci.org/Microsoft/fastlane-plugin-appcenter.svg?branch=master)](https://travis-ci.org/Microsoft/fastlane-plugin-appcenter)
 
 ## Getting Started
 
-This project is a [_fastlane_](https://github.com/fastlane/fastlane) plugin. To get started with `fastlane-plugin-mobile_center`, add it to your project by running:
+This project is a [_fastlane_](https://github.com/fastlane/fastlane) plugin. To get started with `fastlane-plugin-appcenter`, add it to your project by running:
 
 ```bash
-fastlane add_plugin mobile_center
+fastlane add_plugin appcenter
 ```
 
-## About mobile_center
+## About appcenter
 
-Plugin for [Mobile Center](https://mobile.azure.com). Provides `mobile_center_upload` action for [release distribution](https://docs.microsoft.com/en-us/mobile-center/distribution/uploading) and [dSYM uploads](https://docs.microsoft.com/en-us/mobile-center/crashes/ios)
+Plugin for [App Center](https://appcenter.ms). Provides `appcenter_upload` action for [release distribution](https://docs.microsoft.com/en-us/appcenter/distribution/uploading) and [dSYM uploads](https://docs.microsoft.com/en-us/appcenter/crashes/ios)
 
 ## Usage
 
-Obtain an [API token](https://docs.microsoft.com/en-us/mobile-center/api-docs/). API Token is used for authentication for all Mobile Center API calls.
+Obtain an [API token](https://docs.microsoft.com/en-us/appcenter/api-docs/). API Token is used for authentication for all App Center API calls.
 
 ```ruby
-mobile_center_upload(
-  api_token: "<mobile center token>",
-  owner_name: "<your mobile center account name>",
+appcenter_upload(
+  api_token: "<appcenter token>",
+  owner_name: "<your appcenter account name>",
   app_name: "<your app name>",
   apk: "<path to android build binary>"
 )
@@ -77,8 +77,8 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
 ### Intercom
 
-If you have further questions, want to provide feedback or you are running into issues, log in to the [Mobile Center](https://mobile.azure.com) portal and use the blue Intercom button on the bottom right to start a conversation with us.
+If you have further questions, want to provide feedback or you are running into issues, log in to the [App Center](https://appcenter.ms) portal and use the blue Intercom button on the bottom right to start a conversation with us.
 
 ### Twitter
 
-We're on Twitter as [@mobilecenter](https://www.twitter.com/mobilecenter).
+We're on Twitter as [@appcenter](https://www.twitter.com/vsappcenter).

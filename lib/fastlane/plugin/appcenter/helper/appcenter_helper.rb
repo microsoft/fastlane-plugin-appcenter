@@ -1,11 +1,11 @@
 module Fastlane
   module Helper
-    class MobileCenterHelper
+    class AppcenterHelper
       # class methods that you define here become available in your action
-      # as `Helper::MobileCenterHelper.your_method`
+      # as `Helper::AppcenterHelper.your_method`
       #
       def self.show_message
-        UI.message("Hello from the mobile_center plugin helper!")
+        UI.message("Hello from the appcenter plugin helper!")
       end
     end
   end

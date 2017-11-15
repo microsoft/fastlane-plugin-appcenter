@@ -12,6 +12,6 @@ module SpecHelper
 end
 
 require 'fastlane' # to import the Action super class
-require 'fastlane/plugin/mobile_center' # import the actual plugin
+require 'fastlane/plugin/appcenter' # import the actual plugin
 
 Fastlane.load_actions # load other actions (in case your plugin calls other actions or shared values)
