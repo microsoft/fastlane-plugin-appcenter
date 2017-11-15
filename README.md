@@ -81,4 +81,4 @@ If you have further questions, want to provide feedback or you are running into 
 
 ### Twitter
 
-We're on Twitter as [@appcenter](https://www.twitter.com/appcenter).
+We're on Twitter as [@appcenter](https://www.twitter.com/vsappcenter).
