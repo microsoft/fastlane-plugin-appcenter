@@ -6,6 +6,10 @@ module Fastlane
       APPCENTER_BUILD_INFORMATION = :APPCENTER_BUILD_INFORMATION
     end
 
+    module Constants
+      MAX_RELEASE_NOTES_LENGTH = 5000
+    end
+
     class AppcenterUploadAction < Action
       # create request
       def self.connection(upload_url = false, dsym = false)
@@ -280,12 +284,12 @@ module Fastlane
         group = params[:group]
         release_notes = params[:release_notes]
 
-        if release_notes.length >= 5000
-          clip = UI.confirm("The release notes are limited to 5000 characters, would you like to clip it?")
+        if release_notes.length >= Constants::MAX_RELEASE_NOTES_LENGTH
+          clip = UI.confirm("The release notes are limited to #{Constants::MAX_RELEASE_NOTES_LENGTH} characters, would you like to clip it?")
           UI.abort_with_message!("Upload aborted, please edit your release notes") unless clip
           release_notes_link = UI.input("Enter a link to release notes files, if you have")
           read_more = "..." + (release_notes_link.to_s.empty? ? "" : "\n\n[read more](#{release_notes_link})")
-          release_notes = release_notes[0, 5000 - read_more.length] + read_more
+          release_notes = release_notes[0, Constants::MAX_RELEASE_NOTES_LENGTH - read_more.length] + read_more
           UI.message("Release notes clipped")
         end
 
