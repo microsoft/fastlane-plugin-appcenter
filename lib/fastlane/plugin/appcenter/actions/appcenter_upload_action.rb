@@ -278,6 +278,16 @@ module Fastlane
         owner_name = params[:owner_name]
         app_name = params[:app_name]
         group = params[:group]
+        release_notes = params[:release_notes]
+
+        if release_notes.length >= 5000
+          clip = UI.confirm("The release notes are limited to 5000 characters, would you like to clip it?")
+          UI.abort_with_message!("Upload aborted, please edit your release notes") unless clip
+          release_notes_link = UI.input("Enter a link to release notes files, if you have")
+          read_more = "..." + (release_notes_link.to_s.empty? ? "" : "\n\n[read more](#{release_notes_link})")
+          release_notes = release_notes[0, 5000 - read_more.length] + read_more
+          UI.message("Release notes clipped")
+        end
 
         file = [
           params[:ipa],
@@ -299,7 +309,7 @@ module Fastlane
           if uploaded
             release_url = uploaded['release_url']
             UI.message("Release committed")
-            self.add_to_group(api_token, release_url, group, params[:release_notes])
+            self.add_to_group(api_token, release_url, group, release_notes)
           end
         end
       end
