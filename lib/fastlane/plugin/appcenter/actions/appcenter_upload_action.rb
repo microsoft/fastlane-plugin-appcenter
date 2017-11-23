@@ -313,7 +313,10 @@ module Fastlane
           if uploaded
             release_url = uploaded['release_url']
             UI.message("Release committed")
-            self.add_to_group(api_token, release_url, group, release_notes)
+            groups = group.split(',')
+            groups.each do |group_name|
+              self.add_to_group(api_token, release_url, group_name, release_notes)
+            end
           end
         end
       end
@@ -497,7 +500,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :group,
                                   env_name: "APPCENTER_DISTRIBUTE_GROUP",
-                               description: "Distribute group name",
+                               description: "Comma separated list of distribute group names",
                              default_value: "Collaborators",
                                   optional: true,
                                       type: String),
@@ -537,7 +540,7 @@ module Fastlane
             owner_name: "appcenter_owner",
             app_name: "testing_app",
             apk: "./app-release.ipa",
-            group: "Testers",
+            group: "Testers,Alpha",
             dsym: "./app.dSYM.zip",
             release_notes: "release notes"
           )'
