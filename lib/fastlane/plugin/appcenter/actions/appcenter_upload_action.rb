@@ -220,7 +220,7 @@ module Fastlane
           Actions.lane_context[SharedValues::APPCENTER_BUILD_INFORMATION] = release
 
           UI.message("Public Download URL: #{download_url}") if download_url
-          UI.success("Release #{release['short_version']} was successfully distributed")
+          UI.success("Release #{release['short_version']} was successfully distributed to group \"#{group_name}\"")
 
           release
         when 404
