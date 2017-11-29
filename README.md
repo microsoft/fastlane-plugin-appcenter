@@ -18,7 +18,7 @@ Plugin for [App Center](https://appcenter.ms). Provides `appcenter_upload` actio
 
 ## Usage
 
-Obtain an [API token](https://docs.microsoft.com/en-us/appcenter/api-docs/). API Token is used for authentication for all App Center API calls.
+[Obtain an API token](https://appcenter.ms/settings/apitokens). API Token is used for authentication for all App Center API calls.
 
 ```ruby
 appcenter_upload(
