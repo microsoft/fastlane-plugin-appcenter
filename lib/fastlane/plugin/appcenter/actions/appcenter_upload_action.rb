@@ -500,7 +500,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :group,
                                   env_name: "APPCENTER_DISTRIBUTE_GROUP",
-                               description: "Comma separated list of distribute group names",
+                               description: "Comma separated list of Distribution Group names",
                              default_value: "Collaborators",
                                   optional: true,
                                       type: String),
