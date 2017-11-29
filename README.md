@@ -29,6 +29,8 @@ appcenter_upload(
 )
 ```
 
+The action parameters `api_token` and `owner_name` can also be omitted when their values are [set as environment variables](https://docs.fastlane.tools/advanced/#environment-variables) `APPCENTER_API_TOKEN` and `APPCENTER_OWNER_NAME`.
+
 ## Example
 
 Check out the [example `Fastfile`](fastlane/Fastfile) to see how to use this plugin. Try it by cloning the repo, running `fastlane install_plugins` and `bundle exec fastlane test`.
