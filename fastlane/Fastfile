@@ -62,14 +62,13 @@ lane :test do
     release_notes: ENV["TEST_APPCENTER_DISTRIBUTE_RELEASE_NOTES"]
   )
 
-  UI.message("\n\n\n=====================================\n uploading to multiple groups \n=====================================")  
+  UI.message("\n\n\n=====================================\n uploading to multiple groups \n=====================================")
 
   appcenter_upload(
     api_token: ENV["TEST_APPCENTER_API_TOKEN"],
     owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication",
     apk: "./fastlane/app-release.apk",
-    group: ENV["TEST_APPCENTER_DISTRIBUTE_GROUPS"],
+    group: ENV["TEST_APPCENTER_DISTRIBUTE_GROUPS"]
   )
-
 end
