@@ -278,6 +278,7 @@ module Fastlane
 
       # run whole upload process for release
       def self.run_release_upload(params)
+        values = params.values
         api_token = params[:api_token]
         owner_name = params[:owner_name]
         app_name = params[:app_name]
@@ -294,6 +295,7 @@ module Fastlane
           end
           read_more = "..." + (release_notes_link.to_s.empty? ? "" : "\n\n[read more](#{release_notes_link})")
           release_notes = release_notes[0, Constants::MAX_RELEASE_NOTES_LENGTH - read_more.length] + read_more
+          values[:release_notes] = release_notes
           UI.message("Release notes clipped")
         end
 
