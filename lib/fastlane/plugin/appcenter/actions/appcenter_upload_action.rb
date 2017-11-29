@@ -287,10 +287,10 @@ module Fastlane
         release_notes_link = params[:release_notes_link]
 
         if release_notes.length >= Constants::MAX_RELEASE_NOTES_LENGTH
-          if !release_notes_clipping
+          unless release_notes_clipping
             clip = UI.confirm("The release notes are limited to #{Constants::MAX_RELEASE_NOTES_LENGTH} characters, proceeding will clip them. Proceed anyway?")
             UI.abort_with_message!("Upload aborted, please edit your release notes") unless clip
-            release_notes_link = UI.input("Provide a link for additional release notes, leave blank to skip") unless release_notes_link
+            release_notes_link ||= UI.input("Provide a link for additional release notes, leave blank to skip")
           end
           read_more = "..." + (release_notes_link.to_s.empty? ? "" : "\n\n[read more](#{release_notes_link})")
           release_notes = release_notes[0, Constants::MAX_RELEASE_NOTES_LENGTH - read_more.length] + read_more
