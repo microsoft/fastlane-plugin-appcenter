@@ -220,7 +220,7 @@ module Fastlane
           Actions.lane_context[SharedValues::APPCENTER_BUILD_INFORMATION] = release
 
           UI.message("Public Download URL: #{download_url}") if download_url
-          UI.success("Release #{release['short_version']} was successfully distributed")
+          UI.success("Release #{release['short_version']} was successfully distributed to group \"#{group_name}\"")
 
           release
         when 404
@@ -313,7 +313,10 @@ module Fastlane
           if uploaded
             release_url = uploaded['release_url']
             UI.message("Release committed")
-            self.add_to_group(api_token, release_url, group, release_notes)
+            groups = group.split(',')
+            groups.each do |group_name|
+              self.add_to_group(api_token, release_url, group_name, release_notes)
+            end
           end
         end
       end
@@ -497,7 +500,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :group,
                                   env_name: "APPCENTER_DISTRIBUTE_GROUP",
-                               description: "Distribute group name",
+                               description: "Comma separated list of Distribution Group names",
                              default_value: "Collaborators",
                                   optional: true,
                                       type: String),
@@ -537,7 +540,7 @@ module Fastlane
             owner_name: "appcenter_owner",
             app_name: "testing_app",
             apk: "./app-release.ipa",
-            group: "Testers",
+            group: "Testers,Alpha",
             dsym: "./app.dSYM.zip",
             release_notes: "release notes"
           )'
