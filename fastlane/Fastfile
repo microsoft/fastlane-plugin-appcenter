@@ -23,7 +23,9 @@ lane :test_release_notes do
     app_name: "MyApplication-01",
     ipa: "./fastlane/app-release.ipa",
     group: ENV["TEST_APPCENTER_DISTRIBUTE_GROUP"],
-    release_notes: sh("cat ./test_CHANGELOG.md")
+    release_notes: sh("cat ./test_CHANGELOG.md"),
+    release_notes_clipping: false,
+    release_notes_link: "https://raw.githubusercontent.com/Microsoft/fastlane-plugin-appcenter/master/README.md"
   )
 end
 

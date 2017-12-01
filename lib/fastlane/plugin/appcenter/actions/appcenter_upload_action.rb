@@ -278,18 +278,24 @@ module Fastlane
 
       # run whole upload process for release
       def self.run_release_upload(params)
+        values = params.values
         api_token = params[:api_token]
         owner_name = params[:owner_name]
         app_name = params[:app_name]
         group = params[:group]
         release_notes = params[:release_notes]
+        should_clip = params[:should_clip]
+        release_notes_link = params[:release_notes_link]
 
         if release_notes.length >= Constants::MAX_RELEASE_NOTES_LENGTH
-          clip = UI.confirm("The release notes are limited to #{Constants::MAX_RELEASE_NOTES_LENGTH} characters, proceeding will clip them. Proceed anyway?")
-          UI.abort_with_message!("Upload aborted, please edit your release notes") unless clip
-          release_notes_link = UI.input("Provide a link for additional release notes, leave blank to skip")
+          unless should_clip
+            clip = UI.confirm("The release notes are limited to #{Constants::MAX_RELEASE_NOTES_LENGTH} characters, proceeding will clip them. Proceed anyway?")
+            UI.abort_with_message!("Upload aborted, please edit your release notes") unless clip
+            release_notes_link ||= UI.input("Provide a link for additional release notes, leave blank to skip")
+          end
           read_more = "..." + (release_notes_link.to_s.empty? ? "" : "\n\n[read more](#{release_notes_link})")
           release_notes = release_notes[0, Constants::MAX_RELEASE_NOTES_LENGTH - read_more.length] + read_more
+          values[:release_notes] = release_notes
           UI.message("Release notes clipped")
         end
 
@@ -509,6 +515,19 @@ module Fastlane
                                   env_name: "APPCENTER_DISTRIBUTE_RELEASE_NOTES",
                                description: "Release notes",
                              default_value: Actions.lane_context[SharedValues::FL_CHANGELOG] || "No changelog given",
+                                  optional: true,
+                                      type: String),
+
+          FastlaneCore::ConfigItem.new(key: :should_clip,
+                                  env_name: "APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING",
+                               description: "Clip release notes if its lenght is more then #{Constants::MAX_RELEASE_NOTES_LENGTH}, true by default",
+                                  optional: true,
+                                 is_string: false,
+                             default_value: true),
+
+          FastlaneCore::ConfigItem.new(key: :release_notes_link,
+                                  env_name: "APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK",
+                               description: "Additional release notes link",
                                   optional: true,
                                       type: String)
         ]
