@@ -1,4 +1,4 @@
-# appcenter plugin
+# App Center `fastlane` plugin
 
 [![fastlane Plugin Badge](https://rawcdn.githack.com/fastlane/fastlane/master/fastlane/assets/plugin-badge.svg)](https://rubygems.org/gems/fastlane-plugin-appcenter)
 [![Gem Version](https://badge.fury.io/rb/fastlane-plugin-appcenter.svg)](https://badge.fury.io/rb/fastlane-plugin-appcenter)
@@ -12,13 +12,12 @@ This project is a [_fastlane_](https://github.com/fastlane/fastlane) plugin. To 
 fastlane add_plugin appcenter
 ```
 
-## About appcenter
-
-Plugin for [App Center](https://appcenter.ms). Provides `appcenter_upload` action for [release distribution](https://docs.microsoft.com/en-us/appcenter/distribution/uploading) and [dSYM uploads](https://docs.microsoft.com/en-us/appcenter/crashes/ios)
+## About App Center
+With [App Center](https://appcenter.ms) you can continuously build, test, release, and monitor your apps. This plugin provides an `appcenter_upload` action which allows you to upload and [release distribute](https://docs.microsoft.com/en-us/appcenter/distribution/uploading) apps to your testers on App Center as well as to upload .dSYM files to [collect detailed crash reports](https://docs.microsoft.com/en-us/appcenter/crashes/ios) in App Center.
 
 ## Usage
 
-[Obtain an API token](https://appcenter.ms/settings/apitokens). API Token is used for authentication for all App Center API calls.
+To get started, first, [obtain an API token](https://appcenter.ms/settings/apitokens) in App Center. The API Token is used to authenticate with the App Center API in each call.
 
 ```ruby
 appcenter_upload(
@@ -28,6 +27,18 @@ appcenter_upload(
   apk: "<path to android build binary>"
 )
 ```
+
+The action parameters `api_token` and `owner_name` can also be omitted when their values are [set as environment variables](https://docs.fastlane.tools/advanced/#environment-variables). Below a list of all available environment variables:
+
+- `APPCENTER_API_TOKEN` - API Token for App Center
+- `APPCENTER_OWNER_NAME` - Owner name
+- `APPCENTER_APP_NAME` - App name. If there is no app with such name, you will be prompted to create one
+- `APPCENTER_DISTRIBUTE_APK` - Build release path for android build
+- `APPCENTER_DISTRIBUTE_IPA` - Build release path for ios build
+- `APPCENTER_DISTRIBUTE_DSYM` - Path to your symbols file. For iOS provide path to app.dSYM.zip
+- `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` - Flag to upload only the dSYM file to App Center
+- `APPCENTER_DISTRIBUTE_GROUP` - Comma separated list of Distribution Group names
+- `APPCENTER_DISTRIBUTE_RELEASE_NOTES` - Release notes
 
 ## Example
 
@@ -55,7 +66,7 @@ rubocop -a
 
 ## Issues and Feedback
 
-For any other issues and feedback about this plugin, please submit it to this repository.
+For any other issues and feedback about this plugin, please open a [GitHub issue](https://github.com/Microsoft/fastlane-plugin-appcenter/issues).
 
 ## Troubleshooting
 
@@ -75,10 +86,4 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
 ## Contact
 
-### Intercom
-
-If you have further questions, want to provide feedback or you are running into issues, log in to the [App Center](https://appcenter.ms) portal and use the blue Intercom button on the bottom right to start a conversation with us.
-
-### Twitter
-
-We're on Twitter as [@appcenter](https://www.twitter.com/vsappcenter).
+We're on Twitter as [@vsappcenter](https://www.twitter.com/vsappcenter). Additionally you can reach out to us on the [App Center](https://appcenter.ms/apps) portal by using the blue Intercom button on the bottom right to start a conversation.
