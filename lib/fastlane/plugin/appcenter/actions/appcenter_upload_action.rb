@@ -284,11 +284,11 @@ module Fastlane
         app_name = params[:app_name]
         group = params[:group]
         release_notes = params[:release_notes]
-        release_notes_clipping = params[:release_notes_clipping]
+        should_clip = params[:should_clip]
         release_notes_link = params[:release_notes_link]
 
         if release_notes.length >= Constants::MAX_RELEASE_NOTES_LENGTH
-          unless release_notes_clipping
+          unless should_clip
             clip = UI.confirm("The release notes are limited to #{Constants::MAX_RELEASE_NOTES_LENGTH} characters, proceeding will clip them. Proceed anyway?")
             UI.abort_with_message!("Upload aborted, please edit your release notes") unless clip
             release_notes_link ||= UI.input("Provide a link for additional release notes, leave blank to skip")
@@ -515,7 +515,7 @@ module Fastlane
                                   optional: true,
                                       type: String),
 
-          FastlaneCore::ConfigItem.new(key: :release_notes_clipping,
+          FastlaneCore::ConfigItem.new(key: :should_clip,
                                   env_name: "APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING",
                                description: "Clip release notes if its lenght is more then #{Constants::MAX_RELEASE_NOTES_LENGTH}, true by default",
                                   optional: true,
