@@ -28,7 +28,17 @@ appcenter_upload(
 )
 ```
 
-The action parameters `api_token` and `owner_name` can also be omitted when their values are [set as environment variables](https://docs.fastlane.tools/advanced/#environment-variables) `APPCENTER_API_TOKEN` and `APPCENTER_OWNER_NAME`. A detailed list of all available environment variables can be found in our [documentation](https://docs.microsoft.com/appcenter/build/custom/scripts/#app-center-variables).
+The action parameters `api_token` and `owner_name` can also be omitted when their values are [set as environment variables](https://docs.fastlane.tools/advanced/#environment-variables). Below a list of all available environment variables:
+
+- `APPCENTER_API_TOKEN` - API Token for App Center
+- `APPCENTER_OWNER_NAME` - Owner name
+- `APPCENTER_APP_NAME` - App name. If there is no app with such name, you will be prompted to create one
+- `APPCENTER_DISTRIBUTE_APK` - Build release path for android build
+- `APPCENTER_DISTRIBUTE_IPA` - Build release path for ios build
+- `APPCENTER_DISTRIBUTE_DSYM` - Path to your symbols file. For iOS provide path to app.dSYM.zip
+- `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` - Flag to upload only the dSYM file to App Center
+- `APPCENTER_DISTRIBUTE_GROUP` - Comma separated list of Distribution Group names
+- `APPCENTER_DISTRIBUTE_RELEASE_NOTES` - Release notes
 
 ## Example
 
@@ -76,4 +86,4 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
 ## Contact
 
-We're on Twitter as [@vsappcenter](https://www.twitter.com/vsappcenter). Additionally you can reach out to us on the [App Center](https://appcenter.ms) portal by using the blue Intercom button on the bottom right to start a conversation.
+We're on Twitter as [@vsappcenter](https://www.twitter.com/vsappcenter). Additionally you can reach out to us on the [App Center](https://appcenter.ms/apps) portal by using the blue Intercom button on the bottom right to start a conversation.
