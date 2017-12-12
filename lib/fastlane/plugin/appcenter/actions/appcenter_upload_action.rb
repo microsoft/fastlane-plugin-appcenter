@@ -195,6 +195,29 @@ module Fastlane
         end
       end
 
+      # get existing release
+      def self.get_release(api_token, release_url)
+        connection = self.connection
+        response = connection.get do |req|
+          req.url("/#{release_url}")
+          req.headers['X-API-Token'] = api_token
+          req.headers['internal-request-source'] = "fastlane"
+        end
+
+        case response.status
+        when 200...300
+          release = response.body
+          UI.message("DEBUG: #{JSON.pretty_generate(release)}") if ENV['DEBUG']
+          release
+        when 404
+          UI.error("Not found, invalid release url")
+          false
+        else
+          UI.error("Error fetching information about release #{response.status}: #{response.body}")
+          false
+        end
+      end
+
       # add release to distribution group
       def self.add_to_group(api_token, release_url, group_name, release_notes = '')
         connection = self.connection
@@ -211,7 +234,9 @@ module Fastlane
 
         case response.status
         when 200...300
-          release = response.body
+          # get full release info
+          release = self.get_release(api_token, release_url)
+          return false unless release
           download_url = release['download_url']
 
           UI.message("DEBUG: #{JSON.pretty_generate(release)}") if ENV['DEBUG']
