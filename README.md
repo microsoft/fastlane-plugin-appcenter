@@ -38,6 +38,7 @@ The action parameters `api_token` and `owner_name` can also be omitted when thei
 - `APPCENTER_DISTRIBUTE_DSYM` - Path to your symbols file. For iOS provide path to app.dSYM.zip
 - `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` - Flag to upload only the dSYM file to App Center
 - `APPCENTER_DISTRIBUTE_GROUP` - Comma separated list of Distribution Group names
+- `APPCENTER_DISTRIBUTE_DESTINATION` - Comma separated list of Destination names
 - `APPCENTER_DISTRIBUTE_RELEASE_NOTES` - Release notes
 
 ## Example
