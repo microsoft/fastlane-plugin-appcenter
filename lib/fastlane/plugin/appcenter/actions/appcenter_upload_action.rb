@@ -291,7 +291,7 @@ module Fastlane
           UI.error("Not found, invalid destination name")
           false
         else
-          UI.error("Error adding to group #{response.status}: #{response.body}")
+          UI.error("Error adding to destination #{response.status}: #{response.body}")
           false
         end
       end
