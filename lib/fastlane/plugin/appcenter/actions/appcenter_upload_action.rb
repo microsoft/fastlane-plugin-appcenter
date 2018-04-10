@@ -257,7 +257,7 @@ module Fastlane
         end
       end
 
-       # add release to destination
+      # add release to destination
       def self.add_to_destination(api_token, release_url, destination_name, release_notes = '')
         connection = self.connection
 
@@ -295,7 +295,7 @@ module Fastlane
           false
         end
       end
-      
+
       # run whole upload process for dSYM files
       def self.run_dsym_upload(params)
         values = params.values
