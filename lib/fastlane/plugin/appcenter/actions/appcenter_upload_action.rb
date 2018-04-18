@@ -257,6 +257,45 @@ module Fastlane
         end
       end
 
+      # add release to destination
+      def self.add_to_destination(api_token, release_url, destination_name, release_notes = '')
+        connection = self.connection
+
+        response = connection.patch do |req|
+          req.url("/#{release_url}")
+          req.headers['X-API-Token'] = api_token
+          req.headers['internal-request-source'] = "fastlane"
+          req.body = {
+            "destination_name" => destination_name,
+            "release_notes" => release_notes
+          }
+        end
+
+        case response.status
+        when 200...300
+          # get full release info
+          release = self.get_release(api_token, release_url)
+          return false unless release
+          download_url = release['download_url']
+
+          UI.message("DEBUG: #{JSON.pretty_generate(release)}") if ENV['DEBUG']
+
+          Actions.lane_context[SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
+          Actions.lane_context[SharedValues::APPCENTER_BUILD_INFORMATION] = release
+
+          UI.message("Public Download URL: #{download_url}") if download_url
+          UI.success("Release #{release['short_version']} was successfully distributed to destination \"#{destination_name}\"")
+
+          release
+        when 404
+          UI.error("Not found, invalid destination name")
+          false
+        else
+          UI.error("Error adding to destination #{response.status}: #{response.body}")
+          false
+        end
+      end
+
       # run whole upload process for dSYM files
       def self.run_dsym_upload(params)
         values = params.values
@@ -308,6 +347,7 @@ module Fastlane
         owner_name = params[:owner_name]
         app_name = params[:app_name]
         group = params[:group]
+        destination = params[:destination]
         release_notes = params[:release_notes]
         should_clip = params[:should_clip]
         release_notes_link = params[:release_notes_link]
@@ -347,6 +387,10 @@ module Fastlane
             groups = group.split(',')
             groups.each do |group_name|
               self.add_to_group(api_token, release_url, group_name, release_notes)
+            end
+            destinations = destination.split(',')
+            destinations.each do |destination_name|
+              self.add_to_destination(api_token, release_url, destination_name, release_notes)
             end
           end
         end
@@ -535,7 +579,12 @@ module Fastlane
                              default_value: "Collaborators",
                                   optional: true,
                                       type: String),
-
+          FastlaneCore::ConfigItem.new(key: :destination,
+                                  env_name: "APPCENTER_DISTRIBUTE_DESTINATION",
+                               description: "Comma separated list of Destination names",
+                             default_value: "",
+                                  optional: true,
+                                      type: String),
           FastlaneCore::ConfigItem.new(key: :release_notes,
                                   env_name: "APPCENTER_DISTRIBUTE_RELEASE_NOTES",
                                description: "Release notes",
