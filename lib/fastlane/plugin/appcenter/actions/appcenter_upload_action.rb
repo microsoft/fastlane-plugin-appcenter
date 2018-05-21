@@ -325,8 +325,6 @@ module Fastlane
             UI.message("dSYM files zipped")
           end
 
-          values[:dsym_path] = dsym_path
-
           UI.message("Starting dSYM upload...")
           dsym_upload_details = self.create_dsym_upload(api_token, owner_name, app_name)
 
