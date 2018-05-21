@@ -337,6 +337,8 @@ module Fastlane
             UI.message("Uploading dSYM...")
             self.upload_dsym(api_token, owner_name, app_name, dsym_path, symbol_upload_id, upload_url)
           end
+        else
+          UI.user_error!("dSYM file not found")
         end
       end
 
