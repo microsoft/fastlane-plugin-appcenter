@@ -185,7 +185,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
             ipa: './spec/fixtures/appfiles/Appfile_empty'
           })
         end").runner.execute(:test)
-      end.to raise_error("Only \".ipa\" formats are allowed, you provided \"\"")
+      end.to raise_error("Only \".ipa\"/\".app\"/\".app.zip\" formats are allowed, you provided \"\"")
     end
 
     it "raises an error if both ipa and apk provided" do
@@ -433,6 +433,72 @@ describe Fastlane::Actions::AppcenterUploadAction do
           group: 'Testers'
         })
       end").runner.execute(:test)
+    end
+
+    describe "uploading a macOS app" do
+
+      describe "not zipped" do
+
+        it "works with valid parameters" do
+          stub_check_app(200)
+          stub_create_release_upload(200)
+          stub_upload_build(200)
+          stub_update_release_upload(200, 'committed')
+          stub_add_to_group(200)
+          stub_get_release(200)
+          stub_create_dsym_upload(200)
+          stub_upload_dsym(200)
+          stub_update_dsym_upload(200, "committed")
+
+          expect(Fastlane::Actions::ZipAction).to receive(:run)
+            .with({
+              path: './spec/fixtures/appfiles/mac_app_empty.app',
+              output_path: './spec/fixtures/appfiles/mac_app_empty.app.zip'
+            })
+
+          Fastlane::FastFile.new.parse("lane :test do
+            appcenter_upload({
+              api_token: 'xxx',
+              owner_name: 'owner',
+              app_name: 'app',
+              ipa: './spec/fixtures/appfiles/mac_app_empty.app',
+              dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
+              group: 'Testers'
+            })
+          end").runner.execute(:test)
+        end
+
+      end
+
+      describe "zipped" do
+
+        it "works with valid parameters" do
+          stub_check_app(200)
+          stub_create_release_upload(200)
+          stub_upload_build(200)
+          stub_update_release_upload(200, 'committed')
+          stub_add_to_group(200)
+          stub_get_release(200)
+          stub_create_dsym_upload(200)
+          stub_upload_dsym(200)
+          stub_update_dsym_upload(200, "committed")
+
+          expect(Fastlane::Actions::ZipAction).not_to receive(:run)
+
+          Fastlane::FastFile.new.parse("lane :test do
+            appcenter_upload({
+              api_token: 'xxx',
+              owner_name: 'owner',
+              app_name: 'app',
+              ipa: './spec/fixtures/appfiles/mac_app_empty.app.zip',
+              dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
+              group: 'Testers'
+            })
+          end").runner.execute(:test)
+        end
+
+      end
+
     end
 
     it "adds to all provided groups" do
