@@ -1,6 +1,6 @@
 describe Fastlane::Helper::AppcenterHelper do
 
-  describe '#file_extname_full' do
+  describe "#file_extname_full" do
 
     it "returns '' (blank) for a file with no extension" do
       path = "./fixtures/appfiles/Appfile_empty"
@@ -34,12 +34,12 @@ describe Fastlane::Helper::AppcenterHelper do
 
     it "returns '.app.zip' for a .app.zip file" do
       path = "./fixtures/appfiles/mac_app_empty.app.zip"
-      expect(Fastlane::Helper::AppcenterHelper.file_extname_full(path)).to eq('.app.zip')
+      expect(Fastlane::Helper::AppcenterHelper.file_extname_full(path)).to eq(".app.zip")
     end
 
     it "returns '.app' for a .app package/directory" do
       path = "./fixtures/appfiles/mac_app_empty.app"
-      expect(Fastlane::Helper::AppcenterHelper.file_extname_full(path)).to eq('.app')
+      expect(Fastlane::Helper::AppcenterHelper.file_extname_full(path)).to eq(".app")
     end
 
   end
