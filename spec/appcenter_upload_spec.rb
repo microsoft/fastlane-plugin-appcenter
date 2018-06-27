@@ -436,9 +436,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     describe "uploading a macOS app" do
-
       describe "not zipped" do
-
         it "works with valid parameters" do
           stub_check_app(200)
           stub_create_release_upload(200)
@@ -467,11 +465,9 @@ describe Fastlane::Actions::AppcenterUploadAction do
             })
           end").runner.execute(:test)
         end
-
       end
 
       describe "zipped" do
-
         it "works with valid parameters" do
           stub_check_app(200)
           stub_create_release_upload(200)
@@ -496,9 +492,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
             })
           end").runner.execute(:test)
         end
-
       end
-
     end
 
     it "adds to all provided groups" do

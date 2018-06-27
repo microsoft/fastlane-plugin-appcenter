@@ -221,9 +221,11 @@ Style/SpaceAroundOperators:
 AllCops:
   Include:
     - '**/fastlane/Fastfile'
+    - 'spec/**/*'
   Exclude:
     - '**/lib/assets/custom_action_template.rb'
     - './vendor/**/*'
+    - 'spec/fixtures/**/*'
 
 # They have not to be snake_case
 Style/FileName:

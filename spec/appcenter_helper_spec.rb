@@ -1,7 +1,5 @@
 describe Fastlane::Helper::AppcenterHelper do
-
   describe "#file_extname_full" do
-
     it "returns '' (blank) for a file with no extension" do
       path = "./fixtures/appfiles/Appfile_empty"
       expect(Fastlane::Helper::AppcenterHelper.file_extname_full(path)).to eq("")
@@ -41,7 +39,5 @@ describe Fastlane::Helper::AppcenterHelper do
       path = "./fixtures/appfiles/mac_app_empty.app"
       expect(Fastlane::Helper::AppcenterHelper.file_extname_full(path)).to eq(".app")
     end
-
   end
-
 end
