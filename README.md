@@ -40,6 +40,7 @@ The action parameters `api_token` and `owner_name` can also be omitted when thei
 - `APPCENTER_DISTRIBUTE_GROUP` - Comma separated list of Distribution Group names
 - `APPCENTER_DISTRIBUTE_DESTINATION` - Comma separated list of Destination names
 - `APPCENTER_DISTRIBUTE_RELEASE_NOTES` - Release notes
+- `APPCENTER_DISTRIBUTE_NOTIFY_TESTERS` - Notify Testers
 
 ## Example
 

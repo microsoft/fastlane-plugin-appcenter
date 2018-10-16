@@ -219,7 +219,7 @@ module Fastlane
       end
 
       # add release to distribution group
-      def self.add_to_group(api_token, release_url, group_name, release_notes = '')
+      def self.add_to_group(api_token, release_url, group_name, release_notes = '', notify_testers = true)
         connection = self.connection
 
         response = connection.patch do |req|
@@ -228,7 +228,8 @@ module Fastlane
           req.headers['internal-request-source'] = "fastlane"
           req.body = {
             "distribution_group_name" => group_name,
-            "release_notes" => release_notes
+            "release_notes" => release_notes,
+            "notify_testers" => notify_testers
           }
         end
 
@@ -258,7 +259,7 @@ module Fastlane
       end
 
       # add release to destination
-      def self.add_to_destination(api_token, release_url, destination_name, release_notes = '')
+      def self.add_to_destination(api_token, release_url, destination_name, release_notes = '', notify_testers = true)
         connection = self.connection
 
         response = connection.patch do |req|
@@ -267,7 +268,8 @@ module Fastlane
           req.headers['internal-request-source'] = "fastlane"
           req.body = {
             "destination_name" => destination_name,
-            "release_notes" => release_notes
+            "release_notes" => release_notes,
+            "notify_testers" => notify_testers
           }
         end
 
@@ -349,6 +351,7 @@ module Fastlane
         group = params[:group]
         destination = params[:destination]
         release_notes = params[:release_notes]
+        notify_testers = params[:notify_testers]
         should_clip = params[:should_clip]
         release_notes_link = params[:release_notes_link]
 
@@ -386,11 +389,11 @@ module Fastlane
             UI.message("Release committed")
             groups = group.split(',')
             groups.each do |group_name|
-              self.add_to_group(api_token, release_url, group_name, release_notes)
+              self.add_to_group(api_token, release_url, group_name, release_notes, notify_testers)
             end
             destinations = destination.split(',')
             destinations.each do |destination_name|
-              self.add_to_destination(api_token, release_url, destination_name, release_notes)
+              self.add_to_destination(api_token, release_url, destination_name, release_notes, notify_testers)
             end
           end
         end
@@ -592,6 +595,13 @@ module Fastlane
                                   optional: true,
                                       type: String),
 
+          FastlaneCore::ConfigItem.new(key: :notify_testers,
+                                      env_name: "APPCENTER_DISTRIBUTE_NOTIFY_TESTERS",
+                                   description: "A boolean which determines whether to notify testers of a new release, default to true",
+                                      optional: true,
+                                     is_string: false,
+                                 default_value: true),
+
           FastlaneCore::ConfigItem.new(key: :should_clip,
                                   env_name: "APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING",
                                description: "Clip release notes if its lenght is more then #{Constants::MAX_RELEASE_NOTES_LENGTH}, true by default",
@@ -626,7 +636,8 @@ module Fastlane
             app_name: "testing_app",
             apk: "./app-release.apk",
             group: "Testers",
-            release_notes: "release notes"
+            release_notes: "release notes",
+            notify_testers: "notify testers"
           )',
           'appcenter_upload(
             api_token: "...",
@@ -636,6 +647,7 @@ module Fastlane
             group: "Testers,Alpha",
             dsym: "./app.dSYM.zip",
             release_notes: "release notes"
+            notify_testers: "notify testers"
           )'
         ]
       end
