@@ -91,15 +91,26 @@ module Fastlane
           uploaded = Helper::AppcenterHelper.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url)
 
           if uploaded
-            release_url = uploaded['release_url']
-            UI.message("Release committed")
+            release_id = uploaded['release_id']
+            UI.message("Release '#{release_id}' committed")
             groups = group.split(',')
             groups.each do |group_name|
-              Helper::AppcenterHelper.add_to_group(api_token, release_url, group_name, release_notes)
+              group = Helper::AppcenterHelper.get_group(api_token, owner_name, app_name, group_name)
+              if group
+                group_id = group['id']
+                distributed_release = Helper::AppcenterHelper.add_to_group(api_token, owner_name, app_name, release_id, group_id)
+                if distributed_release
+                  UI.success("Release #{distributed_release['short_version']} was successfully distributed to group \"#{group_name}\"")
+                else
+                  UI.error("Release '#{release_id}' was not found")
+                end
+              else
+                UI.error("Group '#{group_name}' was not found")
+              end
             end
             destinations = destination.split(',')
             destinations.each do |destination_name|
-              Helper::AppcenterHelper.add_to_destination(api_token, release_url, destination_name, release_notes)
+              Helper::AppcenterHelper.add_to_destination(api_token, owner_name, app_name, release_id, destination_name, release_notes)
             end
           end
         end

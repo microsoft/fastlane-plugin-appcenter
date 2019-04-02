@@ -50,7 +50,7 @@ def stub_update_release_upload(status, release_status)
     .with(
       body: "{\"status\":\"#{release_status}\"}"
     )
-    .to_return(status: status, body: "{\"release_url\":\"v0.1/apps/owner/app/releases/1\"}", headers: {})
+    .to_return(status: status, body: "{\"release_id\":\"1\"}", headers: { 'Content-Type' => 'application/json' })
 end
 
 def stub_update_dsym_upload(status, release_status)
@@ -58,16 +58,21 @@ def stub_update_dsym_upload(status, release_status)
     .with(
       body: "{\"status\":\"#{release_status}\"}"
     )
-    .to_return(status: status, body: "{\"release_url\":\"v0.1/apps/owner/app/releases/1\"}", headers: {})
+    .to_return(status: status, body: "{\"release_id\":\"1\"}", headers: { 'Content-Type' => 'application/json' })
+end
+
+def stub_get_group(status, group_name = "Testers")
+  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/owner/app/distribution_groups/#{group_name}")
+    .to_return(status: status, body: "{\"id\":\"1\"}", headers: { 'Content-Type' => 'application/json' })
 end
 
 def stub_get_release(status)
-  stub_request(:get, "https://api.appcenter.ms/release_url")
+  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/owner/app/releases/1")
     .to_return(status: status, body: "{\"short_version\":\"1.0\",\"download_link\":\"https://download.link\"}", headers: { 'Content-Type' => 'application/json' })
 end
 
 def stub_add_to_group(status)
-  stub_request(:patch, "https://api.appcenter.ms/release_url")
+  stub_request(:post, "https://api.appcenter.ms/v0.1/apps/owner/app/releases/1/groups")
     .to_return(status: status, body: "{\"short_version\":\"1.0\",\"download_link\":\"https://download.link\"}", headers: { 'Content-Type' => 'application/json' })
 end
 
@@ -240,7 +245,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_add_to_group(404)
+      stub_get_group(404)
 
       Fastlane::FastFile.new.parse("lane :test do
         appcenter_upload({
@@ -258,6 +263,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
+      stub_get_group(200)
       stub_add_to_group(200)
       stub_get_release(404)
 
@@ -277,6 +283,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
+      stub_get_group(200)
       stub_add_to_group(200)
       stub_get_release(200)
 
@@ -300,6 +307,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
+      stub_get_group(200)
       stub_add_to_group(200)
       stub_get_release(200)
 
@@ -326,6 +334,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
+      stub_get_group(200)
       stub_add_to_group(200)
       stub_get_release(200)
 
@@ -354,6 +363,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
+      stub_get_group(200)
       stub_add_to_group(200)
       stub_get_release(200)
 
@@ -373,6 +383,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
+      stub_get_group(200)
       stub_add_to_group(200)
       stub_get_release(200)
 
@@ -395,6 +406,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
+      stub_get_group(200)
       stub_add_to_group(200)
       stub_get_release(200)
 
@@ -417,6 +429,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
+      stub_get_group(200)
       stub_add_to_group(200)
       stub_get_release(200)
       stub_create_dsym_upload(200)
@@ -442,6 +455,11 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_update_release_upload(200, 'committed')
       stub_update_release_upload(200, 'committed')
       stub_update_release_upload(200, 'committed')
+      stub_get_group(200, 'Testers1')
+      stub_get_group(200, 'Testers2')
+      stub_get_group(200, 'Testers3')
+      stub_add_to_group(200)
+      stub_add_to_group(200)
       stub_add_to_group(200)
       stub_get_release(200)
       stub_create_dsym_upload(200)
@@ -466,6 +484,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
+      stub_get_group(200)
       stub_add_to_group(200)
       stub_get_release(200)
 
@@ -500,6 +519,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
+      stub_get_group(200)
       stub_add_to_group(200)
       stub_get_release(200)
       stub_create_dsym_upload(200)

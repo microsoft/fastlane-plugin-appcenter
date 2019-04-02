@@ -192,10 +192,10 @@ module Fastlane
       end
 
       # get existing release
-      def self.get_release(api_token, release_url)
+      def self.get_release(api_token, owner_name, app_name, release_id)
         connection = self.connection
         response = connection.get do |req|
-          req.url("/#{release_url}")
+          req.url("/v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}")
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
         end
@@ -214,34 +214,58 @@ module Fastlane
         end
       end
 
-      # add release to distribution group
-      def self.add_to_group(api_token, release_url, group_name, release_notes = '')
+      # get distribution group
+      def self.get_group(api_token, owner_name, app_name, group_name)
         connection = self.connection
 
-        response = connection.patch do |req|
-          req.url("/#{release_url}")
+        response = connection.get do |req|
+          req.url("/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups/#{group_name}")
+          req.headers['X-API-Token'] = api_token
+          req.headers['internal-request-source'] = "fastlane"
+        end
+
+        case response.status
+        when 200...300
+          group = response.body
+          UI.message("DEBUG: received group #{JSON.pretty_generate(group)}") if ENV['DEBUG']
+          group
+        when 404
+          UI.error("Not found, invalid distribution group name")
+          false
+        else
+          UI.error("Error getting group #{response.status}: #{response.body}")
+          false
+        end
+      end
+
+      # add release to distribution group
+      def self.add_to_group(api_token, owner_name, app_name, release_id, group_id)
+        connection = self.connection
+
+        UI.message("DEBUG: getting #{release_id}") if ENV['DEBUG']
+
+        response = connection.post do |req|
+          req.url("/v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}/groups")
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
           req.body = {
-            "distribution_group_name" => group_name,
-            "release_notes" => release_notes
+            "id" => group_id
           }
         end
 
         case response.status
         when 200...300
           # get full release info
-          release = self.get_release(api_token, release_url)
+          release = self.get_release(api_token, owner_name, app_name, release_id)
           return false unless release
           download_url = release['download_url']
 
-          UI.message("DEBUG: #{JSON.pretty_generate(release)}") if ENV['DEBUG']
+          UI.message("DEBUG: received release #{JSON.pretty_generate(release)}") if ENV['DEBUG']
 
           Actions.lane_context[SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
           Actions.lane_context[SharedValues::APPCENTER_BUILD_INFORMATION] = release
 
           UI.message("Public Download URL: #{download_url}") if download_url
-          UI.success("Release #{release['short_version']} was successfully distributed to group \"#{group_name}\"")
 
           release
         when 404
@@ -254,11 +278,11 @@ module Fastlane
       end
 
       # add release to destination
-      def self.add_to_destination(api_token, release_url, destination_name, release_notes = '')
+      def self.add_to_destination(api_token, owner_name, app_name, release_id, destination_name, release_notes = '')
         connection = self.connection
 
         response = connection.patch do |req|
-          req.url("/#{release_url}")
+          req.url("/v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}")
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
           req.body = {
@@ -270,7 +294,7 @@ module Fastlane
         case response.status
         when 200...300
           # get full release info
-          release = self.get_release(api_token, release_url)
+          release = self.get_release(api_token, owner_name, app_name, release_id)
           return false unless release
           download_url = release['download_url']
 
