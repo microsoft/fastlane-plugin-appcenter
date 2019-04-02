@@ -1,301 +1,10 @@
-# rubocop:disable Metrics/ClassLength
 module Fastlane
   module Actions
-    module SharedValues
-      APPCENTER_DOWNLOAD_LINK = :APPCENTER_DOWNLOAD_LINK
-      APPCENTER_BUILD_INFORMATION = :APPCENTER_BUILD_INFORMATION
-    end
-
     module Constants
       MAX_RELEASE_NOTES_LENGTH = 5000
     end
 
     class AppcenterUploadAction < Action
-      # create request
-      def self.connection(upload_url = false, dsym = false)
-        require 'faraday'
-        require 'faraday_middleware'
-
-        options = {
-          url: upload_url ? upload_url : "https://api.appcenter.ms"
-        }
-
-        Faraday.new(options) do |builder|
-          if upload_url
-            builder.request :multipart unless dsym
-            builder.request :url_encoded unless dsym
-          else
-            builder.request :json
-          end
-          builder.response :json, content_type: /\bjson$/
-          builder.use FaradayMiddleware::FollowRedirects
-          builder.adapter :net_http
-        end
-      end
-
-      # creates new release upload
-      # returns:
-      # upload_id
-      # upload_url
-      def self.create_release_upload(api_token, owner_name, app_name)
-        connection = self.connection
-
-        response = connection.post do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}/release_uploads")
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = {}
-        end
-
-        case response.status
-        when 200...300
-          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-          response.body
-        when 401
-          UI.user_error!("Auth Error, provided invalid token")
-          false
-        when 404
-          UI.error("Not found, invalid owner or application name")
-          false
-        else
-          UI.error("Error #{response.status}: #{response.body}")
-          false
-        end
-      end
-
-      # creates new dSYM upload in appcenter
-      # returns:
-      # symbol_upload_id
-      # upload_url
-      # expiration_date
-      def self.create_dsym_upload(api_token, owner_name, app_name)
-        connection = self.connection
-
-        response = connection.post do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}/symbol_uploads")
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = {
-            symbol_type: 'Apple'
-          }
-        end
-
-        case response.status
-        when 200...300
-          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-          response.body
-        when 401
-          UI.user_error!("Auth Error, provided invalid token")
-          false
-        when 404
-          UI.error("Not found, invalid owner or application name")
-          false
-        else
-          UI.error("Error #{response.status}: #{response.body}")
-          false
-        end
-      end
-
-      # committs or aborts dsym upload
-      def self.update_dsym_upload(api_token, owner_name, app_name, symbol_upload_id, status)
-        connection = self.connection
-
-        response = connection.patch do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}/symbol_uploads/#{symbol_upload_id}")
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = {
-            "status" => status
-          }
-        end
-
-        case response.status
-        when 200...300
-          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-          response.body
-        else
-          UI.error("Error #{response.status}: #{response.body}")
-          false
-        end
-      end
-
-      # upload dSYM files to specified upload url
-      # if succeed, then commits the upload
-      # otherwise aborts
-      def self.upload_dsym(api_token, owner_name, app_name, dsym, symbol_upload_id, upload_url)
-        connection = self.connection(upload_url, true)
-
-        response = connection.put do |req|
-          req.headers['x-ms-blob-type'] = "BlockBlob"
-          req.headers['Content-Length'] = File.size(dsym).to_s
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = Faraday::UploadIO.new(dsym, 'application/octet-stream') if dsym && File.exist?(dsym)
-        end
-
-        case response.status
-        when 200...300
-          self.update_dsym_upload(api_token, owner_name, app_name, symbol_upload_id, 'committed')
-          UI.success("dSYM uploaded")
-        else
-          UI.error("Error uploading dSYM #{response.status}: #{response.body}")
-          self.update_dsym_upload(api_token, owner_name, app_name, symbol_upload_id, 'aborted')
-          UI.error("dSYM upload aborted")
-          false
-        end
-      end
-
-      # upload binary for specified upload_url
-      # if succeed, then commits the release
-      # otherwise aborts
-      def self.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url)
-        connection = self.connection(upload_url)
-
-        options = {}
-        options[:upload_id] = upload_id
-        # ipa field is used both for .apk and .ipa files
-        options[:ipa] = Faraday::UploadIO.new(file, 'application/octet-stream') if file && File.exist?(file)
-
-        response = connection.post do |req|
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = options
-        end
-
-        case response.status
-        when 200...300
-          UI.message("Binary uploaded")
-          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'committed')
-        else
-          UI.error("Error uploading binary #{response.status}: #{response.body}")
-          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'aborted')
-          UI.error("Release aborted")
-          false
-        end
-      end
-
-      # Commits or aborts the upload process for a release
-      def self.update_release_upload(api_token, owner_name, app_name, upload_id, status)
-        connection = self.connection
-
-        response = connection.patch do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}/release_uploads/#{upload_id}")
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = {
-            "status" => status
-          }
-        end
-
-        case response.status
-        when 200...300
-          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-          response.body
-        else
-          UI.error("Error #{response.status}: #{response.body}")
-          false
-        end
-      end
-
-      # get existing release
-      def self.get_release(api_token, release_url)
-        connection = self.connection
-        response = connection.get do |req|
-          req.url("/#{release_url}")
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-        end
-
-        case response.status
-        when 200...300
-          release = response.body
-          UI.message("DEBUG: #{JSON.pretty_generate(release)}") if ENV['DEBUG']
-          release
-        when 404
-          UI.error("Not found, invalid release url")
-          false
-        else
-          UI.error("Error fetching information about release #{response.status}: #{response.body}")
-          false
-        end
-      end
-
-      # add release to distribution group
-      def self.add_to_group(api_token, release_url, group_name, release_notes = '')
-        connection = self.connection
-
-        response = connection.patch do |req|
-          req.url("/#{release_url}")
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = {
-            "distribution_group_name" => group_name,
-            "release_notes" => release_notes
-          }
-        end
-
-        case response.status
-        when 200...300
-          # get full release info
-          release = self.get_release(api_token, release_url)
-          return false unless release
-          download_url = release['download_url']
-
-          UI.message("DEBUG: #{JSON.pretty_generate(release)}") if ENV['DEBUG']
-
-          Actions.lane_context[SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
-          Actions.lane_context[SharedValues::APPCENTER_BUILD_INFORMATION] = release
-
-          UI.message("Public Download URL: #{download_url}") if download_url
-          UI.success("Release #{release['short_version']} was successfully distributed to group \"#{group_name}\"")
-
-          release
-        when 404
-          UI.error("Not found, invalid distribution group name")
-          false
-        else
-          UI.error("Error adding to group #{response.status}: #{response.body}")
-          false
-        end
-      end
-
-      # add release to destination
-      def self.add_to_destination(api_token, release_url, destination_name, release_notes = '')
-        connection = self.connection
-
-        response = connection.patch do |req|
-          req.url("/#{release_url}")
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = {
-            "destination_name" => destination_name,
-            "release_notes" => release_notes
-          }
-        end
-
-        case response.status
-        when 200...300
-          # get full release info
-          release = self.get_release(api_token, release_url)
-          return false unless release
-          download_url = release['download_url']
-
-          UI.message("DEBUG: #{JSON.pretty_generate(release)}") if ENV['DEBUG']
-
-          Actions.lane_context[SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
-          Actions.lane_context[SharedValues::APPCENTER_BUILD_INFORMATION] = release
-
-          UI.message("Public Download URL: #{download_url}") if download_url
-          UI.success("Release #{release['short_version']} was successfully distributed to destination \"#{destination_name}\"")
-
-          release
-        when 404
-          UI.error("Not found, invalid destination name")
-          false
-        else
-          UI.error("Error adding to destination #{response.status}: #{response.body}")
-          false
-        end
-      end
-
       # run whole upload process for dSYM files
       def self.run_dsym_upload(params)
         values = params.values
@@ -328,14 +37,14 @@ module Fastlane
           values[:dsym_path] = dsym_path
 
           UI.message("Starting dSYM upload...")
-          dsym_upload_details = self.create_dsym_upload(api_token, owner_name, app_name)
+          dsym_upload_details = Helper::AppcenterHelper.create_dsym_upload(api_token, owner_name, app_name)
 
           if dsym_upload_details
             symbol_upload_id = dsym_upload_details['symbol_upload_id']
             upload_url = dsym_upload_details['upload_url']
 
             UI.message("Uploading dSYM...")
-            self.upload_dsym(api_token, owner_name, app_name, dsym_path, symbol_upload_id, upload_url)
+            Helper::AppcenterHelper.upload_dsym(api_token, owner_name, app_name, dsym_path, symbol_upload_id, upload_url)
           end
         end
       end
@@ -373,49 +82,26 @@ module Fastlane
         UI.user_error!("No Distribute Group given, pass using `group: 'group name'`") unless group && !group.empty?
 
         UI.message("Starting release upload...")
-        upload_details = self.create_release_upload(api_token, owner_name, app_name)
+        upload_details = Helper::AppcenterHelper.create_release_upload(api_token, owner_name, app_name)
         if upload_details
           upload_id = upload_details['upload_id']
           upload_url = upload_details['upload_url']
 
           UI.message("Uploading release binary...")
-          uploaded = self.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url)
+          uploaded = Helper::AppcenterHelper.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url)
 
           if uploaded
             release_url = uploaded['release_url']
             UI.message("Release committed")
             groups = group.split(',')
             groups.each do |group_name|
-              self.add_to_group(api_token, release_url, group_name, release_notes)
+              Helper::AppcenterHelper.add_to_group(api_token, release_url, group_name, release_notes)
             end
             destinations = destination.split(',')
             destinations.each do |destination_name|
-              self.add_to_destination(api_token, release_url, destination_name, release_notes)
+              Helper::AppcenterHelper.add_to_destination(api_token, release_url, destination_name, release_notes)
             end
           end
-        end
-      end
-
-      # returns true if app exists, false in case of 404 and error otherwise
-      def self.get_app(api_token, owner_name, app_name)
-        connection = self.connection
-
-        response = connection.get do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}")
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-        end
-
-        case response.status
-        when 200...300
-          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-          true
-        when 404
-          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-          false
-        else
-          UI.error("Error #{response.status}: #{response.body}")
-          false
         end
       end
 
@@ -430,37 +116,14 @@ module Fastlane
           "iOS" => ['Objective-C-Swift', 'React-Native', 'Xamarin']
         }
 
-        if self.get_app(api_token, owner_name, app_name)
+        if Helper::AppcenterHelper.get_app(api_token, owner_name, app_name)
           true
         else
           if Helper.test? || UI.confirm("App with name #{app_name} not found, create one?")
-            connection = self.connection
-
             os = Helper.test? ? "Android" : UI.select("Select OS", ["Android", "iOS"])
             platform = Helper.test? ? "Java" : UI.select("Select Platform", platforms[os])
 
-            response = connection.post do |req|
-              req.url("/v0.1/apps")
-              req.headers['X-API-Token'] = api_token
-              req.headers['internal-request-source'] = "fastlane"
-              req.body = {
-                "display_name" => app_name,
-                "name" => app_name,
-                "os" => os,
-                "platform" => platform
-              }
-            end
-
-            case response.status
-            when 200...300
-              created = response.body
-              UI.message("DEBUG: #{JSON.pretty_generate(created)}") if ENV['DEBUG']
-              UI.success("Created #{os}/#{platform} app with name \"#{created['name']}\"")
-              true
-            else
-              UI.error("Error creating app #{response.status}: #{response.body}")
-              false
-            end
+            Helper::AppcenterHelper.create_app(api_token, owner_name, app_name, os, platform)
           else
             UI.error("Lane aborted")
             false
@@ -640,4 +303,3 @@ module Fastlane
     end
   end
 end
-# rubocop:enable Metrics/ClassLength
