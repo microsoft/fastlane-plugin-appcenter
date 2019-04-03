@@ -263,7 +263,7 @@ module Fastlane
           Actions.lane_context[SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
           Actions.lane_context[SharedValues::APPCENTER_BUILD_INFORMATION] = release
 
-          UI.success("Release #{release['short_version']} was successfully upddated")
+          UI.message("Release #{release['short_version']} was successfully updated")
 
           release
         when 404
