@@ -41,6 +41,7 @@ Naming/VariableNumber:
 # This is used a lot across the fastlane code base for config files
 Style/MethodMissingSuper:
   Enabled: false
+
 Style/MissingRespondToMissing:
   Enabled: false
 
