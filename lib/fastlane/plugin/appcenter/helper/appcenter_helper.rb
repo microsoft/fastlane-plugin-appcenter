@@ -238,6 +238,43 @@ module Fastlane
         end
       end
 
+      # add release to destination
+      def self.update_release(api_token, owner_name, app_name, release_id, release_notes = '')
+        connection = self.connection
+
+        response = connection.put do |req|
+          req.url("/v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}")
+          req.headers['X-API-Token'] = api_token
+          req.headers['internal-request-source'] = "fastlane"
+          req.body = {
+            "release_notes" => release_notes
+          }
+        end
+
+        case response.status
+        when 200...300
+          # get full release info
+          release = self.get_release(api_token, owner_name, app_name, release_id)
+          return false unless release
+          download_url = release['download_url']
+
+          UI.message("DEBUG: #{JSON.pretty_generate(release)}") if ENV['DEBUG']
+
+          Actions.lane_context[SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
+          Actions.lane_context[SharedValues::APPCENTER_BUILD_INFORMATION] = release
+
+          UI.success("Release #{release['short_version']} was successfully upddated")
+
+          release
+        when 404
+          UI.error("Not found, invalid release id")
+          false
+        else
+          UI.error("Error adding updating release #{response.status}: #{response.body}")
+          false
+        end
+      end
+
       # add release to distribution group
       def self.add_to_group(api_token, owner_name, app_name, release_id, group_id)
         connection = self.connection

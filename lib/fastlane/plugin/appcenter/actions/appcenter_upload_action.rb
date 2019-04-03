@@ -93,6 +93,9 @@ module Fastlane
           if uploaded
             release_id = uploaded['release_id']
             UI.message("Release '#{release_id}' committed")
+
+            Helper::AppcenterHelper.update_release(api_token, owner_name, app_name, release_id, release_notes)
+
             groups = group.split(',')
             groups.each do |group_name|
               group = Helper::AppcenterHelper.get_group(api_token, owner_name, app_name, group_name)
