@@ -276,7 +276,7 @@ module Fastlane
       end
 
       # add release to distribution group
-      def self.add_to_group(api_token, owner_name, app_name, release_id, group_id)
+      def self.add_to_group(api_token, owner_name, app_name, release_id, group_id, mandatory_update = false, notify_testers = false)
         connection = self.connection
 
         UI.message("DEBUG: getting #{release_id}") if ENV['DEBUG']
@@ -286,7 +286,9 @@ module Fastlane
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
           req.body = {
-            "id" => group_id
+            "id" => group_id,
+            "mandatory_update" => mandatory_update,
+            "notify_testers" => notify_testers
           }
         end
 
@@ -310,45 +312,6 @@ module Fastlane
           false
         else
           UI.error("Error adding to group #{response.status}: #{response.body}")
-          false
-        end
-      end
-
-      # add release to destination
-      def self.add_to_destination(api_token, owner_name, app_name, release_id, destination_name, release_notes = '')
-        connection = self.connection
-
-        response = connection.patch do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}")
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = {
-            "destination_name" => destination_name,
-            "release_notes" => release_notes
-          }
-        end
-
-        case response.status
-        when 200...300
-          # get full release info
-          release = self.get_release(api_token, owner_name, app_name, release_id)
-          return false unless release
-          download_url = release['download_url']
-
-          UI.message("DEBUG: #{JSON.pretty_generate(release)}") if ENV['DEBUG']
-
-          Actions.lane_context[SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
-          Actions.lane_context[SharedValues::APPCENTER_BUILD_INFORMATION] = release
-
-          UI.message("Public Download URL: #{download_url}") if download_url
-          UI.success("Release #{release['short_version']} was successfully distributed to destination \"#{destination_name}\"")
-
-          release
-        when 404
-          UI.error("Not found, invalid destination name")
-          false
-        else
-          UI.error("Error adding to destination #{response.status}: #{response.body}")
           false
         end
       end

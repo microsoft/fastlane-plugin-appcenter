@@ -56,7 +56,8 @@ module Fastlane
         owner_name = params[:owner_name]
         app_name = params[:app_name]
         group = params[:group]
-        destination = params[:destination]
+        mandatory_update = params[:mandatory_update]
+        notify_testers = params[:notify_testers]
         release_notes = params[:release_notes]
         should_clip = params[:should_clip]
         release_notes_link = params[:release_notes_link]
@@ -101,7 +102,7 @@ module Fastlane
               group = Helper::AppcenterHelper.get_group(api_token, owner_name, app_name, group_name)
               if group
                 group_id = group['id']
-                distributed_release = Helper::AppcenterHelper.add_to_group(api_token, owner_name, app_name, release_id, group_id)
+                distributed_release = Helper::AppcenterHelper.add_to_group(api_token, owner_name, app_name, release_id, group_id, mandatory_update, notify_testers)
                 if distributed_release
                   UI.success("Release #{distributed_release['short_version']} was successfully distributed to group \"#{group_name}\"")
                 else
@@ -110,10 +111,6 @@ module Fastlane
               else
                 UI.error("Group '#{group_name}' was not found")
               end
-            end
-            destinations = destination.split(',')
-            destinations.each do |destination_name|
-              Helper::AppcenterHelper.add_to_destination(api_token, owner_name, app_name, release_id, destination_name, release_notes)
             end
           end
         end
@@ -254,12 +251,21 @@ module Fastlane
                              default_value: "Collaborators",
                                   optional: true,
                                       type: String),
-          FastlaneCore::ConfigItem.new(key: :destination,
-                                  env_name: "APPCENTER_DISTRIBUTE_DESTINATION",
-                               description: "Comma separated list of Destination names",
-                             default_value: "",
+
+          FastlaneCore::ConfigItem.new(key: :mandatory_update,
+                                  env_name: "APPCENTER_DISTRIBUTE_MANDATORY_UPDATE",
+                               description: "Require users to update to this release",
                                   optional: true,
-                                      type: String),
+                                 is_string: false,
+                             default_value: false),
+
+          FastlaneCore::ConfigItem.new(key: :notify_testers,
+                                  env_name: "APPCENTER_DISTRIBUTE_NOTIFY_TESTERS",
+                               description: "Send email notification about release",
+                                  optional: true,
+                                 is_string: false,
+                             default_value: false),
+
           FastlaneCore::ConfigItem.new(key: :release_notes,
                                   env_name: "APPCENTER_DISTRIBUTE_RELEASE_NOTES",
                                description: "Release notes",
