@@ -41,7 +41,7 @@ The action parameters `api_token` and `owner_name` can also be omitted when thei
 - `APPCENTER_DISTRIBUTE_MANDATORY_UPDATE` - Require users to update to this release
 - `APPCENTER_DISTRIBUTE_NOTIFY_TESTERS` - Send email notification about release
 - `APPCENTER_DISTRIBUTE_RELEASE_NOTES` - Release notes
-- `APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING` - Clip release notes if its lenght is more then 5000, `true` by default
+- `APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING` - Clip release notes if its length is more then 5000, `true` by default
 - `APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK` - Additional release notes link
 
 ## Example

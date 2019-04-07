@@ -275,7 +275,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :should_clip,
                                   env_name: "APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING",
-                               description: "Clip release notes if its lenght is more then #{Constants::MAX_RELEASE_NOTES_LENGTH}, true by default",
+                               description: "Clip release notes if its length is more then #{Constants::MAX_RELEASE_NOTES_LENGTH}, true by default",
                                   optional: true,
                                  is_string: false,
                              default_value: true),
