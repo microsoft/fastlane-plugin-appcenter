@@ -79,8 +79,11 @@ def stub_get_release(status)
     .to_return(status: status, body: "{\"short_version\":\"1.0\",\"download_link\":\"https://download.link\"}", headers: { 'Content-Type' => 'application/json' })
 end
 
-def stub_add_to_group(status)
+def stub_add_to_group(status, mandatory_update = false, notify_testers = false)
   stub_request(:post, "https://api.appcenter.ms/v0.1/apps/owner/app/releases/1/groups")
+    .with(
+      body: "{\"id\":\"1\",\"mandatory_update\":#{mandatory_update},\"notify_testers\":#{notify_testers}}"
+    )
     .to_return(status: status, body: "{\"short_version\":\"1.0\",\"download_link\":\"https://download.link\"}", headers: { 'Content-Type' => 'application/json' })
 end
 
@@ -462,6 +465,86 @@ describe Fastlane::Actions::AppcenterUploadAction do
           ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
           dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
           group: 'Testers'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "uses proper api for mandatory release" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)      
+      stub_get_group(200)
+      stub_add_to_group(200, true, false)
+      stub_get_release(200)
+      stub_create_dsym_upload(200)
+      stub_upload_dsym(200)
+      stub_update_dsym_upload(200, "committed")
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
+          dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
+          group: 'Testers',
+          mandatory_update: true
+        })
+      end").runner.execute(:test)
+    end
+
+    it "uses proper api for release with email notification parameter" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)      
+      stub_get_group(200)
+      stub_add_to_group(200, false, true)
+      stub_get_release(200)
+      stub_create_dsym_upload(200)
+      stub_upload_dsym(200)
+      stub_update_dsym_upload(200, "committed")
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
+          dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
+          group: 'Testers',
+          notify_testers: true
+        })
+      end").runner.execute(:test)
+    end
+
+
+    it "uses proper api for mandatory release with email notification parameter" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)      
+      stub_get_group(200)
+      stub_add_to_group(200, true, true)
+      stub_get_release(200)
+      stub_create_dsym_upload(200)
+      stub_upload_dsym(200)
+      stub_update_dsym_upload(200, "committed")
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
+          dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
+          group: 'Testers',
+          mandatory_update: true,
+          notify_testers: true
         })
       end").runner.execute(:test)
     end
