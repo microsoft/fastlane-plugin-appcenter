@@ -226,7 +226,8 @@ AllCops:
   Exclude:
     - '**/lib/assets/custom_action_template.rb'
     - './vendor/**/*'
-    - 'spec/fixtures/**/*'
+    - './spec/fixtures/**/*'
+    - '**/.DS_Store'
 
 # They have not to be snake_case
 Naming/FileName:

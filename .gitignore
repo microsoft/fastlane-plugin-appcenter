@@ -11,3 +11,4 @@ fastlane/README.md
 fastlane/report.xml
 
 .env
+.DS_Store
