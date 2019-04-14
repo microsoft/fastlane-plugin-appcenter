@@ -121,20 +121,31 @@ module Fastlane
         api_token = params[:api_token]
         owner_name = params[:owner_name]
         app_name = params[:app_name]
+        app_display_name = params[:app_display_name]
+        app_os = params[:app_os]
+        app_platform = params[:app_platform]
 
         platforms = {
           "Android" => ['Java', 'React-Native', 'Xamarin'],
           "iOS" => ['Objective-C-Swift', 'React-Native', 'Xamarin']
         }
 
+        
         if Helper::AppcenterHelper.get_app(api_token, owner_name, app_name)
           true
         else
-          if Helper.test? || UI.confirm("App with name #{app_name} not found, create one?")
-            os = Helper.test? ? "Android" : UI.select("Select OS", ["Android", "iOS"])
-            platform = Helper.test? ? "Java" : UI.select("Select Platform", platforms[os])
+          should_create_app = !app_display_name.to_s.empty? || !app_os.to_s.empty? || app_platform.to_s.empty?
+          
+          if Helper.test? || should_create_app || UI.confirm("App with slug #{app_name} not found, create one?")
+            app_display_name = app_name if app_display_name.to_s.empty?
+            os = app_os.to_s.empty? ?
+              (Helper.test? ? "Android" : UI.select("Select OS", ["Android", "iOS"])) :
+              app_os
+            platform = app_platform.to_s.empty? ?
+              (Helper.test? ? "Java" : UI.select("Select Platform", platforms[os])) :
+              app_platform
 
-            Helper::AppcenterHelper.create_app(api_token, owner_name, app_name, os, platform)
+            Helper::AppcenterHelper.create_app(api_token, owner_name, app_name, app_display_name, os, platform)
           else
             UI.error("Lane aborted")
             false
@@ -189,12 +200,30 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :app_name,
                                   env_name: "APPCENTER_APP_NAME",
-                               description: "App name. If there is no app with such name, you will be prompted to create one",
+                               description: "App slug. If there is no app with such slug, you will be prompted to create one",
                                   optional: false,
                                       type: String,
                               verify_block: proc do |value|
                                 UI.user_error!("No App name given, pass using `app_name: 'app name'`") unless value && !value.empty?
                               end),
+
+          FastlaneCore::ConfigItem.new(key: :app_display_name,
+                                  env_name: "APPCENTER_APP_DISPLAY_NAME",
+                               description: "App display name. Used for new app creation, if app with 'app_name' slug was not found",
+                                  optional: true,
+                                      type: String),
+
+          FastlaneCore::ConfigItem.new(key: :app_os,
+                                  env_name: "APPCENTER_APP_OS",
+                               description: "App OS. Used for new app creation, if app with 'app_name' slug was not found",
+                                  optional: true,
+                                      type: String),
+
+          FastlaneCore::ConfigItem.new(key: :app_platform,
+                                  env_name: "APPCENTER_APP_PLATFORM",
+                               description: "App Platform. Used for new app creation, if app with 'app_name' slug was not found",
+                                  optional: true,
+                                      type: String),
 
           FastlaneCore::ConfigItem.new(key: :apk,
                                   env_name: "APPCENTER_DISTRIBUTE_APK",
