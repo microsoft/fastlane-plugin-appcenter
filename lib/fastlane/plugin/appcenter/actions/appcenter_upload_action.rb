@@ -4,6 +4,11 @@ module Fastlane
       MAX_RELEASE_NOTES_LENGTH = 5000
     end
 
+    module SharedValues
+      APPCENTER_DOWNLOAD_LINK = :APPCENTER_DOWNLOAD_LINK
+      APPCENTER_BUILD_INFORMATION = :APPCENTER_BUILD_INFORMATION
+    end
+
     class AppcenterUploadAction < Action
       # run whole upload process for dSYM files
       def self.run_dsym_upload(params)

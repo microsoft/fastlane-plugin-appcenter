@@ -1,10 +1,5 @@
 module Fastlane
   module Helper
-    module SharedValues
-      APPCENTER_DOWNLOAD_LINK = :APPCENTER_DOWNLOAD_LINK
-      APPCENTER_BUILD_INFORMATION = :APPCENTER_BUILD_INFORMATION
-    end
-
     class AppcenterHelper
 
       # create request
@@ -260,8 +255,8 @@ module Fastlane
 
           UI.message("DEBUG: #{JSON.pretty_generate(release)}") if ENV['DEBUG']
 
-          Actions.lane_context[SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
-          Actions.lane_context[SharedValues::APPCENTER_BUILD_INFORMATION] = release
+          Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
+          Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_BUILD_INFORMATION] = release
 
           UI.message("Release #{release['short_version']} was successfully updated")
 
@@ -301,8 +296,8 @@ module Fastlane
 
           UI.message("DEBUG: received release #{JSON.pretty_generate(release)}") if ENV['DEBUG']
 
-          Actions.lane_context[SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
-          Actions.lane_context[SharedValues::APPCENTER_BUILD_INFORMATION] = release
+          Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
+          Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_BUILD_INFORMATION] = release
 
           UI.message("Public Download URL: #{download_url}") if download_url
 
