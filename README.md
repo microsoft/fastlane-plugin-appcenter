@@ -24,7 +24,8 @@ appcenter_upload(
   api_token: "<appcenter token>",
   owner_name: "<your appcenter account name>",
   app_name: "<your app name>",
-  apk: "<path to android build binary>"
+  apk: "<path to android build binary>",
+  notify_testers: true # Set to false if you don't want to notify testers of your new release (default: `false`)
 )
 ```
 
@@ -39,7 +40,7 @@ The action parameters `api_token` and `owner_name` can also be omitted when thei
 - `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` - Flag to upload only the dSYM file to App Center
 - `APPCENTER_DISTRIBUTE_GROUP` - Comma separated list of Distribution Group names
 - `APPCENTER_DISTRIBUTE_MANDATORY_UPDATE` - Require users to update to this release
-- `APPCENTER_DISTRIBUTE_NOTIFY_TESTERS` - Send email notification about release
+- `APPCENTER_DISTRIBUTE_NOTIFY_TESTERS` - Send email notification about release (default: `false`)
 - `APPCENTER_DISTRIBUTE_RELEASE_NOTES` - Release notes
 - `APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING` - Clip release notes if its length is more then 5000, `true` by default
 - `APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK` - Additional release notes link

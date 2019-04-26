@@ -312,7 +312,8 @@ module Fastlane
             app_name: "testing_app",
             apk: "./app-release.apk",
             group: "Testers",
-            release_notes: "release notes"
+            release_notes: "release notes",
+            notify_testers: false
           )',
           'appcenter_upload(
             api_token: "...",
@@ -321,7 +322,8 @@ module Fastlane
             apk: "./app-release.ipa",
             group: "Testers,Alpha",
             dsym: "./app.dSYM.zip",
-            release_notes: "release notes"
+            release_notes: "release notes",
+            notify_testers: false
           )'
         ]
       end
