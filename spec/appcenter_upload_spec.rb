@@ -99,7 +99,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           appcenter_upload({
             owner_name: 'owner',
             app_name: 'app',
-            group: 'Testers',
+            destinations: 'Testers',
+            destination_type: 'group',
             apk: './spec/fixtures/appfiles/apk_file_empty.apk'
           })
         end").runner.execute(:test)
@@ -112,7 +113,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           appcenter_upload({
             api_token: 'xxx',
             app_name: 'app',
-            group: 'Testers',
+            destinations: 'Testers',
+            destination_type: 'group',
             apk: './spec/fixtures/appfiles/apk_file_empty.apk'
           })
         end").runner.execute(:test)
@@ -125,7 +127,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           appcenter_upload({
             api_token: 'xxx',
             owner_name: 'owner',
-            group: 'Testers',
+            destinations: 'Testers',
+            destination_type: 'group',
             apk: './spec/fixtures/appfiles/apk_file_empty.apk'
           })
         end").runner.execute(:test)
@@ -140,7 +143,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
-            group: 'Testers'
+            destinations: 'Testers',
+            destination_type: 'group'
           })
         end").runner.execute(:test)
       end.to raise_error("Couldn't find build file at path ''")
@@ -154,7 +158,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
-            group: 'Testers',
+            destinations: 'Testers',
+            destination_type: 'group',
             apk: './nothing.apk'
           })
         end").runner.execute(:test)
@@ -169,7 +174,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
-            group: 'Testers',
+            destinations: 'Testers',
+            destination_type: 'group',
             ipa: './nothing.ipa'
           })
         end").runner.execute(:test)
@@ -183,7 +189,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
-            group: 'Testers',
+            destinations: 'Testers',
+            destination_type: 'group',
             apk: './spec/fixtures/appfiles/Appfile_empty'
           })
         end").runner.execute(:test)
@@ -197,7 +204,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
-            group: 'Testers',
+            destinations: 'Testers',
+            destination_type: 'group',
             ipa: './spec/fixtures/appfiles/Appfile_empty'
           })
         end").runner.execute(:test)
@@ -211,12 +219,28 @@ describe Fastlane::Actions::AppcenterUploadAction do
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
-            group: 'Testers',
+            destinations: 'Testers',
+            destination_type: 'group',
             ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
             apk: './spec/fixtures/appfiles/apk_file_empty.apk'
           })
         end").runner.execute(:test)
       end.to raise_error("You can't use 'ipa' and 'apk' options in one run")
+    end
+
+    it "raises an error if destination type is not group" do
+      expect do
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            destinations: 'Testers',
+            destination_type: 'random',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("No or wrong destination type given. Use `destination_type: 'group'`")
     end
 
     it "handles upload build error" do
@@ -231,7 +255,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
@@ -246,7 +271,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
@@ -266,7 +292,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
@@ -287,7 +314,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
@@ -310,7 +338,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
 
@@ -337,7 +366,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers',
+          destinations: 'Testers',
+          destination_type: 'group',
           release_notes: '#{release_notes}'
         })
       end").runner.execute(:test)
@@ -366,7 +396,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers',
+          destinations: 'Testers',
+          destination_type: 'group',
           release_notes: '#{release_notes}',
           release_notes_link: '#{release_notes_link}'
         })
@@ -391,7 +422,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
@@ -413,7 +445,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
 
@@ -437,7 +470,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
 
@@ -464,7 +498,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           app_name: 'app',
           ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
           dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
@@ -489,7 +524,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           app_name: 'app',
           ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
           dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
-          group: 'Testers',
+          destinations: 'Testers',
+          destination_type: 'group',
           mandatory_update: true
         })
       end").runner.execute(:test)
@@ -515,7 +551,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           app_name: 'app',
           ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
           dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
-          group: 'Testers',
+          destinations: 'Testers',
+          destination_type: 'group',
           notify_testers: true
         })
       end").runner.execute(:test)
@@ -541,7 +578,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           app_name: 'app',
           ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
           dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
-          group: 'Testers',
+          destinations: 'Testers',
+          destination_type: 'group',
           mandatory_update: true,
           notify_testers: true
         })
@@ -572,7 +610,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           app_name: 'app',
           ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
           dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
-          group: 'Testers1,Testers2,Testers3'
+          destinations: 'Testers1,Testers2,Testers3',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
@@ -601,7 +640,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           app_name: 'app',
           ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
           dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
-          group: 'Testers 1,Testers 2,Testers 3'
+          destinations: 'Testers 1,Testers 2,Testers 3',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
@@ -623,7 +663,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
@@ -638,7 +679,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
@@ -663,7 +705,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           app_name: 'app',
           ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
           dsym: './spec/fixtures/symbols/Themoji.dSYM',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
 
@@ -718,7 +761,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
             owner_name: 'owner',
             app_name: 'app',
             apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-            group: 'Testers'
+            destinations: 'Testers',
+            destination_type: 'group'
           })
         end").runner.execute(:test)
       end.to raise_error("Auth Error, provided invalid token")

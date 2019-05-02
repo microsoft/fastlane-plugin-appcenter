@@ -60,7 +60,8 @@ module Fastlane
         api_token = params[:api_token]
         owner_name = params[:owner_name]
         app_name = params[:app_name]
-        group = params[:group]
+        destinations = params[:destinations]
+        destination_type = params[:destination_type]
         mandatory_update = params[:mandatory_update]
         notify_testers = params[:notify_testers]
         release_notes = params[:release_notes]
@@ -85,7 +86,6 @@ module Fastlane
         ].detect { |e| !e.to_s.empty? }
 
         UI.user_error!("Couldn't find build file at path '#{file}'") unless file && File.exist?(file)
-        UI.user_error!("No Distribute Group given, pass using `group: 'group name'`") unless group && !group.empty?
 
         UI.message("Starting release upload...")
         upload_details = Helper::AppcenterHelper.create_release_upload(api_token, owner_name, app_name)
@@ -102,19 +102,19 @@ module Fastlane
 
             Helper::AppcenterHelper.update_release(api_token, owner_name, app_name, release_id, release_notes)
 
-            groups = group.split(',')
-            groups.each do |group_name|
-              group = Helper::AppcenterHelper.get_group(api_token, owner_name, app_name, group_name)
+            destinations_array = destinations.split(',')
+            destinations_array.each do |destination_name|
+              group = Helper::AppcenterHelper.get_group(api_token, owner_name, app_name, destination_name)
               if group
                 group_id = group['id']
                 distributed_release = Helper::AppcenterHelper.add_to_group(api_token, owner_name, app_name, release_id, group_id, mandatory_update, notify_testers)
                 if distributed_release
-                  UI.success("Release #{distributed_release['short_version']} was successfully distributed to group \"#{group_name}\"")
+                  UI.success("Release #{distributed_release['short_version']} was successfully distributed to group \"#{destination_name}\"")
                 else
                   UI.error("Release '#{release_id}' was not found")
                 end
               else
-                UI.error("Group '#{group_name}' was not found")
+                UI.error("Group '#{destination_name}' was not found")
               end
             end
           end
@@ -255,7 +255,29 @@ module Fastlane
                                description: "Comma separated list of Distribution Group names",
                              default_value: "Collaborators",
                                   optional: true,
+                                      type: String,
+                                deprecated: true,
+                              verify_block: proc do |value|
+                                UI.user_error!("Option `group` is depreated. Use `destinations` and `destination_type`")
+                              end),
+
+          FastlaneCore::ConfigItem.new(key: :destinations,
+                                  env_name: "APPCENTER_DISTRIBUTE_DESTINATIONS",
+                               description: "Comma separated list of destination names. Currently only distribution groups are supported",
+                             default_value: "Collaborators",
+                                  optional: true,
                                       type: String),
+
+
+          FastlaneCore::ConfigItem.new(key: :destination_type,
+                                  env_name: "APPCENTER_DISTRIBUTE_DESTINATION_TYPE",
+                               description: "Destination type of distribution destination. Currently only 'group' is supported",
+                             default_value: "group",
+                                  optional: true,
+                                      type: String,
+                              verify_block: proc do |value|
+                                UI.user_error!("No or wrong destination type given. Use `destination_type: 'group'`") unless value && !value.empty? && value == "group"
+                              end),
 
           FastlaneCore::ConfigItem.new(key: :mandatory_update,
                                   env_name: "APPCENTER_DISTRIBUTE_MANDATORY_UPDATE",
@@ -311,7 +333,8 @@ module Fastlane
             owner_name: "appcenter_owner",
             app_name: "testing_app",
             apk: "./app-release.apk",
-            group: "Testers",
+            destinations: "Testers",
+            destination_type: "group",
             release_notes: "release notes",
             notify_testers: false
           )',
@@ -320,7 +343,8 @@ module Fastlane
             owner_name: "appcenter_owner",
             app_name: "testing_app",
             apk: "./app-release.ipa",
-            group: "Testers,Alpha",
+            destinations: "Testers,Alpha",
+            destination_type: "group",
             dsym: "./app.dSYM.zip",
             release_notes: "release notes",
             notify_testers: false
