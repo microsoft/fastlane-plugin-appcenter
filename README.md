@@ -71,7 +71,7 @@ rubocop -a
 
 ## Issues and Feedback
 
-For any other issues and feedback about this plugin, please open a [GitHub issue](https://github.com/Microsoft/fastlane-plugin-appcenter/issues).
+For any other issues and feedback about this plugin, please open a [GitHub issue](https://github.com/microsoft/fastlane-plugin-appcenter/issues).
 
 ## Troubleshooting
 

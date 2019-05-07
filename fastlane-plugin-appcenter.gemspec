@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.author        = 'Microsoft Corporation'
 
   spec.summary       = 'Fastlane plugin for App Center'
-  spec.homepage      = "https://github.com/Microsoft/fastlane-plugin-appcenter"
+  spec.homepage      = "https://github.com/microsoft/fastlane-plugin-appcenter"
   spec.license       = "MIT"
 
   spec.files         = Dir["lib/**/*"] + %w(README.md LICENSE)
