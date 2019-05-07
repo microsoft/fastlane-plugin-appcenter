@@ -301,13 +301,13 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :build_number,
                                        env_name: "APPCENTER_DISTRIBUTE_BUILD_NUMBER",
-                                       description: "Android apk build number",
+                                       description: "The build number. Used (and required) for uploading Android ProGuard mapping file",
                                        optional: true,
                                        type: String),
 
           FastlaneCore::ConfigItem.new(key: :version,
                                        env_name: "APPCENTER_DISTRIBUTE_VERSION",
-                                       description: "Android apk version name",
+                                       description: "The version number. Used (and required) for uploading Android ProGuard mapping file",
                                        optional: true,
                                        type: String),
         ]
