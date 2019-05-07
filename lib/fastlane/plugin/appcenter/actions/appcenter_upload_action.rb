@@ -257,7 +257,7 @@ module Fastlane
                                       type: String,
                                 deprecated: true,
                               verify_block: proc do |value|
-                                UI.user_error!("Option `group` is depreated. Use `destinations` and `destination_type`")
+                                UI.user_error!("Option `group` is deprecated. Use `destinations` and `destination_type`")
                               end),
 
           FastlaneCore::ConfigItem.new(key: :destinations,
@@ -275,7 +275,7 @@ module Fastlane
                                   optional: true,
                                       type: String,
                               verify_block: proc do |value|
-                                UI.user_error!("No or wrong destination type given. Use `destination_type: 'group'`") unless value && !value.empty? && value == "group"
+                                UI.user_error!("No or incorrect destination type given. Use `destination_type: 'group'`") unless value && !value.empty? && value == "group"
                               end),
 
           FastlaneCore::ConfigItem.new(key: :mandatory_update,
