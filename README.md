@@ -2,7 +2,7 @@
 
 [![fastlane Plugin Badge](https://rawcdn.githack.com/fastlane/fastlane/master/fastlane/assets/plugin-badge.svg)](https://rubygems.org/gems/fastlane-plugin-appcenter)
 [![Gem Version](https://badge.fury.io/rb/fastlane-plugin-appcenter.svg)](https://badge.fury.io/rb/fastlane-plugin-appcenter)
-[![Build Status](https://travis-ci.org/Microsoft/fastlane-plugin-appcenter.svg?branch=master)](https://travis-ci.org/Microsoft/fastlane-plugin-appcenter)
+[![Build Status](https://travis-ci.org/microsoft/fastlane-plugin-appcenter.svg?branch=master)](https://travis-ci.org/microsoft/fastlane-plugin-appcenter)
 
 ## Getting Started
 
@@ -71,7 +71,7 @@ rubocop -a
 
 ## Issues and Feedback
 
-For any other issues and feedback about this plugin, please open a [GitHub issue](https://github.com/Microsoft/fastlane-plugin-appcenter/issues).
+For any other issues and feedback about this plugin, please open a [GitHub issue](https://github.com/microsoft/fastlane-plugin-appcenter/issues).
 
 ## Troubleshooting
 
