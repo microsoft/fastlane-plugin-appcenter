@@ -565,11 +565,13 @@ describe Fastlane::Actions::AppcenterUploadAction do
           stub_upload_dsym(200)
           stub_update_dsym_upload(200, "committed")
 
+          # rubocop:disable Layout/IndentHash
           expect(Fastlane::Actions::ZipAction).to receive(:run)
             .with({
-              path: './spec/fixtures/appfiles/mac_app_empty.app',
-              output_path: './spec/fixtures/appfiles/mac_app_empty.app.zip'
+                path: './spec/fixtures/appfiles/mac_app_empty.app',
+                output_path: './spec/fixtures/appfiles/mac_app_empty.app.zip'
             })
+          # rubocop:enable Layout/IndentHash
 
           Fastlane::FastFile.new.parse("lane :test do
             appcenter_upload({
@@ -648,7 +650,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)      
+      stub_update_release(200)
       stub_get_group(200, 'Testers%201')
       stub_get_group(200, 'Testers%202')
       stub_get_group(200, 'Testers%203')
