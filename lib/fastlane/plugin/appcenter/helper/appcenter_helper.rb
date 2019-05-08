@@ -54,6 +54,42 @@ module Fastlane
         end
       end
 
+      # creates new mapping upload in appcenter
+      # returns:
+      # symbol_upload_id
+      # upload_url
+      # expiration_date
+      def self.create_mapping_upload(api_token, owner_name, app_name, file_name, build_number, version)
+        connection = self.connection
+
+        response = connection.post do |req|
+          req.url("/v0.1/apps/#{owner_name}/#{app_name}/symbol_uploads")
+          req.headers['X-API-Token'] = api_token
+          req.headers['internal-request-source'] = "fastlane"
+          req.body = {
+            symbol_type: "AndroidProguard",
+            file_name: file_name,
+            build: build_number,
+            version: version,
+          }
+        end
+
+        case response.status
+        when 200...300
+          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+          response.body
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+          false
+        when 404
+          UI.error("Not found, invalid owner or application name")
+          false
+        else
+          UI.error("Error #{response.status}: #{response.body}")
+          false
+        end
+      end
+
       # creates new dSYM upload in appcenter
       # returns:
       # symbol_upload_id

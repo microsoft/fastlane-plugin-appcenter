@@ -113,4 +113,18 @@ lane :test do
     group: ENV["TEST_APPCENTER_DISTRIBUTE_GROUP"],
     notify_testers: true
   )
+
+  UI.message("\n\n\n=====================================\n uploading only proguard mapping.txt \n=====================================")
+
+  appcenter_upload(
+    api_token: ENV["TEST_APPCENTER_API_TOKEN"],
+    owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
+    app_name: "MyApplication",
+    apk: "./fastlane/app-release.apk",
+    upload_dsym_only: true,
+    build_number: "3",
+    version: "1.0.0",
+    dsym: "./fastlane/mapping.txt",
+    notify_testers: false
+  )
 end

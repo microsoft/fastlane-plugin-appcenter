@@ -18,6 +18,8 @@ module Fastlane
         app_name = params[:app_name]
         file = params[:ipa]
         dsym = params[:dsym]
+        build_number = params[:build_number]
+        version = params[:version]
 
         dsym_path = nil
         if dsym
@@ -42,7 +44,13 @@ module Fastlane
           values[:dsym_path] = dsym_path
 
           UI.message("Starting dSYM upload...")
-          dsym_upload_details = Helper::AppcenterHelper.create_dsym_upload(api_token, owner_name, app_name)
+          
+          if File.extname(dsym_path) == ".txt"
+            file_name = File.basename(dsym_path)
+            dsym_upload_details = Helper::AppcenterHelper.create_mapping_upload(api_token, owner_name, app_name, file_name ,build_number, version)
+          else
+            dsym_upload_details = Helper::AppcenterHelper.create_dsym_upload(api_token, owner_name, app_name)
+          end
 
           if dsym_upload_details
             symbol_upload_id = dsym_upload_details['symbol_upload_id']
@@ -289,7 +297,19 @@ module Fastlane
                                   env_name: "APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK",
                                description: "Additional release notes link",
                                   optional: true,
-                                      type: String)
+                                      type: String),
+
+          FastlaneCore::ConfigItem.new(key: :build_number,
+                                       env_name: "APPCENTER_DISTRIBUTE_BUILD_NUMBER",
+                                       description: "The build number. Used (and required) for uploading Android ProGuard mapping file",
+                                       optional: true,
+                                       type: String),
+
+          FastlaneCore::ConfigItem.new(key: :version,
+                                       env_name: "APPCENTER_DISTRIBUTE_VERSION",
+                                       description: "The version number. Used (and required) for uploading Android ProGuard mapping file",
+                                       optional: true,
+                                       type: String),
         ]
       end
 
