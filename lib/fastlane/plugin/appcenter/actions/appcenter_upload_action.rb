@@ -149,7 +149,7 @@ module Fastlane
         else
           should_create_app = !app_display_name.to_s.empty? || !app_os.to_s.empty? || app_platform.to_s.empty?
           
-          if Helper.test? || should_create_app || UI.confirm("App with slug #{app_name} not found, create one?")
+          if Helper.test? || should_create_app || UI.confirm("App with name #{app_name} not found, create one?")
             app_display_name = app_name if app_display_name.to_s.empty?
             os = app_os.to_s.empty? ?
               (Helper.test? ? "Android" : UI.select("Select OS", ["Android", "iOS"])) :
@@ -213,7 +213,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :app_name,
                                   env_name: "APPCENTER_APP_NAME",
-                               description: "App slug. If there is no app with such slug, you will be prompted to create one",
+                               description: "App name. If there is no app with such name, you will be prompted to create one",
                                   optional: false,
                                       type: String,
                               verify_block: proc do |value|
@@ -222,19 +222,19 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :app_display_name,
                                   env_name: "APPCENTER_APP_DISPLAY_NAME",
-                               description: "App display name. Used for new app creation, if app with 'app_name' slug was not found",
+                               description: "App display name. Used for new app creation, if app with 'app_name' name was not found",
                                   optional: true,
                                       type: String),
 
           FastlaneCore::ConfigItem.new(key: :app_os,
                                   env_name: "APPCENTER_APP_OS",
-                               description: "App OS. Used for new app creation, if app with 'app_name' slug was not found",
+                               description: "App OS. Used for new app creation, if app with 'app_name' name was not found",
                                   optional: true,
                                       type: String),
 
           FastlaneCore::ConfigItem.new(key: :app_platform,
                                   env_name: "APPCENTER_APP_PLATFORM",
-                               description: "App Platform. Used for new app creation, if app with 'app_name' slug was not found",
+                               description: "App Platform. Used for new app creation, if app with 'app_name' name was not found",
                                   optional: true,
                                       type: String),
 

@@ -390,7 +390,7 @@ module Fastlane
         when 200...300
           created = response.body
           UI.message("DEBUG: #{JSON.pretty_generate(created)}") if ENV['DEBUG']
-          UI.success("Created #{os}/#{platform} app with slug \"#{created['name']}\" and display name \"#{created['display_name']}\"")
+          UI.success("Created #{os}/#{platform} app with name \"#{created['name']}\" and display name \"#{created['display_name']}\"")
           true
         else
           UI.error("Error creating app #{response.status}: #{response.body}")
