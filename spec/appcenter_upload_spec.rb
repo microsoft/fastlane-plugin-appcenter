@@ -643,6 +643,35 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end").runner.execute(:test)
     end
 
+    it "encodes group names" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)      
+      stub_get_group(200, 'Testers%201')
+      stub_get_group(200, 'Testers%202')
+      stub_get_group(200, 'Testers%203')
+      stub_add_to_group(200)
+      stub_add_to_group(200)
+      stub_add_to_group(200)
+      stub_get_release(200)
+      stub_create_dsym_upload(200)
+      stub_upload_dsym(200)
+      stub_update_dsym_upload(200, "committed")
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
+          dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
+          group: 'Testers 1,Testers 2,Testers 3'
+        })
+      end").runner.execute(:test)
+    end
+
     it "creates app if it was not found" do
       stub_check_app(404)
       stub_create_app(200)

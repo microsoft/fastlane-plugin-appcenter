@@ -2,7 +2,7 @@
 
 [![fastlane Plugin Badge](https://rawcdn.githack.com/fastlane/fastlane/master/fastlane/assets/plugin-badge.svg)](https://rubygems.org/gems/fastlane-plugin-appcenter)
 [![Gem Version](https://badge.fury.io/rb/fastlane-plugin-appcenter.svg)](https://badge.fury.io/rb/fastlane-plugin-appcenter)
-[![Build Status](https://travis-ci.org/Microsoft/fastlane-plugin-appcenter.svg?branch=master)](https://travis-ci.org/Microsoft/fastlane-plugin-appcenter)
+[![Build Status](https://travis-ci.org/microsoft/fastlane-plugin-appcenter.svg?branch=master)](https://travis-ci.org/microsoft/fastlane-plugin-appcenter)
 
 ## Getting Started
 
@@ -24,7 +24,8 @@ appcenter_upload(
   api_token: "<appcenter token>",
   owner_name: "<your appcenter account name>",
   app_name: "<your app name>",
-  apk: "<path to android build binary>"
+  apk: "<path to android build binary>",
+  notify_testers: true # Set to false if you don't want to notify testers of your new release (default: `false`)
 )
 ```
 
@@ -39,7 +40,7 @@ The action parameters `api_token` and `owner_name` can also be omitted when thei
 - `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` - Flag to upload only the dSYM file to App Center
 - `APPCENTER_DISTRIBUTE_GROUP` - Comma separated list of Distribution Group names
 - `APPCENTER_DISTRIBUTE_MANDATORY_UPDATE` - Require users to update to this release
-- `APPCENTER_DISTRIBUTE_NOTIFY_TESTERS` - Send email notification about release
+- `APPCENTER_DISTRIBUTE_NOTIFY_TESTERS` - Send email notification about release (default: `false`)
 - `APPCENTER_DISTRIBUTE_RELEASE_NOTES` - Release notes
 - `APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING` - Clip release notes if its length is more then 5000, `true` by default
 - `APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK` - Additional release notes link
@@ -70,7 +71,7 @@ rubocop -a
 
 ## Issues and Feedback
 
-For any other issues and feedback about this plugin, please open a [GitHub issue](https://github.com/Microsoft/fastlane-plugin-appcenter/issues).
+For any other issues and feedback about this plugin, please open a [GitHub issue](https://github.com/microsoft/fastlane-plugin-appcenter/issues).
 
 ## Troubleshooting
 
