@@ -240,7 +240,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
             apk: './spec/fixtures/appfiles/apk_file_empty.apk'
           })
         end").runner.execute(:test)
-      end.to raise_error("No or wrong destination type given. Use `destination_type: 'group'`")
+      end.to raise_error("No or incorrect destination type given. Use `destination_type: 'group'`")
     end
 
     it "handles upload build error" do
