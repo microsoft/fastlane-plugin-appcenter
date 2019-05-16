@@ -145,24 +145,24 @@ module Fastlane
 
         
         if Helper::AppcenterHelper.get_app(api_token, owner_name, app_name)
-          true
-        else
-          should_create_app = !app_display_name.to_s.empty? || !app_os.to_s.empty? || !app_platform.to_s.empty?
-          
-          if Helper.test? || should_create_app || UI.confirm("App with name #{app_name} not found, create one?")
-            app_display_name = app_name if app_display_name.to_s.empty?
-            os = app_os.to_s.empty? ?
-              (Helper.test? ? "Android" : UI.select("Select OS", ["Android", "iOS"])) :
-              app_os
-            platform = app_platform.to_s.empty? ?
-              (Helper.test? ? "Java" : UI.select("Select Platform", platforms[os])) :
-              app_platform
+          return true
+        end
 
-            Helper::AppcenterHelper.create_app(api_token, owner_name, app_name, app_display_name, os, platform)
-          else
-            UI.error("Lane aborted")
-            false
-          end
+        should_create_app = !app_display_name.to_s.empty? || !app_os.to_s.empty? || !app_platform.to_s.empty?
+        
+        if Helper.test? || should_create_app || UI.confirm("App with name #{app_name} not found, create one?")
+          app_display_name = app_name if app_display_name.to_s.empty?
+          os = app_os.to_s.empty? ?
+            (Helper.test? ? "Android" : UI.select("Select OS", ["Android", "iOS"])) :
+            app_os
+          platform = app_platform.to_s.empty? ?
+            (Helper.test? ? "Java" : UI.select("Select Platform", platforms[os])) :
+            app_platform
+
+          Helper::AppcenterHelper.create_app(api_token, owner_name, app_name, app_display_name, os, platform)
+        else
+          UI.error("Lane aborted")
+          false
         end
       end
 
