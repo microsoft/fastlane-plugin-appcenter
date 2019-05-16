@@ -371,7 +371,7 @@ module Fastlane
       end
 
       # returns true if app exists, false in case of 404 and error otherwise
-      def self.create_app(api_token, owner_name, app_name, os, platform)
+      def self.create_app(api_token, app_name, os, platform)
         connection = self.connection
 
         response = connection.post do |req|
@@ -391,9 +391,31 @@ module Fastlane
           created = response.body
           UI.message("DEBUG: #{JSON.pretty_generate(created)}") if ENV['DEBUG']
           UI.success("Created #{os}/#{platform} app with name \"#{created['name']}\"")
-          true
+          created
         else
           UI.error("Error creating app #{response.status}: #{response.body}")
+          false
+        end
+      end
+
+      def self.transfer_app(api_token, owner_name, app_name, destination_owner_name)
+        connection = self.connection
+
+        response = connection.post do |req|
+          req.url("/v0.1/apps/#{owner_name}/#{app_name}/transfer/#{destination_owner_name}")
+          req.headers['X-API-Token'] = api_token
+          req.headers['internal-request-source'] = "fastlane"
+          req.headers['Content-Type'] = "application/json"
+        end
+
+        case response.status
+        when 200...300
+          transferred = response.body
+          UI.message("DEBUG: #{JSON.pretty_generate(transferred)}") if ENV['DEBUG']
+          UI.success("Transferred app to \"#{destination_owner_name}\"")
+          transferred
+        else
+          UI.error("Error transferring app #{response.status}: #{response.body}")
           false
         end
       end

@@ -6,11 +6,20 @@ def stub_check_app(status)
     )
 end
 
-def stub_create_app(status)
+def stub_create_app(status, owner_name)
   stub_request(:post, "https://api.appcenter.ms/v0.1/apps")
     .to_return(
       status: status,
-      body: "{\"name\":\"app\"}",
+      body: "{\"name\":\"app\", \"owner\":{\"name\":\"#{owner_name}\"}}",
+      headers: { 'Content-Type' => 'application/json' }
+    )
+end
+
+def stub_transfer_app(status, owner_name, app_name, destination_owner_name)
+  stub_request(:post, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}/transfer/#{destination_owner_name}")
+    .to_return(
+      status: status,
+      body: "{\"name\":\"app\", \"owner\": {\"name\":\"#{destination_owner_name}\"}}",
       headers: { 'Content-Type' => 'application/json' }
     )
 end
@@ -648,7 +657,31 @@ describe Fastlane::Actions::AppcenterUploadAction do
 
     it "creates app if it was not found" do
       stub_check_app(404)
-      stub_create_app(200)
+      stub_create_app(200, 'owner')
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)      
+      stub_get_group(200)
+      stub_add_to_group(200)
+      stub_get_release(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "creates app in org if it was not found" do
+      stub_check_app(404)
+      stub_create_app(200, 'other_owner')
+      stub_transfer_app(200, 'other_owner', 'app', 'owner')
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
@@ -671,7 +704,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
 
     it "handles app creation error" do
       stub_check_app(404)
-      stub_create_app(500)
+      stub_create_app(500, 'owner')
 
       Fastlane::FastFile.new.parse("lane :test do
         appcenter_upload({

@@ -147,7 +147,12 @@ module Fastlane
             os = Helper.test? ? "Android" : UI.select("Select OS", ["Android", "iOS"])
             platform = Helper.test? ? "Java" : UI.select("Select Platform", platforms[os])
 
-            Helper::AppcenterHelper.create_app(api_token, owner_name, app_name, os, platform)
+            created = Helper::AppcenterHelper.create_app(api_token, app_name, os, platform)
+            # by default app created for authorized user
+            # we need to update owner if it action called for org
+            if created && created['owner']['name'] != owner_name
+              Helper::AppcenterHelper.transfer_app(api_token, created['owner']['name'], app_name, owner_name)
+            end
           else
             UI.error("Lane aborted")
             false
