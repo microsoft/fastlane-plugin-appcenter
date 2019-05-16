@@ -666,7 +666,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
