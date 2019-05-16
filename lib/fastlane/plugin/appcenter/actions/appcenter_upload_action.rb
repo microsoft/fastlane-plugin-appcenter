@@ -149,7 +149,7 @@ module Fastlane
 
             created = Helper::AppcenterHelper.create_app(api_token, app_name, os, platform)
             # by default app created for authorized user
-            # we need to update owner if it action called for org
+            # we need to update owner if action called for org
             if created && created['owner']['name'] != owner_name
               Helper::AppcenterHelper.transfer_app(api_token, created['owner']['name'], app_name, owner_name)
             end
