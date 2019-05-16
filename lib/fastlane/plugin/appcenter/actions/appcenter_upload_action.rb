@@ -143,7 +143,6 @@ module Fastlane
           "iOS" => ['Objective-C-Swift', 'React-Native', 'Xamarin']
         }
 
-        
         if Helper::AppcenterHelper.get_app(api_token, owner_name, app_name)
           return true
         end
@@ -222,7 +221,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :app_display_name,
                                   env_name: "APPCENTER_APP_DISPLAY_NAME",
-                               description: "App display name. Used for new app creation, if app with 'app_name' name was not found",
+                               description: "App display name to use when creating a new app",
                                   optional: true,
                                       type: String),
 
