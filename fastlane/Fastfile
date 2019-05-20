@@ -97,6 +97,17 @@ lane :test do
     destination_type: "group"
   )
 
+  UI.message("\n\n\n=====================================\n uploading to store \n=====================================")
+
+  appcenter_upload(
+    api_token: ENV["TEST_APPCENTER_API_TOKEN"],
+    owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
+    app_name: "MyApplication",
+    apk: "./fastlane/app-release.apk",
+    destinations: ENV["TEST_APPCENTER_DISTRIBUTE_STORE"],
+    destination_type: "store"
+  )
+
   UI.message("\n\n\n=====================================\n uploading mandatory release \n=====================================")
 
   appcenter_upload(

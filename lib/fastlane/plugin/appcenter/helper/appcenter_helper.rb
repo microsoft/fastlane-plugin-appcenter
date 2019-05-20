@@ -245,26 +245,26 @@ module Fastlane
         end
       end
 
-      # get distribution group
-      def self.get_group(api_token, owner_name, app_name, group_name)
+      # get distribution group or store
+      def self.get_destination(api_token, owner_name, app_name, destination_type, destination_name)
         connection = self.connection
 
         response = connection.get do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups/#{ERB::Util.url_encode(group_name)}")
+          req.url("/v0.1/apps/#{owner_name}/#{app_name}/distribution_#{destination_type}s/#{ERB::Util.url_encode(destination_name)}")
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
         end
 
         case response.status
         when 200...300
-          group = response.body
-          UI.message("DEBUG: received group #{JSON.pretty_generate(group)}") if ENV['DEBUG']
-          group
+          destination = response.body
+          UI.message("DEBUG: received #{destination_type} #{JSON.pretty_generate(group)}") if ENV['DEBUG']
+          destination
         when 404
-          UI.error("Not found, invalid distribution group name")
+          UI.error("Not found, invalid distribution #{destination_type} name")
           false
         else
-          UI.error("Error getting group #{response.status}: #{response.body}")
+          UI.error("Error getting #{destination_type} #{response.status}: #{response.body}")
           false
         end
       end
@@ -306,21 +306,23 @@ module Fastlane
         end
       end
 
-      # add release to distribution group
-      def self.add_to_group(api_token, owner_name, app_name, release_id, group_id, mandatory_update = false, notify_testers = false)
+      # add release to distribution group or store
+      def self.add_to_destination(api_token, owner_name, app_name, release_id, destination_type, destination_id, mandatory_update = false, notify_testers = false)
         connection = self.connection
 
         UI.message("DEBUG: getting #{release_id}") if ENV['DEBUG']
 
+        body = { "id" => destination_id }
+        if destination_type == "group"
+          body["mandatory_update"] = mandatory_update
+          body["notify_testers"] = notify_testers
+        end
+
         response = connection.post do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}/groups")
+          req.url("/v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}/#{destination_type}s")
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
-          req.body = {
-            "id" => group_id,
-            "mandatory_update" => mandatory_update,
-            "notify_testers" => notify_testers
-          }
+          req.body = body
         end
 
         case response.status
@@ -339,10 +341,10 @@ module Fastlane
 
           release
         when 404
-          UI.error("Not found, invalid distribution group name")
+          UI.error("Not found, invalid distribution #{destination_type} name")
           false
         else
-          UI.error("Error adding to group #{response.status}: #{response.body}")
+          UI.error("Error adding to #{destination_type} #{response.status}: #{response.body}")
           false
         end
       end
