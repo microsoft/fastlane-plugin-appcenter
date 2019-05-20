@@ -258,7 +258,7 @@ module Fastlane
         case response.status
         when 200...300
           destination = response.body
-          UI.message("DEBUG: received #{destination_type} #{JSON.pretty_generate(group)}") if ENV['DEBUG']
+          UI.message("DEBUG: received #{destination_type} #{JSON.pretty_generate(destination)}") if ENV['DEBUG']
           destination
         when 404
           UI.error("Not found, invalid distribution #{destination_type} name")
