@@ -123,8 +123,8 @@ module Fastlane
         end
       end
 
-      # committs or aborts dsym upload
-      def self.update_dsym_upload(api_token, owner_name, app_name, symbol_upload_id, status)
+      # committs or aborts symbol upload
+      def self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, status)
         connection = self.connection
 
         response = connection.patch do |req|
@@ -146,28 +146,30 @@ module Fastlane
         end
       end
 
-      # TODO: Convert this to more generic upload_symbol and support Android mapping as first-class citizens
-      # upload dSYM files to specified upload url
+      # upload symbol (dSYM or mapping) files to specified upload url
       # if succeed, then commits the upload
       # otherwise aborts
-      def self.upload_dsym(api_token, owner_name, app_name, dsym, symbol_upload_id, upload_url)
+      def self.upload_symbol(api_token, owner_name, app_name, symbol, symbol_type, symbol_upload_id, upload_url)
         connection = self.connection(upload_url, true)
 
         response = connection.put do |req|
           req.headers['x-ms-blob-type'] = "BlockBlob"
-          req.headers['Content-Length'] = File.size(dsym).to_s
+          req.headers['Content-Length'] = File.size(symbol).to_s
           req.headers['internal-request-source'] = "fastlane"
-          req.body = Faraday::UploadIO.new(dsym, 'application/octet-stream') if dsym && File.exist?(dsym)
+          req.body = Faraday::UploadIO.new(symbol, 'application/octet-stream') if symbol && File.exist?(symbol)
         end
+
+        logType = "dSYM" if (symbol_type == "Apple")
+        logType = "mapping" if (symbol_type == "Android")
 
         case response.status
         when 200...300
-          self.update_dsym_upload(api_token, owner_name, app_name, symbol_upload_id, 'committed')
-          UI.success("dSYM uploaded")
+          self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, 'committed')
+          UI.success("#{logType} uploaded")
         else
-          UI.error("Error uploading dSYM #{response.status}: #{response.body}")
-          self.update_dsym_upload(api_token, owner_name, app_name, symbol_upload_id, 'aborted')
-          UI.error("dSYM upload aborted")
+          UI.error("Error uploading #{logType} #{response.status}: #{response.body}")
+          self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, 'aborted')
+          UI.error("#{logType} upload aborted")
           false
         end
       end

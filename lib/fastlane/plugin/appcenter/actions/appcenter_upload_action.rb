@@ -45,6 +45,7 @@ module Fastlane
 
           UI.message("Starting dSYM upload...")
           
+          # TODO: this should eventually be removed once we have warned of deprecation for long enough
           if File.extname(dsym_path) == ".txt"
             file_name = File.basename(dsym_path)
             dsym_upload_details = Helper::AppcenterHelper.create_mapping_upload(api_token, owner_name, app_name, file_name ,build_number, version)
@@ -57,33 +58,32 @@ module Fastlane
             upload_url = dsym_upload_details['upload_url']
 
             UI.message("Uploading dSYM...")
-            Helper::AppcenterHelper.upload_dsym(api_token, owner_name, app_name, dsym_path, symbol_upload_id, upload_url)
+            Helper::AppcenterHelper.upload_symbol(api_token, owner_name, app_name, dsym_path, "Apple", symbol_upload_id, upload_url)
           end
         end
       end
 
-      # TODO: Discuss converting internal functions to create_symbol_upload rather than create_dsym_upload and pass mapping as first-class option
-      # def self.run_mapping_upload(params)
-      #   values = params.values
-      #   api_token = params[:api_token]
-      #   owner_name = params[:owner_name]
-      #   app_name = params[:app_name]
-      #   file = params[:ipa]
-      #   dsym = params[:dsym]
-      #   build_number = params[:build_number]
-      #   version = params[:version]
+      def self.run_mapping_upload(params)
+        values = params.values
+        api_token = params[:api_token]
+        owner_name = params[:owner_name]
+        app_name = params[:app_name]
+        file = params[:apk]
+        mapping = params[:mapping]
+        build_number = params[:build_number]
+        version = params[:version]
 
-      #   file_name = File.basename(dsym_path)
-      #   dsym_upload_details = Helper::AppcenterHelper.create_mapping_upload(api_token, owner_name, app_name, file_name ,build_number, version)
+        UI.message("Starting mapping upload...")
+        symbol_upload_details = Helper::AppcenterHelper.create_mapping_upload(api_token, owner_name, app_name, file, build_number, version)
 
-      #   if dsym_upload_details
-      #     symbol_upload_id = dsym_upload_details['symbol_upload_id']
-      #     upload_url = dsym_upload_details['upload_url']
+        if symbol_upload_details
+          symbol_upload_id = symbol_upload_details['symbol_upload_id']
+          upload_url = symbol_upload_details['upload_url']
 
-      #     UI.message("Uploading dSYM...")
-      #     Helper::AppcenterHelper.upload_dsym(api_token, owner_name, app_name, dsym_path, symbol_upload_id, upload_url)
-      #   end
-      # end
+          UI.message("Uploading mapping...")
+          Helper::AppcenterHelper.upload_symbol(api_token, owner_name, app_name, mapping, symbol_upload_id, upload_url)
+        end
+      end
 
       # run whole upload process for release
       def self.run_release_upload(params)
@@ -186,8 +186,8 @@ module Fastlane
         # if app found or successfully created
         if self.get_or_create_app(params)
           self.run_release_upload(params) unless upload_dsym_only or unless upload_mapping_only
-          self.run_dsym_upload(params) when upload_dsym_only = true
-          self.run_mapping_upload(params) when upload_mapping_only = true
+          self.run_dsym_upload(params) if (upload_dsym_only == true)
+          self.run_mapping_upload(params) if (upload_mapping_only == true)
         end
 
         return values if Helper.test?
