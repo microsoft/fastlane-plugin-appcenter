@@ -62,6 +62,29 @@ module Fastlane
         end
       end
 
+      # TODO: Discuss converting internal functions to create_symbol_upload rather than create_dsym_upload and pass mapping as first-class option
+      # def self.run_mapping_upload(params)
+      #   values = params.values
+      #   api_token = params[:api_token]
+      #   owner_name = params[:owner_name]
+      #   app_name = params[:app_name]
+      #   file = params[:ipa]
+      #   dsym = params[:dsym]
+      #   build_number = params[:build_number]
+      #   version = params[:version]
+
+      #   file_name = File.basename(dsym_path)
+      #   dsym_upload_details = Helper::AppcenterHelper.create_mapping_upload(api_token, owner_name, app_name, file_name ,build_number, version)
+
+      #   if dsym_upload_details
+      #     symbol_upload_id = dsym_upload_details['symbol_upload_id']
+      #     upload_url = dsym_upload_details['upload_url']
+
+      #     UI.message("Uploading dSYM...")
+      #     Helper::AppcenterHelper.upload_dsym(api_token, owner_name, app_name, dsym_path, symbol_upload_id, upload_url)
+      #   end
+      # end
+
       # run whole upload process for release
       def self.run_release_upload(params)
         values = params.values
@@ -158,11 +181,13 @@ module Fastlane
       def self.run(params)
         values = params.values
         upload_dsym_only = params[:upload_dsym_only]
+        upload_mapping_only = params[:upload_mapping_only]
 
         # if app found or successfully created
         if self.get_or_create_app(params)
-          self.run_release_upload(params) unless upload_dsym_only
-          self.run_dsym_upload(params)
+          self.run_release_upload(params) unless upload_dsym_only or unless upload_mapping_only
+          self.run_dsym_upload(params) when upload_dsym_only = true
+          self.run_mapping_upload(params) when upload_mapping_only = true
         end
 
         return values if Helper.test?
@@ -246,14 +271,37 @@ module Fastlane
                                   optional: true,
                                       type: String,
                               verify_block: proc do |value|
+                                deprecated_files = ["mapping.txt"]
                                 if value
                                   UI.user_error!("Couldn't find dSYM file at path '#{value}'") unless File.exist?(value)
+                                  UI.message("Support for mapping.txt has been deprecated. Please use APPCENTER_DISTRIBUTE_ANDROID_MAPPING instead.") when deprecated_files.include? File.name(value)
                                 end
                               end),
 
           FastlaneCore::ConfigItem.new(key: :upload_dsym_only,
                                   env_name: "APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY",
                                description: "Flag to upload only the dSYM file to App Center",
+                                  optional: true,
+                                 is_string: false,
+                             default_value: false),
+
+          FastlaneCore::ConfigItem.new(key: :mapping,
+                                  env_name: "APPCENTER_DISTRIBUTE_ANDROID_MAPPING",
+                               description: "Path to your Android Proguard or R8 mapping.txt",
+                             default_value: Actions.lane_context[SharedValues::MAPPING_OUTPUT_PATH],
+                                  optional: true,
+                                      type: String,
+                              verify_block: proc do |value|
+                                accepted_formats = ["mapping.txt"]
+                                if value
+                                  UI.user_error!("Couldn't find mapping.txt at path '#{value}'") unless File.exist?(value)
+                                  UI.user_error!("Only \"mapping.txt\" file name is allowed, you provided \"#{File.name(value)}\"") unless accepted_formats.include? File.name(value)
+                                end
+                              end),
+
+          FastlaneCore::ConfigItem.new(key: :upload_mapping_only,
+                                  env_name: "APPCENTER_DISTRIBUTE_UPLOAD_ANDROID_MAPPING_ONLY",
+                               description: "Flag to upload only the mapping.txt file to App Center",
                                   optional: true,
                                  is_string: false,
                              default_value: false),
@@ -354,6 +402,7 @@ module Fastlane
             apk: "./app-release.apk",
             destinations: "Testers",
             destination_type: "group",
+            mapping: "./mapping.txt",
             release_notes: "release notes",
             notify_testers: false
           )',

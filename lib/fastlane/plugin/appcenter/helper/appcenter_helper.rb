@@ -146,6 +146,7 @@ module Fastlane
         end
       end
 
+      # TODO: Convert this to more generic upload_symbol and support Android mapping as first-class citizens
       # upload dSYM files to specified upload url
       # if succeed, then commits the upload
       # otherwise aborts
