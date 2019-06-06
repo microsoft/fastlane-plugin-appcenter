@@ -81,7 +81,7 @@ module Fastlane
           upload_url = symbol_upload_details['upload_url']
 
           UI.message("Uploading mapping...")
-          Helper::AppcenterHelper.upload_symbol(api_token, owner_name, app_name, mapping, symbol_upload_id, upload_url)
+          Helper::AppcenterHelper.upload_symbol(api_token, owner_name, app_name, mapping, "Android", symbol_upload_id, upload_url)
         end
       end
 
@@ -274,7 +274,7 @@ module Fastlane
                                 deprecated_files = ["mapping.txt"]
                                 if value
                                   UI.user_error!("Couldn't find dSYM file at path '#{value}'") unless File.exist?(value)
-                                  UI.message("Support for mapping.txt has been deprecated. Please use APPCENTER_DISTRIBUTE_ANDROID_MAPPING instead.") if (deprecated_files.include? File.name(value))
+                                  UI.message("Support for mapping.txt has been deprecated. Please use APPCENTER_DISTRIBUTE_ANDROID_MAPPING instead.") if deprecated_files.include? File.basename(value)
                                 end
                               end),
 
@@ -288,14 +288,13 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :mapping,
                                   env_name: "APPCENTER_DISTRIBUTE_ANDROID_MAPPING",
                                description: "Path to your Android Proguard or R8 mapping.txt",
-                             default_value: Actions.lane_context[SharedValues::MAPPING_OUTPUT_PATH],
                                   optional: true,
                                       type: String,
                               verify_block: proc do |value|
                                 accepted_formats = ["mapping.txt"]
                                 if value
                                   UI.user_error!("Couldn't find mapping.txt at path '#{value}'") unless File.exist?(value)
-                                  UI.user_error!("Only \"mapping.txt\" file name is allowed, you provided \"#{File.name(value)}\"") unless accepted_formats.include? File.name(value)
+                                  UI.user_error!("Only \"mapping.txt\" file name is allowed, you provided \"#{File.name(value)}\"") unless accepted_formats.include? File.basename(value)
                                 end
                               end),
 
