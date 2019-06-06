@@ -3,6 +3,7 @@ module Fastlane
     class AppcenterHelper
 
       # create request
+      # TODO: handle dsym vs mapping
       def self.connection(upload_url = false, dsym = false)
         require 'faraday'
         require 'faraday_middleware'

@@ -185,9 +185,9 @@ module Fastlane
 
         # if app found or successfully created
         if self.get_or_create_app(params)
-          self.run_release_upload(params) unless upload_dsym_only or unless upload_mapping_only
-          self.run_dsym_upload(params) if (upload_dsym_only == true)
-          self.run_mapping_upload(params) if (upload_mapping_only == true)
+          self.run_release_upload(params) unless upload_dsym_only unless upload_mapping_only
+          self.run_dsym_upload(params) if upload_dsym_only 
+          self.run_mapping_upload(params) if upload_mapping_only 
         end
 
         return values if Helper.test?
@@ -274,7 +274,7 @@ module Fastlane
                                 deprecated_files = ["mapping.txt"]
                                 if value
                                   UI.user_error!("Couldn't find dSYM file at path '#{value}'") unless File.exist?(value)
-                                  UI.message("Support for mapping.txt has been deprecated. Please use APPCENTER_DISTRIBUTE_ANDROID_MAPPING instead.") when deprecated_files.include? File.name(value)
+                                  UI.message("Support for mapping.txt has been deprecated. Please use APPCENTER_DISTRIBUTE_ANDROID_MAPPING instead.") if (deprecated_files.include? File.name(value))
                                 end
                               end),
 
