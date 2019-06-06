@@ -73,6 +73,10 @@ module Fastlane
         build_number = params[:build_number]
         version = params[:version]
 
+        if mapping == nil
+          return
+        end
+
         UI.message("Starting mapping upload...")
         symbol_upload_details = Helper::AppcenterHelper.create_mapping_upload(api_token, owner_name, app_name, file, build_number, version)
 
@@ -186,8 +190,8 @@ module Fastlane
         # if app found or successfully created
         if self.get_or_create_app(params)
           self.run_release_upload(params) unless upload_dsym_only unless upload_mapping_only
-          self.run_dsym_upload(params) if upload_dsym_only 
-          self.run_mapping_upload(params) if upload_mapping_only 
+          self.run_dsym_upload(params) 
+          self.run_mapping_upload(params) 
         end
 
         return values if Helper.test?
