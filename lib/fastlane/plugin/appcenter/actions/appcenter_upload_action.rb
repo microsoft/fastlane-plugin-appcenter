@@ -278,7 +278,7 @@ module Fastlane
                                 deprecated_files = ["mapping.txt"]
                                 if value
                                   UI.user_error!("Couldn't find dSYM file at path '#{value}'") unless File.exist?(value)
-                                  UI.message("Support for mapping.txt has been deprecated. Please use APPCENTER_DISTRIBUTE_ANDROID_MAPPING instead.") if deprecated_files.include? File.basename(value)
+                                  UI.message("Support for mapping.txt has been deprecated. Please use --mapping parameter or APPCENTER_DISTRIBUTE_ANDROID_MAPPING environment variable instead.") if deprecated_files.include? File.basename(value)
                                 end
                               end),
 
