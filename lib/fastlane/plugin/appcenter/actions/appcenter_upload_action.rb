@@ -68,7 +68,6 @@ module Fastlane
         api_token = params[:api_token]
         owner_name = params[:owner_name]
         app_name = params[:app_name]
-        file = params[:apk]
         mapping = params[:mapping]
         build_number = params[:build_number]
         version = params[:version]
