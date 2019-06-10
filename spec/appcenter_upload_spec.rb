@@ -688,8 +688,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
       stub_update_release(200)      
-      stub_get_group(200)
-      stub_add_to_group(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
       stub_get_release(200)
 
       Fastlane::FastFile.new.parse("lane :test do
