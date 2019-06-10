@@ -406,6 +406,8 @@ module Fastlane
             apk: "./app-release.apk",
             destinations: "Testers",
             destination_type: "group",
+            build_number: "3",
+            version: "1.0.0",
             mapping: "./mapping.txt",
             release_notes: "release notes",
             notify_testers: false
