@@ -45,6 +45,7 @@ module Fastlane
 
           UI.message("Starting dSYM upload...")
           
+          # TODO: this should eventually be removed once we have warned of deprecation for long enough
           if File.extname(dsym_path) == ".txt"
             file_name = File.basename(dsym_path)
             dsym_upload_details = Helper::AppcenterHelper.create_mapping_upload(api_token, owner_name, app_name, file_name ,build_number, version)
@@ -57,8 +58,34 @@ module Fastlane
             upload_url = dsym_upload_details['upload_url']
 
             UI.message("Uploading dSYM...")
-            Helper::AppcenterHelper.upload_dsym(api_token, owner_name, app_name, dsym_path, symbol_upload_id, upload_url)
+            Helper::AppcenterHelper.upload_symbol(api_token, owner_name, app_name, dsym_path, "Apple", symbol_upload_id, upload_url)
           end
+        end
+      end
+
+      def self.run_mapping_upload(params)
+        values = params.values
+        api_token = params[:api_token]
+        owner_name = params[:owner_name]
+        app_name = params[:app_name]
+        mapping = params[:mapping]
+        build_number = params[:build_number]
+        version = params[:version]
+
+        if mapping == nil
+          return
+        end
+
+        UI.message("Starting mapping upload...")
+        mapping_name = File.basename(mapping)
+        symbol_upload_details = Helper::AppcenterHelper.create_mapping_upload(api_token, owner_name, app_name, mapping_name, build_number, version)
+
+        if symbol_upload_details
+          symbol_upload_id = symbol_upload_details['symbol_upload_id']
+          upload_url = symbol_upload_details['upload_url']
+
+          UI.message("Uploading mapping...")
+          Helper::AppcenterHelper.upload_symbol(api_token, owner_name, app_name, mapping, "Android", symbol_upload_id, upload_url)
         end
       end
 
@@ -168,11 +195,13 @@ module Fastlane
       def self.run(params)
         values = params.values
         upload_dsym_only = params[:upload_dsym_only]
+        upload_mapping_only = params[:upload_mapping_only]
 
         # if app found or successfully created
         if self.get_or_create_app(params)
-          self.run_release_upload(params) unless upload_dsym_only
-          self.run_dsym_upload(params)
+          self.run_release_upload(params) unless upload_dsym_only || upload_mapping_only
+          self.run_dsym_upload(params) unless upload_mapping_only
+          self.run_mapping_upload(params) unless upload_dsym_only
         end
 
         return values if Helper.test?
@@ -274,14 +303,36 @@ module Fastlane
                                   optional: true,
                                       type: String,
                               verify_block: proc do |value|
+                                deprecated_files = [".txt"]
                                 if value
                                   UI.user_error!("Couldn't find dSYM file at path '#{value}'") unless File.exist?(value)
+                                  UI.message("Support for *.txt has been deprecated. Please use --mapping parameter or APPCENTER_DISTRIBUTE_ANDROID_MAPPING environment variable instead.") if deprecated_files.include? File.extname(value)
                                 end
                               end),
 
           FastlaneCore::ConfigItem.new(key: :upload_dsym_only,
                                   env_name: "APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY",
                                description: "Flag to upload only the dSYM file to App Center",
+                                  optional: true,
+                                 is_string: false,
+                             default_value: false),
+
+          FastlaneCore::ConfigItem.new(key: :mapping,
+                                  env_name: "APPCENTER_DISTRIBUTE_ANDROID_MAPPING",
+                               description: "Path to your Android mapping.txt",
+                                  optional: true,
+                                      type: String,
+                              verify_block: proc do |value|
+                                accepted_formats = [".txt"]
+                                if value
+                                  UI.user_error!("Couldn't find mapping file at path '#{value}'") unless File.exist?(value)
+                                  UI.user_error!("Only \"*.txt\" formats are allowed, you provided \"#{File.name(value)}\"") unless accepted_formats.include? File.extname(value)
+                                end
+                              end),
+
+          FastlaneCore::ConfigItem.new(key: :upload_mapping_only,
+                                  env_name: "APPCENTER_DISTRIBUTE_UPLOAD_ANDROID_MAPPING_ONLY",
+                               description: "Flag to upload only the mapping.txt file to App Center",
                                   optional: true,
                                  is_string: false,
                              default_value: false),
@@ -382,6 +433,9 @@ module Fastlane
             apk: "./app-release.apk",
             destinations: "Testers",
             destination_type: "group",
+            build_number: "3",
+            version: "1.0.0",
+            mapping: "./mapping.txt",
             release_notes: "release notes",
             notify_testers: false
           )',

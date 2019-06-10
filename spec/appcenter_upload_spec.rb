@@ -38,12 +38,27 @@ def stub_create_dsym_upload(status)
     )
 end
 
+def stub_create_mapping_upload(status, version, build, file_name = "mapping.txt")
+  stub_request(:post, "https://api.appcenter.ms/v0.1/apps/owner/app/symbol_uploads")
+    .with(body: "{\"symbol_type\":\"AndroidProguard\",\"file_name\":\"#{file_name}\",\"build\":\"3\",\"version\":\"1.0.0\"}",)
+    .to_return(
+      status: status,
+      body: "",
+      headers: { 'Content-Type' => 'application/json' }
+    )
+end
+
 def stub_upload_build(status)
   stub_request(:post, "https://upload.com/")
     .to_return(status: status, body: "", headers: {})
 end
 
 def stub_upload_dsym(status)
+  stub_request(:put, "https://upload_dsym.com/")
+    .to_return(status: status, body: "", headers: {})
+end
+
+def stub_upload_mapping(status)
   stub_request(:put, "https://upload_dsym.com/")
     .to_return(status: status, body: "", headers: {})
 end
@@ -57,6 +72,14 @@ def stub_update_release_upload(status, release_status)
 end
 
 def stub_update_dsym_upload(status, release_status)
+  stub_request(:patch, "https://api.appcenter.ms/v0.1/apps/owner/app/symbol_uploads/symbol_upload_id")
+    .with(
+      body: "{\"status\":\"#{release_status}\"}"
+    )
+    .to_return(status: status, body: "{\"release_id\":\"1\"}", headers: { 'Content-Type' => 'application/json' })
+end
+
+def stub_update_mapping_upload(status, release_status)
   stub_request(:patch, "https://api.appcenter.ms/v0.1/apps/owner/app/symbol_uploads/symbol_upload_id")
     .with(
       body: "{\"status\":\"#{release_status}\"}"
@@ -742,6 +765,81 @@ describe Fastlane::Actions::AppcenterUploadAction do
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
           destinations: 'Testers',
           destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "allows to send android mappings" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)      
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+      stub_create_mapping_upload(200, "1.0.0", "3")
+      stub_upload_mapping(200)
+      stub_update_mapping_upload(200, "committed")
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          mapping: './spec/fixtures/symbols/mapping.txt',
+          build_number: '3',
+          version: '1.0.0',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "allows to send android mappings with custom name" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)      
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+      stub_create_mapping_upload(200, "1.0.0", "3", "renamed-mapping.txt")
+      stub_upload_mapping(200)
+      stub_update_mapping_upload(200, "committed")
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          mapping: './spec/fixtures/symbols/renamed-mapping.txt',
+          build_number: '3',
+          version: '1.0.0',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "allows to send only android mappings" do
+      stub_check_app(200)
+      stub_create_mapping_upload(200, "1.0.0", "3", "renamed-mapping.txt")
+      stub_upload_mapping(200)
+      stub_update_mapping_upload(200, "committed")
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          upload_mapping_only: true,
+          mapping: './spec/fixtures/symbols/renamed-mapping.txt',
+          build_number: '3',
+          version: '1.0.0'
         })
       end").runner.execute(:test)
     end
