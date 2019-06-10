@@ -298,7 +298,7 @@ module Fastlane
                                 accepted_formats = [".txt"]
                                 if value
                                   UI.user_error!("Couldn't find mapping file at path '#{value}'") unless File.exist?(value)
-                                  UI.user_error!("Only \"*.txt\" file name is allowed, you provided \"#{File.name(value)}\"") unless accepted_formats.include? File.extname(value)
+                                  UI.user_error!("Only \"*.txt\" formats are allowed, you provided \"#{File.name(value)}\"") unless accepted_formats.include? File.extname(value)
                                 end
                               end),
 
