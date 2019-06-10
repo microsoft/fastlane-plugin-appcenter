@@ -279,7 +279,7 @@ module Fastlane
                                 deprecated_files = [".txt"]
                                 if value
                                   UI.user_error!("Couldn't find dSYM file at path '#{value}'") unless File.exist?(value)
-                                  UI.message("Support for mapping.txt has been deprecated. Please use --mapping parameter or APPCENTER_DISTRIBUTE_ANDROID_MAPPING environment variable instead.") if deprecated_files.include? File.extname(value)
+                                  UI.message("Support for *.txt has been deprecated. Please use --mapping parameter or APPCENTER_DISTRIBUTE_ANDROID_MAPPING environment variable instead.") if deprecated_files.include? File.extname(value)
                                 end
                               end),
 
@@ -298,8 +298,8 @@ module Fastlane
                               verify_block: proc do |value|
                                 accepted_formats = [".txt"]
                                 if value
-                                  UI.user_error!("Couldn't find mapping.txt at path '#{value}'") unless File.exist?(value)
-                                  UI.user_error!("Only \"mapping.txt\" file name is allowed, you provided \"#{File.name(value)}\"") unless accepted_formats.include? File.extname(value)
+                                  UI.user_error!("Couldn't find mapping file at path '#{value}'") unless File.exist?(value)
+                                  UI.user_error!("Only \"*.txt\" file name is allowed, you provided \"#{File.name(value)}\"") unless accepted_formats.include? File.extname(value)
                                 end
                               end),
 
