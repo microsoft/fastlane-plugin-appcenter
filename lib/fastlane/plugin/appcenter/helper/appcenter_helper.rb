@@ -370,13 +370,13 @@ module Fastlane
           UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
           false
         else
-          UI.error("Error #{response.status}: #{response.body}")
+          UI.error("Error getting app #{owner}/#{app_name}, #{response.status}: #{response.body}")
           false
         end
       end
 
       # returns true if app exists, false in case of 404 and error otherwise
-      def self.create_app(api_token, owner_name, app_name, os, platform)
+      def self.create_app(api_token, owner_name, app_name, app_display_name, os, platform)
         connection = self.connection
 
         response = connection.post do |req|
@@ -384,7 +384,7 @@ module Fastlane
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
           req.body = {
-            "display_name" => app_name,
+            "display_name" => app_display_name,
             "name" => app_name,
             "os" => os,
             "platform" => platform
@@ -395,7 +395,7 @@ module Fastlane
         when 200...300
           created = response.body
           UI.message("DEBUG: #{JSON.pretty_generate(created)}") if ENV['DEBUG']
-          UI.success("Created #{os}/#{platform} app with name \"#{created['name']}\"")
+          UI.success("Created #{os}/#{platform} app with name \"#{created['name']}\" and display name \"#{created['display_name']}\"")
           true
         else
           UI.error("Error creating app #{response.status}: #{response.body}")

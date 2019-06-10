@@ -6,8 +6,11 @@ def stub_check_app(status)
     )
 end
 
-def stub_create_app(status)
+def stub_create_app(status, app_name = "app", app_display_name = "app", app_os = "Android", app_platform = "Java")
   stub_request(:post, "https://api.appcenter.ms/v0.1/apps")
+    .with(
+      body: "{\"display_name\":\"#{app_display_name}\",\"name\":\"#{app_name}\",\"os\":\"#{app_os}\",\"platform\":\"#{app_platform}\"}",
+    )
     .to_return(
       status: status,
       body: "{\"name\":\"app\"}",
@@ -703,7 +706,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
 
     it "creates app if it was not found" do
       stub_check_app(404)
-      stub_create_app(200)
+      stub_create_app(200, "app", "app", "Android", "Java")
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
@@ -717,6 +720,32 @@ describe Fastlane::Actions::AppcenterUploadAction do
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "creates app if it was not found with specified os, platform and display_name" do
+      stub_check_app(404)
+      stub_create_app(200, "app", "App Name", "Android", "Java")
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)      
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          app_display_name: 'App Name',
+          app_os: 'Android',
+          app_platform: 'Java',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
           destinations: 'Testers',
           destination_type: 'group'

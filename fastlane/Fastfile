@@ -16,6 +16,19 @@ lane :test_autocreation do
   )
 end
 
+lane :test_autocreation_without_prompts do
+  # app should be autocreated if not found, without asking user
+  appcenter_upload(
+    api_token: ENV["TEST_APPCENTER_API_TOKEN"],
+    owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
+    app_name: "my-new-app-center-app",
+    app_display_name: "My New App Center App",
+    app_os: "Android",
+    app_platform: "Java",
+    apk: "./fastlane/app-release.apk"
+  )
+end
+
 lane :test_release_notes do
   appcenter_upload(
     api_token: ENV["TEST_APPCENTER_API_TOKEN"],
