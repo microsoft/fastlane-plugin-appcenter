@@ -38,7 +38,8 @@ The action parameters `api_token` and `owner_name` can also be omitted when thei
 - `APPCENTER_DISTRIBUTE_IPA` - Build release path for ios build
 - `APPCENTER_DISTRIBUTE_DSYM` - Path to your symbols file. For iOS provide path to app.dSYM.zip
 - `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` - Flag to upload only the dSYM file to App Center
-- `APPCENTER_DISTRIBUTE_GROUP` - Comma separated list of Distribution Group names
+- `APPCENTER_DISTRIBUTE_DESTINATIONS` - Comma separated list of destination names. Both distribution groups and stores are supported. All names are required to be of the same destination type. Default is `Collaborators`.
+- `APPCENTER_DISTRIBUTE_DESTINATION_TYPE` - Destination type of distribution destination. `group` and `store` are supported. Default is `group`
 - `APPCENTER_DISTRIBUTE_MANDATORY_UPDATE` - Require users to update to this release
 - `APPCENTER_DISTRIBUTE_NOTIFY_TESTERS` - Send email notification about release (default: `false`)
 - `APPCENTER_DISTRIBUTE_RELEASE_NOTES` - Release notes

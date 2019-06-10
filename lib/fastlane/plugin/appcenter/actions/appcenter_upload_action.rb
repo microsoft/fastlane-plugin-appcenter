@@ -112,17 +112,17 @@ module Fastlane
 
             destinations_array = destinations.split(',')
             destinations_array.each do |destination_name|
-              group = Helper::AppcenterHelper.get_group(api_token, owner_name, app_name, destination_name)
-              if group
-                group_id = group['id']
-                distributed_release = Helper::AppcenterHelper.add_to_group(api_token, owner_name, app_name, release_id, group_id, mandatory_update, notify_testers)
+              destination = Helper::AppcenterHelper.get_destination(api_token, owner_name, app_name, destination_type, destination_name)
+              if destination
+                destination_id = destination['id']
+                distributed_release = Helper::AppcenterHelper.add_to_destination(api_token, owner_name, app_name, release_id, destination_type, destination_id, mandatory_update, notify_testers)
                 if distributed_release
-                  UI.success("Release #{distributed_release['short_version']} was successfully distributed to group \"#{destination_name}\"")
+                  UI.success("Release #{distributed_release['short_version']} was successfully distributed to #{destination_type} \"#{destination_name}\"")
                 else
                   UI.error("Release '#{release_id}' was not found")
                 end
               else
-                UI.error("Group '#{destination_name}' was not found")
+                UI.error("#{destination_type} '#{destination_name}' was not found")
               end
             end
           end
@@ -298,7 +298,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :destinations,
                                   env_name: "APPCENTER_DISTRIBUTE_DESTINATIONS",
-                               description: "Comma separated list of destination names. Currently only distribution groups are supported",
+                               description: "Comma separated list of destination names. Both distribution groups and stores are supported. All names are required to be of the same destination type",
                              default_value: "Collaborators",
                                   optional: true,
                                       type: String),
@@ -306,24 +306,24 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :destination_type,
                                   env_name: "APPCENTER_DISTRIBUTE_DESTINATION_TYPE",
-                               description: "Destination type of distribution destination. Currently only 'group' is supported",
+                               description: "Destination type of distribution destination. 'group' and 'store' are supported",
                              default_value: "group",
                                   optional: true,
                                       type: String,
                               verify_block: proc do |value|
-                                UI.user_error!("No or incorrect destination type given. Use `destination_type: 'group'`") unless value && !value.empty? && value == "group"
+                                UI.user_error!("No or incorrect destination type given. Use 'group' or 'store'") unless value && !value.empty? && ["group", "store"].include?(value)
                               end),
 
           FastlaneCore::ConfigItem.new(key: :mandatory_update,
                                   env_name: "APPCENTER_DISTRIBUTE_MANDATORY_UPDATE",
-                               description: "Require users to update to this release",
+                               description: "Require users to update to this release. Ignored if destination type is 'store'",
                                   optional: true,
                                  is_string: false,
                              default_value: false),
 
           FastlaneCore::ConfigItem.new(key: :notify_testers,
                                   env_name: "APPCENTER_DISTRIBUTE_NOTIFY_TESTERS",
-                               description: "Send email notification about release",
+                               description: "Send email notification about release. Ignored if destination type is 'store'",
                                   optional: true,
                                  is_string: false,
                              default_value: false),
