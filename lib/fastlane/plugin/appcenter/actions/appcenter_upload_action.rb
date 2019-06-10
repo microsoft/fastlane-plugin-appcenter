@@ -189,7 +189,7 @@ module Fastlane
 
         # if app found or successfully created
         if self.get_or_create_app(params)
-          self.run_release_upload(params) unless upload_dsym_only unless upload_mapping_only
+          self.run_release_upload(params) unless upload_dsym_only || upload_mapping_only
           self.run_dsym_upload(params) unless upload_mapping_only
           self.run_mapping_upload(params) unless upload_dsym_only
         end
