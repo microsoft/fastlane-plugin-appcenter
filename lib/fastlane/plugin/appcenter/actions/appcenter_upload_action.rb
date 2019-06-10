@@ -292,7 +292,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :mapping,
                                   env_name: "APPCENTER_DISTRIBUTE_ANDROID_MAPPING",
-                               description: "Path to your Android Proguard or R8 mapping.txt",
+                               description: "Path to your Android mapping.txt",
                                   optional: true,
                                       type: String,
                               verify_block: proc do |value|
