@@ -78,7 +78,8 @@ module Fastlane
         end
 
         UI.message("Starting mapping upload...")
-        symbol_upload_details = Helper::AppcenterHelper.create_mapping_upload(api_token, owner_name, app_name, mapping, build_number, version)
+        mapping_name = File.basename(mapping)
+        symbol_upload_details = Helper::AppcenterHelper.create_mapping_upload(api_token, owner_name, app_name, mapping_name, build_number, version)
 
         if symbol_upload_details
           symbol_upload_id = symbol_upload_details['symbol_upload_id']
