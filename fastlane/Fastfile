@@ -139,10 +139,10 @@ lane :test do
     owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication",
     apk: "./fastlane/app-release.apk",
-    upload_dsym_only: true,
+    upload_mapping_only: true,
     build_number: "3",
     version: "1.0.0",
-    dsym: "./fastlane/mapping.txt",
+    mapping: "./fastlane/mapping.txt",
     notify_testers: false
   )
 end
