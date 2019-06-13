@@ -370,7 +370,7 @@ module Fastlane
           UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
           false
         else
-          UI.error("Error getting app #{owner}/#{app_name}, #{response.status}: #{response.body}")
+          UI.error("Error getting app #{owner_name}/#{app_name}, #{response.status}: #{response.body}")
           false
         end
       end
