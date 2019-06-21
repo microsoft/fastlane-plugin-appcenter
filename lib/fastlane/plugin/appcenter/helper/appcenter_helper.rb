@@ -48,6 +48,8 @@ module Fastlane
         when 404
           UI.error("Not found, invalid owner or application name")
           false
+        when 500..
+          UI.crash!("Internal Service Error, please try again later")
         else
           UI.error("Error #{response.status}: #{response.body}")
           false
