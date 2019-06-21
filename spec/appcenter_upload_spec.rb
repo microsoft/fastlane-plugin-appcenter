@@ -275,6 +275,27 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end.to raise_error("No or incorrect destination type given. Use 'group' or 'store'")
     end
 
+    it "raises an error on update release upload error" do
+      expect do
+
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_upload_build(200)
+        stub_update_release_upload(500, 'committed')
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Internal Service Error, please try again later")
+    end
+
     it "handles external service response and fails" do
       expect do
         stub_check_app(200)
