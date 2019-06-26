@@ -152,6 +152,8 @@ module Fastlane
                 UI.error("#{destination_type} '#{destination_name}' was not found")
               end
             end
+          else 
+            UI.user_error!("Failed to upload release")
           end
         end
       end
