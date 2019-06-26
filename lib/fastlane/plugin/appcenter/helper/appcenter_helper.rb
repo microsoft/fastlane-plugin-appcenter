@@ -48,6 +48,8 @@ module Fastlane
         when 404
           UI.error("Not found, invalid owner or application name")
           false
+        when 500...600
+          UI.crash!("Internal Service Error, please try again later")
         else
           UI.error("Error #{response.status}: #{response.body}")
           false
@@ -219,6 +221,8 @@ module Fastlane
         when 200...300
           UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
           response.body
+        when 500...600
+          UI.crash!("Internal Service Error, please try again later")
         else
           UI.error("Error #{response.status}: #{response.body}")
           false
