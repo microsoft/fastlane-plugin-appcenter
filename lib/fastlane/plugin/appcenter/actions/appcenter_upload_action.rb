@@ -415,7 +415,7 @@ module Fastlane
                                        type: String),
 
           FastlaneCore::ConfigItem.new(key: :timeout,
-                                       env_name: "APPCENTER_TIMEOUT",
+                                       env_name: "APPCENTER_DISTRIBUTE_TIMEOUT",
                                        description: "Request timeout in seconds",
                                        optional: true,
                                        type: Integer),
