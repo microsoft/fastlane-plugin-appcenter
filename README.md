@@ -47,6 +47,7 @@ The action parameters `api_token` and `owner_name` can also be omitted when thei
 - `APPCENTER_DISTRIBUTE_RELEASE_NOTES` - Release notes
 - `APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING` - Clip release notes if its length is more then 5000, `true` by default
 - `APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK` - Additional release notes link
+- `APPCENTER_TIMEOUT` - Sets the request timeout in seconds. Used when uploading builds to App Center.
 
 ## Example
 
