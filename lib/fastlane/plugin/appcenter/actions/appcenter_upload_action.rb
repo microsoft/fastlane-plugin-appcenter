@@ -102,6 +102,7 @@ module Fastlane
         release_notes = params[:release_notes]
         should_clip = params[:should_clip]
         release_notes_link = params[:release_notes_link]
+        timeout = params[:timeout]
 
         if release_notes.length >= Constants::MAX_RELEASE_NOTES_LENGTH
           unless should_clip
@@ -129,7 +130,7 @@ module Fastlane
           upload_url = upload_details['upload_url']
 
           UI.message("Uploading release binary...")
-          uploaded = Helper::AppcenterHelper.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url)
+          uploaded = Helper::AppcenterHelper.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, timeout)
 
           if uploaded
             release_id = uploaded['release_id']
@@ -412,6 +413,12 @@ module Fastlane
                                        description: "The version number. Used (and required) for uploading Android ProGuard mapping file",
                                        optional: true,
                                        type: String),
+
+          FastlaneCore::ConfigItem.new(key: :timeout,
+                                       env_name: "APPCENTER_TIMEOUT",
+                                       description: "Request timeout in seconds",
+                                       optional: true,
+                                       type: Integer),
         ]
       end
 
