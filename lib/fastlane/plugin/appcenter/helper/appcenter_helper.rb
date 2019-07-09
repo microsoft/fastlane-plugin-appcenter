@@ -125,7 +125,7 @@ module Fastlane
         end
       end
 
-      # committs or aborts symbol upload
+      # commits or aborts symbol upload
       def self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, status)
         connection = self.connection
 
@@ -179,7 +179,7 @@ module Fastlane
       # upload binary for specified upload_url
       # if succeed, then commits the release
       # otherwise aborts
-      def self.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url)
+      def self.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, timeout)
         connection = self.connection(upload_url)
 
         options = {}
@@ -188,6 +188,7 @@ module Fastlane
         options[:ipa] = Faraday::UploadIO.new(file, 'application/octet-stream') if file && File.exist?(file)
 
         response = connection.post do |req|
+          req.options.timeout = timeout
           req.headers['internal-request-source'] = "fastlane"
           req.body = options
         end
