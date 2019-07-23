@@ -198,6 +198,22 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end.to raise_error("Couldn't find build file at path './nothing.apk'")
     end
 
+    it "raises an error if given aab was not found" do
+      expect do
+        stub_check_app(200)
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            destinations: 'Testers',
+            destination_type: 'group',
+            aab: './nothing.aab'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Couldn't find build file at path './nothing.aab'")
+    end
+
     it "raises an error if given ipa was not found" do
       expect do
         stub_check_app(200)
@@ -229,6 +245,21 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end.to raise_error("Only \".apk\" formats are allowed, you provided \"\"")
     end
 
+    it "raises an error if given file has invalid extension for aab" do
+      expect do
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            destinations: 'Testers',
+            destination_type: 'group',
+            aab: './spec/fixtures/appfiles/Appfile_empty'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Only \".aab\" formats are allowed, you provided \"\"")
+    end
+
     it "raises an error if given file has invalid extension for ipa" do
       expect do
         Fastlane::FastFile.new.parse("lane :test do
@@ -245,6 +276,38 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "raises an error if both ipa and apk provided" do
+      expect do
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            destinations: 'Testers',
+            destination_type: 'group',
+            ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("You can't use 'ipa' and 'apk' options in one run")
+    end
+
+    it "raises an error if both aab and apk provided" do
+      expect do
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            destinations: 'Testers',
+            destination_type: 'group',
+            aab: './spec/fixtures/appfiles/aab_file_empty.aab',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("You can't use 'aab' and 'apk' options in one run")
+    end
+
+    it "raises an error if both aab and ipa provided" do
       expect do
         Fastlane::FastFile.new.parse("lane :test do
           appcenter_upload({
@@ -502,7 +565,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)      
+      stub_update_release(200)
       stub_get_destination(200)
       stub_add_to_destination(200)
       stub_get_release(200)
@@ -519,12 +582,34 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end").runner.execute(:test)
     end
 
+    it "works with valid parameters for android app bundle" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          aab: './spec/fixtures/appfiles/aab_file_empty.aab',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
     it "uses GRADLE_APK_OUTPUT_PATH as default for apk" do
       stub_check_app(200)
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)      
+      stub_update_release(200)
       stub_get_destination(200)
       stub_add_to_destination(200)
       stub_get_release(200)
@@ -542,6 +627,31 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end").runner.execute(:test)
 
       expect(values[:apk]).to eq('./spec/fixtures/appfiles/apk_file_empty.apk')
+    end
+
+    it "uses GRADLE_AAB_OUTPUT_PATH as default for aab" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      values = Fastlane::FastFile.new.parse("lane :test do
+        Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH] = './spec/fixtures/appfiles/aab_file_empty.aab'
+
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+
+      expect(values[:aab]).to eq('./spec/fixtures/appfiles/aab_file_empty.aab')
     end
 
     it "uses IPA_OUTPUT_PATH as default for ipa" do

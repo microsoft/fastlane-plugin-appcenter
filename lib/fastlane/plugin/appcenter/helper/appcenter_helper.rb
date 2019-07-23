@@ -184,7 +184,7 @@ module Fastlane
 
         options = {}
         options[:upload_id] = upload_id
-        # ipa field is used both for .apk and .ipa files
+        # ipa field is used for .apk, .aab and .ipa files
         options[:ipa] = Faraday::UploadIO.new(file, 'application/octet-stream') if file && File.exist?(file)
 
         response = connection.post do |req|

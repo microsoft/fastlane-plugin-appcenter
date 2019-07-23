@@ -118,7 +118,8 @@ module Fastlane
 
         file = [
           params[:ipa],
-          params[:apk]
+          params[:apk],
+          params[:aab]
         ].detect { |e| !e.to_s.empty? }
 
         UI.user_error!("Couldn't find build file at path '#{file}'") unless file && File.exist?(file)
@@ -275,7 +276,7 @@ module Fastlane
                              default_value: Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH],
                                   optional: true,
                                       type: String,
-                       conflicting_options: [:ipa],
+                       conflicting_options: [:ipa, :aab],
                             conflict_block: proc do |value|
                               UI.user_error!("You can't use 'apk' and '#{value.key}' options in one run")
                             end,
@@ -284,13 +285,28 @@ module Fastlane
                                 UI.user_error!("Only \".apk\" formats are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? File.extname(value)
                               end),
 
+          FastlaneCore::ConfigItem.new(key: :aab,
+                                  env_name: "APPCENTER_DISTRIBUTE_AAB",
+                               description: "Build release path for android app bundle build (preview)",
+                             default_value: Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH],
+                                  optional: true,
+                                      type: String,
+                       conflicting_options: [:ipa, :apk],
+                            conflict_block: proc do |value|
+                              UI.user_error!("You can't use 'aab' and '#{value.key}' options in one run")
+                            end,
+                              verify_block: proc do |value|
+                                accepted_formats = [".aab"]
+                                UI.user_error!("Only \".aab\" formats are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? File.extname(value)
+                              end),
+
           FastlaneCore::ConfigItem.new(key: :ipa,
                                   env_name: "APPCENTER_DISTRIBUTE_IPA",
                                description: "Build release path for ios build",
                              default_value: Actions.lane_context[SharedValues::IPA_OUTPUT_PATH],
                                   optional: true,
                                       type: String,
-                       conflicting_options: [:apk],
+                       conflicting_options: [:apk, :aab],
                             conflict_block: proc do |value|
                               UI.user_error!("You can't use 'ipa' and '#{value.key}' options in one run")
                             end,
@@ -456,6 +472,19 @@ module Fastlane
             destinations: "Testers,Alpha",
             destination_type: "group",
             dsym: "./app.dSYM.zip",
+            release_notes: "release notes",
+            notify_testers: false
+          )',
+          'appcenter_upload(
+            api_token: "...",
+            owner_name: "appcenter_owner",
+            app_name: "testing_app",
+            aab: "./app.aab",
+            destinations: "Alpha",
+            destination_type: "store",
+            build_number: "3",
+            version: "1.0.0",
+            mapping: "./mapping.txt",
             release_notes: "release notes",
             notify_testers: false
           )'
