@@ -24,7 +24,7 @@ appcenter_upload(
   api_token: "<appcenter token>",
   owner_name: "<your appcenter account name>",
   app_name: "<your app name>",
-  apk: "<path to android build binary>"
+  apk: "<path to android build binary>",
   notify_testers: true # Set to false if you don't want to notify testers of your new release (default: `false`)
 )
 ```
