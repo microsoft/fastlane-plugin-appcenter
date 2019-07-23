@@ -24,7 +24,7 @@ appcenter_upload(
   api_token: "<appcenter token>",
   owner_name: "<your appcenter account name>",
   app_name: "<your app name>",
-  apk: "<path to android build binary>", # Or aab: "<path to aab file>" for app bundles
+  apk: "<path to android build binary>"
   notify_testers: true # Set to false if you don't want to notify testers of your new release (default: `false`)
 )
 ```
@@ -35,7 +35,7 @@ The action parameters `api_token` and `owner_name` can also be omitted when thei
 - `APPCENTER_OWNER_NAME` - Owner name
 - `APPCENTER_APP_NAME` - App name. If there is no app with such name, you will be prompted to create one
 - `APPCENTER_DISTRIBUTE_APK` - Build release path for android build
-- `APPCENTER_DISTRIBUTE_AAB` - Build release path for android app bundle build
+- `APPCENTER_DISTRIBUTE_AAB` - Build release path for android app bundle build (preview)
 - `APPCENTER_DISTRIBUTE_IPA` - Build release path for ios build
 - `APPCENTER_DISTRIBUTE_DSYM` - Path to your symbols (app.dSYM.zip) file 
 - `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` - Flag to upload only the dSYM file to App Center

@@ -287,7 +287,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :aab,
                                   env_name: "APPCENTER_DISTRIBUTE_AAB",
-                               description: "Build release path for android app bundle build",
+                               description: "Build release path for android app bundle build (preview)",
                              default_value: Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH],
                                   optional: true,
                                       type: String,
