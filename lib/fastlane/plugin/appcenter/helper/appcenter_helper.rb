@@ -8,7 +8,7 @@ module Fastlane
         require 'faraday_middleware'
 
         options = {
-          url: upload_url ? upload_url : "https://api.appcenter.ms"
+          url: upload_url ? upload_url : ENV.fetch('APPCENTER_UPLOAD_URL', "https://api.appcenter.ms")
         }
 
         Faraday.new(options) do |builder|
@@ -31,8 +31,7 @@ module Fastlane
       def self.create_release_upload(api_token, owner_name, app_name)
         connection = self.connection
 
-        response = connection.post do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}/release_uploads")
+        response = connection.post("v0.1/apps/#{owner_name}/#{app_name}/release_uploads") do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
           req.body = {}
@@ -64,8 +63,7 @@ module Fastlane
       def self.create_mapping_upload(api_token, owner_name, app_name, file_name, build_number, version)
         connection = self.connection
 
-        response = connection.post do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}/symbol_uploads")
+        response = connection.post("v0.1/apps/#{owner_name}/#{app_name}/symbol_uploads") do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
           req.body = {
@@ -100,8 +98,7 @@ module Fastlane
       def self.create_dsym_upload(api_token, owner_name, app_name)
         connection = self.connection
 
-        response = connection.post do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}/symbol_uploads")
+        response = connection.post("v0.1/apps/#{owner_name}/#{app_name}/symbol_uploads") do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
           req.body = {
@@ -129,8 +126,7 @@ module Fastlane
       def self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, status)
         connection = self.connection
 
-        response = connection.patch do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}/symbol_uploads/#{symbol_upload_id}")
+        response = connection.patch("v0.1/apps/#{owner_name}/#{app_name}/symbol_uploads/#{symbol_upload_id}") do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
           req.body = {
@@ -209,8 +205,7 @@ module Fastlane
       def self.update_release_upload(api_token, owner_name, app_name, upload_id, status)
         connection = self.connection
 
-        response = connection.patch do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}/release_uploads/#{upload_id}")
+        response = connection.patch("v0.1/apps/#{owner_name}/#{app_name}/release_uploads/#{upload_id}") do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
           req.body = {
@@ -233,8 +228,7 @@ module Fastlane
       # get existing release
       def self.get_release(api_token, owner_name, app_name, release_id)
         connection = self.connection
-        response = connection.get do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}")
+        response = connection.get("v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}") do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
         end
@@ -257,8 +251,7 @@ module Fastlane
       def self.get_destination(api_token, owner_name, app_name, destination_type, destination_name)
         connection = self.connection
 
-        response = connection.get do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}/distribution_#{destination_type}s/#{ERB::Util.url_encode(destination_name)}")
+        response = connection.get("v0.1/apps/#{owner_name}/#{app_name}/distribution_#{destination_type}s/#{ERB::Util.url_encode(destination_name)}") do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
         end
@@ -281,8 +274,7 @@ module Fastlane
       def self.update_release(api_token, owner_name, app_name, release_id, release_notes = '')
         connection = self.connection
 
-        response = connection.put do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}")
+        response = connection.put("v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}") do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
           req.body = {
@@ -326,8 +318,7 @@ module Fastlane
           body["notify_testers"] = notify_testers
         end
 
-        response = connection.post do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}/#{destination_type}s")
+        response = connection.post("v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}/#{destination_type}s") do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
           req.body = body
@@ -361,8 +352,7 @@ module Fastlane
       def self.get_app(api_token, owner_name, app_name)
         connection = self.connection
 
-        response = connection.get do |req|
-          req.url("/v0.1/apps/#{owner_name}/#{app_name}")
+        response = connection.get("v0.1/apps/#{owner_name}/#{app_name}") do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
         end
@@ -384,8 +374,7 @@ module Fastlane
       def self.create_app(api_token, owner_name, app_name, app_display_name, os, platform)
         connection = self.connection
 
-        response = connection.post do |req|
-          req.url("/v0.1/apps")
+        response = connection.post("v0.1/apps") do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
           req.body = {
