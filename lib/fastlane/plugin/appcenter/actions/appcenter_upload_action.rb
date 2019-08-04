@@ -26,7 +26,7 @@ module Fastlane
           # we can use dsym parameter only if build file is ipa
           dsym_path = dsym if !file || File.extname(file) == '.ipa'
         else
-          # if dsym is note set, but build is ipa - check default path
+          # if dsym is not set, but build is ipa - check default path
           if file && File.exist?(file) && File.extname(file) == '.ipa'
             dsym_path = file.to_s.gsub('.ipa', '.dSYM.zip')
             UI.message("dSYM is found")
