@@ -22,7 +22,7 @@ To get started, first, [obtain an API token](https://appcenter.ms/settings/apito
 ```ruby
 appcenter_upload(
   api_token: "<appcenter token>",
-  owner_name: "<appcenter account name of the owner of the app (user or organization)>",
+  owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
   app_name: "<appcenter app name>",
   apk: "<path to android build binary>",
   notify_testers: true # Set to false if you don't want to notify testers of your new release (default: `false`)
