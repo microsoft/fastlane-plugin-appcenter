@@ -243,7 +243,7 @@ module Fastlane
                                       type: String,
                               verify_block: proc do |value|
                                 accepted_formats = ["user", "organization"]
-                                UI.user_error!("Only \"user\" and \"organization\" formats are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? value
+                                UI.user_error!("Only \"user\" and \"organization\" types are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? value
                               end),
 
           FastlaneCore::ConfigItem.new(key: :owner_name,
