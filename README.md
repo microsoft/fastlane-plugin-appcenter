@@ -32,6 +32,7 @@ appcenter_upload(
 The action parameters `api_token` and `owner_name` can also be omitted when their values are [set as environment variables](https://docs.fastlane.tools/advanced/#environment-variables). Below a list of all available environment variables:
 
 - `APPCENTER_API_TOKEN` - API Token for App Center
+- `APPCENTER_OWNER_TYPE` - Owner type - `user` or `organization` (default value is `user`)
 - `APPCENTER_OWNER_NAME` - Owner name
 - `APPCENTER_APP_NAME` - App name. If there is no app with such name, you will be prompted to create one
 - `APPCENTER_DISTRIBUTE_APK` - Build release path for android build
