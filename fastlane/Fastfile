@@ -15,7 +15,7 @@ lane :test_autocreation do
     apk: "./fastlane/app-release.apk"
   )
 
-  # app should be created for "fastlane-test-org" organisation
+  # app should be created for "fastlane-test-org" organization
   appcenter_upload(
     api_token: ENV["TEST_APPCENTER_API_TOKEN"],
     owner_type: "organization",
