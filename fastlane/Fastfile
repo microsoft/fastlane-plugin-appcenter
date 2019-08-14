@@ -14,6 +14,17 @@ lane :test_autocreation do
     app_name: "MyApplication-notfound-2",
     apk: "./fastlane/app-release.apk"
   )
+
+  # app should be created for "fastlane-test-org" organization
+  appcenter_upload(
+    api_token: ENV["TEST_APPCENTER_API_TOKEN"],
+    owner_type: "organization",
+    owner_name: "fastlane-test-org",
+    app_os: 'Android',
+    app_platform: 'Java',
+    app_name: "MyApplication-notfound-3",
+    apk: "./fastlane/app-release.apk"
+  )
 end
 
 lane :test_autocreation_without_prompts do

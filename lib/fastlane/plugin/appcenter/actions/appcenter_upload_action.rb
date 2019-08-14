@@ -163,6 +163,7 @@ module Fastlane
       # checks app existance, if ther is no such - creates it
       def self.get_or_create_app(params)
         api_token = params[:api_token]
+        owner_type = params[:owner_type]
         owner_name = params[:owner_name]
         app_name = params[:app_name]
         app_display_name = params[:app_display_name]
@@ -189,7 +190,7 @@ module Fastlane
             (Helper.test? ? "Java" : UI.select("Select Platform", platforms[os])) :
             app_platform
 
-          Helper::AppcenterHelper.create_app(api_token, owner_name, app_name, app_display_name, os, platform)
+          Helper::AppcenterHelper.create_app(api_token, owner_type, owner_name, app_name, app_display_name, os, platform)
         else
           UI.error("Lane aborted")
           false
@@ -232,6 +233,17 @@ module Fastlane
                                       type: String,
                               verify_block: proc do |value|
                                 UI.user_error!("No API token for App Center given, pass using `api_token: 'token'`") unless value && !value.empty?
+                              end),
+
+          FastlaneCore::ConfigItem.new(key: :owner_type,
+                                  env_name: "APPCENTER_OWNER_TYPE",
+                               description: "Owner type",
+                                  optional: true,
+                             default_value: "user",
+                                      type: String,
+                              verify_block: proc do |value|
+                                accepted_formats = ["user", "organization"]
+                                UI.user_error!("Only \"user\" and \"organization\" types are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? value
                               end),
 
           FastlaneCore::ConfigItem.new(key: :owner_name,
