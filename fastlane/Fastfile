@@ -33,14 +33,6 @@ lane :test_macos do
     owner_name: ENV["APPCENTER_OWNER_NAME"],
     app_name: ENV["APPCENTER_MACOS_APP_NAME"],
     app_os: 'MacOS',
-    ipa: "./fastlane/macos-app.app"
-  )
-
-  appcenter_upload(
-    api_token: ENV["TEST_APPCENTER_API_TOKEN"],
-    owner_name: ENV["APPCENTER_OWNER_NAME"],
-    app_name: ENV["APPCENTER_MACOS_APP_NAME"],
-    app_os: 'MacOS',
     ipa: "./fastlane/macos-app.app.zip"
   )
 end
