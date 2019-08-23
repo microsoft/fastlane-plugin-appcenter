@@ -22,8 +22,8 @@ To get started, first, [obtain an API token](https://appcenter.ms/settings/apito
 ```ruby
 appcenter_upload(
   api_token: "<appcenter token>",
-  owner_name: "<your appcenter account name>",
-  app_name: "<your app name>",
+  owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
+  app_name: "<appcenter app name>",
   apk: "<path to android build binary>",
   notify_testers: true # Set to false if you don't want to notify testers of your new release (default: `false`)
 )
@@ -32,18 +32,24 @@ appcenter_upload(
 The action parameters `api_token` and `owner_name` can also be omitted when their values are [set as environment variables](https://docs.fastlane.tools/advanced/#environment-variables). Below a list of all available environment variables:
 
 - `APPCENTER_API_TOKEN` - API Token for App Center
+- `APPCENTER_OWNER_TYPE` - Owner type - `user` or `organization` (default value is `user`)
 - `APPCENTER_OWNER_NAME` - Owner name
 - `APPCENTER_APP_NAME` - App name. If there is no app with such name, you will be prompted to create one
 - `APPCENTER_DISTRIBUTE_APK` - Build release path for android build
+- `APPCENTER_DISTRIBUTE_AAB` - Build release path for android app bundle build (preview)
 - `APPCENTER_DISTRIBUTE_IPA` - Build release path for ios build
-- `APPCENTER_DISTRIBUTE_DSYM` - Path to your symbols file. For iOS provide path to app.dSYM.zip
+- `APPCENTER_DISTRIBUTE_DSYM` - Path to your symbols (app.dSYM.zip) file 
 - `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` - Flag to upload only the dSYM file to App Center
-- `APPCENTER_DISTRIBUTE_GROUP` - Comma separated list of Distribution Group names
+- `APPCENTER_DISTRIBUTE_ANDROID_MAPPING` - Path to your Android mapping.txt file 
+- `APPCENTER_DISTRIBUTE_UPLOAD_ANDROID_MAPPING_ONLY` - Flag to upload only the mapping file to App Center
+- `APPCENTER_DISTRIBUTE_DESTINATIONS` - Comma separated list of destination names. Both distribution groups and stores are supported. All names are required to be of the same destination type. Default is `Collaborators`.
+- `APPCENTER_DISTRIBUTE_DESTINATION_TYPE` - Destination type of distribution destination. `group` and `store` are supported. Default is `group`
 - `APPCENTER_DISTRIBUTE_MANDATORY_UPDATE` - Require users to update to this release
 - `APPCENTER_DISTRIBUTE_NOTIFY_TESTERS` - Send email notification about release (default: `false`)
 - `APPCENTER_DISTRIBUTE_RELEASE_NOTES` - Release notes
 - `APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING` - Clip release notes if its length is more then 5000, `true` by default
 - `APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK` - Additional release notes link
+- `APPCENTER_DISTRIBUTE_TIMEOUT` - Sets the request timeout in seconds. Used when uploading builds to App Center.
 
 ## Example
 

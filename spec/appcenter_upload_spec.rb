@@ -6,8 +6,11 @@ def stub_check_app(status)
     )
 end
 
-def stub_create_app(status)
-  stub_request(:post, "https://api.appcenter.ms/v0.1/apps")
+def stub_create_app(status, app_name = "app", app_display_name = "app", app_os = "Android", app_platform = "Java", owner_type = "user", owner_name = "owner")
+  stub_request(:post, owner_type == "user" ? "https://api.appcenter.ms/v0.1/apps" : "https://api.appcenter.ms/v0.1/orgs/#{owner_name}/apps")
+    .with(
+      body: "{\"display_name\":\"#{app_display_name}\",\"name\":\"#{app_name}\",\"os\":\"#{app_os}\",\"platform\":\"#{app_platform}\"}",
+    )
     .to_return(
       status: status,
       body: "{\"name\":\"app\"}",
@@ -35,12 +38,27 @@ def stub_create_dsym_upload(status)
     )
 end
 
+def stub_create_mapping_upload(status, version, build, file_name = "mapping.txt")
+  stub_request(:post, "https://api.appcenter.ms/v0.1/apps/owner/app/symbol_uploads")
+    .with(body: "{\"symbol_type\":\"AndroidProguard\",\"file_name\":\"#{file_name}\",\"build\":\"3\",\"version\":\"1.0.0\"}",)
+    .to_return(
+      status: status,
+      body: "",
+      headers: { 'Content-Type' => 'application/json' }
+    )
+end
+
 def stub_upload_build(status)
   stub_request(:post, "https://upload.com/")
     .to_return(status: status, body: "", headers: {})
 end
 
 def stub_upload_dsym(status)
+  stub_request(:put, "https://upload_dsym.com/")
+    .to_return(status: status, body: "", headers: {})
+end
+
+def stub_upload_mapping(status)
   stub_request(:put, "https://upload_dsym.com/")
     .to_return(status: status, body: "", headers: {})
 end
@@ -61,8 +79,16 @@ def stub_update_dsym_upload(status, release_status)
     .to_return(status: status, body: "{\"release_id\":\"1\"}", headers: { 'Content-Type' => 'application/json' })
 end
 
-def stub_get_group(status, group_name = "Testers")
-  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/owner/app/distribution_groups/#{group_name}")
+def stub_update_mapping_upload(status, release_status)
+  stub_request(:patch, "https://api.appcenter.ms/v0.1/apps/owner/app/symbol_uploads/symbol_upload_id")
+    .with(
+      body: "{\"status\":\"#{release_status}\"}"
+    )
+    .to_return(status: status, body: "{\"release_id\":\"1\"}", headers: { 'Content-Type' => 'application/json' })
+end
+
+def stub_get_destination(status, destination_type = "group", destination_name = "Testers")
+  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/owner/app/distribution_#{destination_type}s/#{destination_name}")
     .to_return(status: status, body: "{\"id\":\"1\"}", headers: { 'Content-Type' => 'application/json' })
 end
 
@@ -79,10 +105,16 @@ def stub_get_release(status)
     .to_return(status: status, body: "{\"short_version\":\"1.0\",\"download_link\":\"https://download.link\"}", headers: { 'Content-Type' => 'application/json' })
 end
 
-def stub_add_to_group(status, mandatory_update = false, notify_testers = false)
-  stub_request(:post, "https://api.appcenter.ms/v0.1/apps/owner/app/releases/1/groups")
+def stub_add_to_destination(status, destination_type = "group", mandatory_update = false, notify_testers = false)
+  if destination_type == "group"
+    body = "{\"id\":\"1\",\"mandatory_update\":#{mandatory_update},\"notify_testers\":#{notify_testers}}"
+  else
+    body = "{\"id\":\"1\"}"
+  end
+
+  stub_request(:post, "https://api.appcenter.ms/v0.1/apps/owner/app/releases/1/#{destination_type}s")
     .with(
-      body: "{\"id\":\"1\",\"mandatory_update\":#{mandatory_update},\"notify_testers\":#{notify_testers}}"
+      body: body
     )
     .to_return(status: status, body: "{\"short_version\":\"1.0\",\"download_link\":\"https://download.link\"}", headers: { 'Content-Type' => 'application/json' })
 end
@@ -99,7 +131,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           appcenter_upload({
             owner_name: 'owner',
             app_name: 'app',
-            group: 'Testers',
+            destinations: 'Testers',
+            destination_type: 'group',
             apk: './spec/fixtures/appfiles/apk_file_empty.apk'
           })
         end").runner.execute(:test)
@@ -112,7 +145,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           appcenter_upload({
             api_token: 'xxx',
             app_name: 'app',
-            group: 'Testers',
+            destinations: 'Testers',
+            destination_type: 'group',
             apk: './spec/fixtures/appfiles/apk_file_empty.apk'
           })
         end").runner.execute(:test)
@@ -125,7 +159,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           appcenter_upload({
             api_token: 'xxx',
             owner_name: 'owner',
-            group: 'Testers',
+            destinations: 'Testers',
+            destination_type: 'group',
             apk: './spec/fixtures/appfiles/apk_file_empty.apk'
           })
         end").runner.execute(:test)
@@ -140,7 +175,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
-            group: 'Testers'
+            destinations: 'Testers',
+            destination_type: 'group'
           })
         end").runner.execute(:test)
       end.to raise_error("Couldn't find build file at path ''")
@@ -154,11 +190,28 @@ describe Fastlane::Actions::AppcenterUploadAction do
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
-            group: 'Testers',
+            destinations: 'Testers',
+            destination_type: 'group',
             apk: './nothing.apk'
           })
         end").runner.execute(:test)
       end.to raise_error("Couldn't find build file at path './nothing.apk'")
+    end
+
+    it "raises an error if given aab was not found" do
+      expect do
+        stub_check_app(200)
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            destinations: 'Testers',
+            destination_type: 'group',
+            aab: './nothing.aab'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Couldn't find build file at path './nothing.aab'")
     end
 
     it "raises an error if given ipa was not found" do
@@ -169,7 +222,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
-            group: 'Testers',
+            destinations: 'Testers',
+            destination_type: 'group',
             ipa: './nothing.ipa'
           })
         end").runner.execute(:test)
@@ -183,11 +237,27 @@ describe Fastlane::Actions::AppcenterUploadAction do
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
-            group: 'Testers',
+            destinations: 'Testers',
+            destination_type: 'group',
             apk: './spec/fixtures/appfiles/Appfile_empty'
           })
         end").runner.execute(:test)
       end.to raise_error("Only \".apk\" formats are allowed, you provided \"\"")
+    end
+
+    it "raises an error if given file has invalid extension for aab" do
+      expect do
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            destinations: 'Testers',
+            destination_type: 'group',
+            aab: './spec/fixtures/appfiles/Appfile_empty'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Only \".aab\" formats are allowed, you provided \"\"")
     end
 
     it "raises an error if given file has invalid extension for ipa" do
@@ -197,7 +267,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
-            group: 'Testers',
+            destinations: 'Testers',
+            destination_type: 'group',
             ipa: './spec/fixtures/appfiles/Appfile_empty'
           })
         end").runner.execute(:test)
@@ -211,7 +282,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
-            group: 'Testers',
+            destinations: 'Testers',
+            destination_type: 'group',
             ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
             apk: './spec/fixtures/appfiles/apk_file_empty.apk'
           })
@@ -219,21 +291,128 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end.to raise_error("You can't use 'ipa' and 'apk' options in one run")
     end
 
-    it "handles upload build error" do
-      stub_check_app(200)
-      stub_create_release_upload(200)
-      stub_upload_build(400)
-      stub_update_release_upload(200, 'aborted')
+    it "raises an error if both aab and apk provided" do
+      expect do
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            destinations: 'Testers',
+            destination_type: 'group',
+            aab: './spec/fixtures/appfiles/aab_file_empty.aab',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("You can't use 'aab' and 'apk' options in one run")
+    end
 
-      Fastlane::FastFile.new.parse("lane :test do
-        appcenter_upload({
-          api_token: 'xxx',
-          owner_name: 'owner',
-          app_name: 'app',
-          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers'
-        })
-      end").runner.execute(:test)
+    it "raises an error if both aab and ipa provided" do
+      expect do
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            destinations: 'Testers',
+            destination_type: 'group',
+            ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("You can't use 'ipa' and 'apk' options in one run")
+    end
+
+    it "raises an error if destination type is not group or store" do
+      expect do
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            destinations: 'Testers',
+            destination_type: 'random',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("No or incorrect destination type given. Use 'group' or 'store'")
+    end
+
+    it "raises an error on update release upload error" do
+      expect do
+
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_upload_build(200)
+        stub_update_release_upload(500, 'committed')
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Internal Service Error, please try again later")
+    end
+
+    it "handles external service response and fails" do
+      expect do
+        stub_check_app(200)
+        stub_create_release_upload(500)
+        
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Internal Service Error, please try again later")
+    end
+
+    it "raises an error on upload build failure" do
+      expect do
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_upload_build(400)
+        stub_update_release_upload(200, 'aborted')
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Failed to upload release")
+    end
+
+    it "raises an error on release upload creation auth failure" do
+      expect do
+        stub_check_app(200)
+        stub_create_release_upload(401)
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Auth Error, provided invalid token")
     end
 
     it "handles not found owner or app error" do
@@ -246,7 +425,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
@@ -257,7 +437,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
       stub_update_release(200, 'No changelog given')
-      stub_get_group(404)
+      stub_get_destination(404)
       stub_get_release(200)
 
       Fastlane::FastFile.new.parse("lane :test do
@@ -266,7 +446,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
@@ -277,8 +458,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
       stub_update_release(200, 'No changelog given')
-      stub_get_group(200)
-      stub_add_to_group(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
       stub_get_release(404)
 
       Fastlane::FastFile.new.parse("lane :test do
@@ -287,7 +468,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
@@ -298,8 +480,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
       stub_update_release(200, 'autogenerated changelog')
-      stub_get_group(200)
-      stub_add_to_group(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
       stub_get_release(200)
 
       values = Fastlane::FastFile.new.parse("lane :test do
@@ -310,7 +492,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
 
@@ -327,8 +510,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
       stub_update_release(200, release_notes_clipped)
-      stub_get_group(200)
-      stub_add_to_group(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
       stub_get_release(200)
 
       values = Fastlane::FastFile.new.parse("lane :test do
@@ -337,7 +520,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers',
+          destinations: 'Testers',
+          destination_type: 'group',
           release_notes: '#{release_notes}'
         })
       end").runner.execute(:test)
@@ -357,9 +541,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_update_release_upload(200, 'committed')
       # rubocop:disable Metrics/LineLength
       stub_update_release(200, "______________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________...\\n\\n[read more](https://text.com)")
-      # rubocop:enable Metrics/LineLength
-      stub_get_group(200)
-      stub_add_to_group(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
       stub_get_release(200)
 
       values = Fastlane::FastFile.new.parse("lane :test do
@@ -368,7 +551,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers',
+          destinations: 'Testers',
+          destination_type: 'group',
           release_notes: '#{release_notes}',
           release_notes_link: '#{release_notes_link}'
         })
@@ -383,8 +567,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
       stub_update_release(200)
-      stub_get_group(200)
-      stub_add_to_group(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
       stub_get_release(200)
 
       Fastlane::FastFile.new.parse("lane :test do
@@ -393,7 +577,30 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "works with valid parameters for android app bundle" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          aab: './spec/fixtures/appfiles/aab_file_empty.aab',
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
@@ -404,8 +611,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
       stub_update_release(200)
-      stub_get_group(200)
-      stub_add_to_group(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
       stub_get_release(200)
 
       values = Fastlane::FastFile.new.parse("lane :test do
@@ -415,11 +622,37 @@ describe Fastlane::Actions::AppcenterUploadAction do
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
 
       expect(values[:apk]).to eq('./spec/fixtures/appfiles/apk_file_empty.apk')
+    end
+
+    it "uses GRADLE_AAB_OUTPUT_PATH as default for aab" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      values = Fastlane::FastFile.new.parse("lane :test do
+        Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH] = './spec/fixtures/appfiles/aab_file_empty.aab'
+
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+
+      expect(values[:aab]).to eq('./spec/fixtures/appfiles/aab_file_empty.aab')
     end
 
     it "uses IPA_OUTPUT_PATH as default for ipa" do
@@ -427,9 +660,9 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)
-      stub_get_group(200)
-      stub_add_to_group(200)
+      stub_update_release(200)      
+      stub_get_destination(200)
+      stub_add_to_destination(200)
       stub_get_release(200)
 
       values = Fastlane::FastFile.new.parse("lane :test do
@@ -439,7 +672,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
 
@@ -451,9 +685,9 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)
-      stub_get_group(200)
-      stub_add_to_group(200)
+      stub_update_release(200)      
+      stub_get_destination(200)
+      stub_add_to_destination(200)
       stub_get_release(200)
       stub_create_dsym_upload(200)
       stub_upload_dsym(200)
@@ -466,7 +700,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           app_name: 'app',
           ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
           dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
@@ -476,9 +711,9 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)
-      stub_get_group(200)
-      stub_add_to_group(200, true, false)
+      stub_update_release(200)      
+      stub_get_destination(200)
+      stub_add_to_destination(200, 'group', true, false)
       stub_get_release(200)
       stub_create_dsym_upload(200)
       stub_upload_dsym(200)
@@ -491,7 +726,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           app_name: 'app',
           ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
           dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
-          group: 'Testers',
+          destinations: 'Testers',
+          destination_type: 'group',
           mandatory_update: true
         })
       end").runner.execute(:test)
@@ -502,9 +738,9 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)
-      stub_get_group(200)
-      stub_add_to_group(200, false, true)
+      stub_update_release(200)      
+      stub_get_destination(200)
+      stub_add_to_destination(200, 'group', false, true)
       stub_get_release(200)
       stub_create_dsym_upload(200)
       stub_upload_dsym(200)
@@ -517,7 +753,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           app_name: 'app',
           ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
           dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
-          group: 'Testers',
+          destinations: 'Testers',
+          destination_type: 'group',
           notify_testers: true
         })
       end").runner.execute(:test)
@@ -528,9 +765,9 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)
-      stub_get_group(200)
-      stub_add_to_group(200, true, true)
+      stub_update_release(200)      
+      stub_get_destination(200)
+      stub_add_to_destination(200, 'group', true, true)
       stub_get_release(200)
       stub_create_dsym_upload(200)
       stub_upload_dsym(200)
@@ -543,7 +780,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           app_name: 'app',
           ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
           dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
-          group: 'Testers',
+          destinations: 'Testers',
+          destination_type: 'group',
           mandatory_update: true,
           notify_testers: true
         })
@@ -621,13 +859,13 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)
-      stub_get_group(200, 'Testers1')
-      stub_get_group(200, 'Testers2')
-      stub_get_group(200, 'Testers3')
-      stub_add_to_group(200)
-      stub_add_to_group(200)
-      stub_add_to_group(200)
+      stub_update_release(200)      
+      stub_get_destination(200, 'group', 'Testers1')
+      stub_get_destination(200, 'group', 'Testers2')
+      stub_get_destination(200, 'group', 'Testers3')
+      stub_add_to_destination(200)
+      stub_add_to_destination(200)
+      stub_add_to_destination(200)
       stub_get_release(200)
       stub_create_dsym_upload(200)
       stub_upload_dsym(200)
@@ -640,7 +878,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           app_name: 'app',
           ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
           dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
-          group: 'Testers1,Testers2,Testers3'
+          destinations: 'Testers1,Testers2,Testers3',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
@@ -650,13 +889,13 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)
-      stub_get_group(200, 'Testers%201')
-      stub_get_group(200, 'Testers%202')
-      stub_get_group(200, 'Testers%203')
-      stub_add_to_group(200)
-      stub_add_to_group(200)
-      stub_add_to_group(200)
+      stub_update_release(200)      
+      stub_get_destination(200, 'group', 'Testers%201')
+      stub_get_destination(200, 'group', 'Testers%202')
+      stub_get_destination(200, 'group', 'Testers%203')
+      stub_add_to_destination(200)
+      stub_add_to_destination(200)
+      stub_add_to_destination(200)
       stub_get_release(200)
       stub_create_dsym_upload(200)
       stub_upload_dsym(200)
@@ -669,20 +908,47 @@ describe Fastlane::Actions::AppcenterUploadAction do
           app_name: 'app',
           ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
           dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
-          group: 'Testers 1,Testers 2,Testers 3'
+          destinations: 'Testers 1,Testers 2,Testers 3',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "can release to store" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)      
+      stub_get_destination(200, 'store')
+      stub_add_to_destination(200, 'store')
+      stub_get_release(200)
+      stub_create_dsym_upload(200)
+      stub_upload_dsym(200)
+      stub_update_dsym_upload(200, "committed")
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
+          dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
+          destinations: 'Testers',
+          destination_type: 'store'
         })
       end").runner.execute(:test)
     end
 
     it "creates app if it was not found" do
       stub_check_app(404)
-      stub_create_app(200)
+      stub_create_app(200, "app", "app", "Android", "Java")
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)
-      stub_get_group(200)
-      stub_add_to_group(200)
+      stub_update_release(200)      
+      stub_get_destination(200)
+      stub_add_to_destination(200)
       stub_get_release(200)
 
       Fastlane::FastFile.new.parse("lane :test do
@@ -691,7 +957,61 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "creates app if it was not found with specified os, platform and display_name" do
+      stub_check_app(404)
+      stub_create_app(200, "app", "App Name", "Android", "Java")
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)      
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          app_display_name: 'App Name',
+          app_os: 'Android',
+          app_platform: 'Java',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "creates app in organization if it was not found with specified os, platform and display_name" do
+      stub_check_app(404)
+      stub_create_app(200, "app", "App Name", "Android", "Java", "organization", "owner")
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)      
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_type: 'organization',
+          owner_name: 'owner',
+          app_name: 'app',
+          app_display_name: 'App Name',
+          app_os: 'Android',
+          app_platform: 'Java',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
     end
@@ -706,7 +1026,102 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "handles app creation error in org" do
+      stub_check_app(404)
+      stub_create_app(500, "app", "app", "Android", "Java", "organization", "owner")
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_type: 'organization',
+          owner_name: 'owner',
+          app_name: 'app',
+          app_os: 'Android',
+          app_platform: 'Java',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "allows to send android mappings" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)      
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+      stub_create_mapping_upload(200, "1.0.0", "3")
+      stub_upload_mapping(200)
+      stub_update_mapping_upload(200, "committed")
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          mapping: './spec/fixtures/symbols/mapping.txt',
+          build_number: '3',
+          version: '1.0.0',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "allows to send android mappings with custom name" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)      
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+      stub_create_mapping_upload(200, "1.0.0", "3", "renamed-mapping.txt")
+      stub_upload_mapping(200)
+      stub_update_mapping_upload(200, "committed")
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          mapping: './spec/fixtures/symbols/renamed-mapping.txt',
+          build_number: '3',
+          version: '1.0.0',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "allows to send only android mappings" do
+      stub_check_app(200)
+      stub_create_mapping_upload(200, "1.0.0", "3", "renamed-mapping.txt")
+      stub_upload_mapping(200)
+      stub_update_mapping_upload(200, "committed")
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          upload_mapping_only: true,
+          mapping: './spec/fixtures/symbols/renamed-mapping.txt',
+          build_number: '3',
+          version: '1.0.0'
         })
       end").runner.execute(:test)
     end
@@ -716,9 +1131,9 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)
-      stub_get_group(200)
-      stub_add_to_group(200)
+      stub_update_release(200)      
+      stub_get_destination(200)
+      stub_add_to_destination(200)
       stub_get_release(200)
       stub_create_dsym_upload(200)
       stub_upload_dsym(200)
@@ -731,7 +1146,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           app_name: 'app',
           ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
           dsym: './spec/fixtures/symbols/Themoji.dSYM',
-          group: 'Testers'
+          destinations: 'Testers',
+          destination_type: 'group'
         })
       end").runner.execute(:test)
 
@@ -786,7 +1202,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
             owner_name: 'owner',
             app_name: 'app',
             apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-            group: 'Testers'
+            destinations: 'Testers',
+            destination_type: 'group'
           })
         end").runner.execute(:test)
       end.to raise_error("Auth Error, provided invalid token")
