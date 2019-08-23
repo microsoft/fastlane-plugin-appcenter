@@ -411,7 +411,6 @@ module Fastlane
           false
         end
       end
-
     end
   end
 end
