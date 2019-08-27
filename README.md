@@ -36,11 +36,11 @@ The action parameters `api_token` and `owner_name` can also be omitted when thei
 - `APPCENTER_OWNER_NAME` - Owner name
 - `APPCENTER_APP_NAME` - App name. If there is no app with such name, you will be prompted to create one
 - `APPCENTER_DISTRIBUTE_APK` - Build release path for android build
-- `APPCENTER_DISTRIBUTE_AAB` - Build release path for android app bundle build (preview)
+- `APPCENTER_DISTRIBUTE_AAB` - Build release path for android app bundle build
 - `APPCENTER_DISTRIBUTE_IPA` - Build release path for ios build
-- `APPCENTER_DISTRIBUTE_DSYM` - Path to your symbols (app.dSYM.zip) file 
+- `APPCENTER_DISTRIBUTE_DSYM` - Path to your symbols (app.dSYM.zip) file
 - `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` - Flag to upload only the dSYM file to App Center
-- `APPCENTER_DISTRIBUTE_ANDROID_MAPPING` - Path to your Android mapping.txt file 
+- `APPCENTER_DISTRIBUTE_ANDROID_MAPPING` - Path to your Android mapping.txt file
 - `APPCENTER_DISTRIBUTE_UPLOAD_ANDROID_MAPPING_ONLY` - Flag to upload only the mapping file to App Center
 - `APPCENTER_DISTRIBUTE_DESTINATIONS` - Comma separated list of destination names. Both distribution groups and stores are supported. All names are required to be of the same destination type. Default is `Collaborators`.
 - `APPCENTER_DISTRIBUTE_DESTINATION_TYPE` - Destination type of distribution destination. `group` and `store` are supported. Default is `group`

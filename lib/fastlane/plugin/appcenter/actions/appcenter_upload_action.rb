@@ -44,7 +44,7 @@ module Fastlane
           values[:dsym_path] = dsym_path
 
           UI.message("Starting dSYM upload...")
-          
+
           # TODO: this should eventually be removed once we have warned of deprecation for long enough
           if File.extname(dsym_path) == ".txt"
             file_name = File.basename(dsym_path)
@@ -123,6 +123,7 @@ module Fastlane
         ].detect { |e| !e.to_s.empty? }
 
         UI.user_error!("Couldn't find build file at path '#{file}'") unless file && File.exist?(file)
+        UI.user_error!("Can't distribute .aab to groups. Please use destination type 'store'.") if !params[:aab].nil? && destination_type == "group"
 
         UI.message("Starting release upload...")
         upload_details = Helper::AppcenterHelper.create_release_upload(api_token, owner_name, app_name)
@@ -154,7 +155,7 @@ module Fastlane
                 UI.error("#{destination_type} '#{destination_name}' was not found")
               end
             end
-          else 
+          else
             UI.user_error!("Failed to upload release")
           end
         end
@@ -180,7 +181,7 @@ module Fastlane
         end
 
         should_create_app = !app_display_name.to_s.empty? || !app_os.to_s.empty? || !app_platform.to_s.empty?
-        
+
         if Helper.test? || should_create_app || UI.confirm("App with name #{app_name} not found, create one?")
           app_display_name = app_name if app_display_name.to_s.empty?
           os = app_os.to_s.empty? ?
@@ -299,7 +300,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :aab,
                                   env_name: "APPCENTER_DISTRIBUTE_AAB",
-                               description: "Build release path for android app bundle build (preview)",
+                               description: "Build release path for android app bundle build",
                              default_value: Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH],
                                   optional: true,
                                       type: String,
