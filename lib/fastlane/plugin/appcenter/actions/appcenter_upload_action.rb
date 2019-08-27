@@ -123,7 +123,9 @@ module Fastlane
         ].detect { |e| !e.to_s.empty? }
 
         UI.user_error!("Couldn't find build file at path '#{file}'") unless file && File.exist?(file)
-        UI.user_error!("Can't distribute .aab to groups. Please use destination type 'store'.") if !params[:aab].nil? && destination_type == "group"
+        if !params[:aab].to_s.empty? && destination_type == "group"
+          UI.user_error!("Can't distribute .aab to groups. Please use destination type 'store'.")
+        end
 
         file_ext = Helper::AppcenterHelper.file_extname_full(file)
         if file_ext == ".app" && File.directory?(file)

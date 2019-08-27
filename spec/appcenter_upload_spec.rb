@@ -125,6 +125,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
       allow(FastlaneCore::FastlaneFolder).to receive(:path).and_return(nil)
     end
 
+    after :each do
+      Fastlane::FastFile.new.parse("lane :test do
+        Actions.lane_context[SharedValues::IPA_OUTPUT_PATH] = nil
+        Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH] = nil
+        Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH] = nil
+      end").runner.execute(:test)
+    end
+
     it "raises an error if no api token was given" do
       expect do
         Fastlane::FastFile.new.parse("lane :test do
@@ -201,13 +209,15 @@ describe Fastlane::Actions::AppcenterUploadAction do
     it "raises an error if given aab was not found" do
       expect do
         stub_check_app(200)
+        stub_get_destination(200, 'store', 'Alpha')
+        stub_add_to_destination(200, 'store')
         Fastlane::FastFile.new.parse("lane :test do
           appcenter_upload({
             api_token: 'xxx',
             owner_name: 'owner',
             app_name: 'app',
-            destinations: 'Testers',
-            destination_type: 'group',
+            destinations: 'Alpha',
+            destination_type: 'store',
             aab: './nothing.aab'
           })
         end").runner.execute(:test)
@@ -589,8 +599,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
       stub_update_release(200)
-      stub_get_destination(200)
-      stub_add_to_destination(200)
+      stub_get_destination(200, 'store', 'Alpha')
+      stub_add_to_destination(200, 'store')
       stub_get_release(200)
 
       Fastlane::FastFile.new.parse("lane :test do
@@ -599,10 +609,34 @@ describe Fastlane::Actions::AppcenterUploadAction do
           owner_name: 'owner',
           app_name: 'app',
           aab: './spec/fixtures/appfiles/aab_file_empty.aab',
-          destinations: 'Testers',
-          destination_type: 'group'
+          destinations: 'Alpha',
+          destination_type: 'store'
         })
       end").runner.execute(:test)
+    end
+
+    it "raises an error when trying to upload an .aab to a group" do
+      expect do
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_upload_build(200)
+        stub_update_release_upload(200, 'committed')
+        stub_update_release(200)
+        stub_get_destination(200)
+        stub_add_to_destination(200)
+        stub_get_release(200)
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            aab: './spec/fixtures/appfiles/aab_file_empty.aab',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Can't distribute .aab to groups. Please use destination type 'store'.")
     end
 
     it "uses GRADLE_APK_OUTPUT_PATH as default for apk" do
@@ -636,8 +670,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
       stub_update_release(200)
-      stub_get_destination(200)
-      stub_add_to_destination(200)
+      stub_get_destination(200, 'store', 'Alpha')
+      stub_add_to_destination(200, 'store')
       stub_get_release(200)
 
       values = Fastlane::FastFile.new.parse("lane :test do
@@ -647,8 +681,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
-          destinations: 'Testers',
-          destination_type: 'group'
+          destinations: 'Alpha',
+          destination_type: 'store'
         })
       end").runner.execute(:test)
 
