@@ -41,13 +41,13 @@ module Fastlane
       # returns:
       # upload_id
       # upload_url
-      def self.create_release_upload(api_token, owner_name, app_name)
+      def self.create_release_upload(api_token, owner_name, app_name, body)
         connection = self.connection
 
         response = connection.post("v0.1/apps/#{owner_name}/#{app_name}/release_uploads") do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
-          req.body = {}
+          req.body = body.nil? && {} || body
         end
 
         case response.status
