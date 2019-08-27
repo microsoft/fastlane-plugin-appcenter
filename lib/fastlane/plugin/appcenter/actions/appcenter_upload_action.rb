@@ -126,12 +126,14 @@ module Fastlane
         ].detect { |e| !e.to_s.empty? }
 
         UI.user_error!("Couldn't find build file at path '#{file}'") unless file && File.exist?(file)
-        if !params[:aab].to_s.empty? && destination_type == "group"
-          UI.user_error!("Can't distribute .aab to groups. Please use destination type 'store'")
+        file_ext = File.extname(file)
+        if destination_type == "group"
+          UI.user_error!("Can't distribute .aab to groups, please use destination type 'store'") unless params[:aab].to_s.empty?
+        else
+          UI.user_error!("Can't distribute #{file_ext} to stores, please use destination type 'group'") if %w(.dmg .pkg .zip).include? file_ext
         end
 
         unless params[:file].to_s.empty?
-          file_ext = File.extname(file)
           if %w[.dmg .pkg].include? file_ext
             UI.user_error!("Fields `version` and `build_number` must be specified to upload a #{file_ext} file") if build_number.to_s.empty? || version.to_s.empty?
             release_upload_body = { build_version: version, build_number: build_number }
