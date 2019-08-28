@@ -363,7 +363,7 @@ module Fastlane
                                       type: String,
                        conflicting_options: [:apk, :aab, :ipa],
                             conflict_block: proc do |value|
-                              UI.user_error!("You can't use 'ipa' and '#{value.key}' options in one run")
+                              UI.user_error!("You can't use 'file' and '#{value.key}' options in one run")
                             end,
                               verify_block: proc do |value|
                                 accepted_formats = %w(.aab .apk .dmg .ipa .pkg .zip)

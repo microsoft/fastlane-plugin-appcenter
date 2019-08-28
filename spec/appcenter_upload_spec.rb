@@ -18,9 +18,9 @@ def stub_create_app(status, app_name = "app", app_display_name = "app", app_os =
     )
 end
 
-def stub_create_release_upload(status)
+def stub_create_release_upload(status, body = nil)
   stub_request(:post, "https://api.appcenter.ms/v0.1/apps/owner/app/release_uploads")
-    .with(body: "{}")
+    .with(body: body && JSON.generate(body) || "{}")
     .to_return(
       status: status,
       body: "{\"upload_id\":\"upload_id\",\"upload_url\":\"https://upload.com\"}",
@@ -285,21 +285,30 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end.to raise_error("Only \".ipa\"/\".app\"/\".app.zip\" formats are allowed, you provided \"\"")
     end
 
-    it "raises an error if both ipa and apk provided" do
-      expect do
-        Fastlane::FastFile.new.parse("lane :test do
-          appcenter_upload({
-            api_token: 'xxx',
-            owner_name: 'owner',
-            app_name: 'app',
-            destinations: 'Testers',
-            destination_type: 'group',
-            ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
-            apk: './spec/fixtures/appfiles/apk_file_empty.apk'
-          })
-        end").runner.execute(:test)
-      end.to raise_error("You can't use 'ipa' and 'apk' options in one run")
+    %w(aab apk ipa file).each do |type1|
+      %w(aab apk ipa file).each do |type2|
+        next if type1 == type2
+
+        ext1 = type1 == "file" && "zip" || type1
+        ext2 = type2 == "file" && "zip" || type2
+        it "raises an error if both #{type1} and #{type2} provided" do
+          expect do
+            Fastlane::FastFile.new.parse("lane :test do
+              appcenter_upload({
+                api_token: 'xxx',
+                owner_name: 'owner',
+                app_name: 'app',
+                destinations: 'Testers',
+                destination_type: 'group',
+                #{type1}: './spec/fixtures/appfiles/#{ext1}_file_empty.#{ext1}',
+                #{type2}: './spec/fixtures/appfiles/#{ext2}_file_empty.#{ext2}'
+              })
+            end").runner.execute(:test)
+          end.to raise_error("You can't use '#{type1}' and '#{type2}' options in one run")
+        end
+      end
     end
+
 
     it "raises an error if both aab and apk provided" do
       expect do
@@ -636,7 +645,111 @@ describe Fastlane::Actions::AppcenterUploadAction do
             destination_type: 'group'
           })
         end").runner.execute(:test)
-      end.to raise_error("Can't distribute .aab to groups. Please use destination type 'store'.")
+      end.to raise_error("Can't distribute .aab to groups, please use destination type 'store'")
+    end
+
+    it "works with valid parameters for a macOS .zip file" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          file: './spec/fixtures/appfiles/zip_file_empty.zip',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
+    %w(dmg pkg).each do |ext|
+      it "works with valid parameters for a macOS .#{ext} file" do
+        stub_check_app(200)
+        stub_create_release_upload(200, { build_version: "1.0-alpha", build_number: "1234" })
+        stub_upload_build(200)
+        stub_update_release_upload(200, 'committed')
+        stub_update_release(200)
+        stub_get_destination(200)
+        stub_add_to_destination(200)
+        stub_get_release(200)
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            file: './spec/fixtures/appfiles/#{ext}_file_empty.#{ext}',
+            destinations: 'Testers',
+            destination_type: 'group',
+            build_number: '1234',
+            version: '1.0-alpha'
+          })
+        end").runner.execute(:test)
+      end
+    end
+
+    %w(dmg pkg).each do |ext|
+      %w(version build_number mandatory_update).each do |only_field|
+        # Note: mandatory_update is used here to test case without either field
+        it "raises an error when trying to upload a .#{ext} when specifying only #{only_field}" do
+          expect do
+            stub_check_app(200)
+            stub_create_release_upload(200)
+            stub_upload_build(200)
+            stub_update_release_upload(200, 'committed')
+            stub_update_release(200)
+            stub_get_destination(200)
+            stub_add_to_destination(200)
+            stub_get_release(200)
+
+            Fastlane::FastFile.new.parse("lane :test do
+              appcenter_upload({
+                api_token: 'xxx',
+                owner_name: 'owner',
+                app_name: 'app',
+                file: './spec/fixtures/appfiles/#{ext}_file_empty.#{ext}',
+                destinations: 'Testers',
+                destination_type: 'group',
+                #{only_field}: '123'
+              })
+            end").runner.execute(:test)
+          end.to raise_error("Fields `version` and `build_number` must be specified to upload a .#{ext} file")
+        end
+      end
+    end
+
+    %w(dmg pkg zip).each do |ext|
+      it "raises an error when trying to upload a .#{ext} to a store" do
+        expect do
+          stub_check_app(200)
+          stub_create_release_upload(200)
+          stub_upload_build(200)
+          stub_update_release_upload(200, 'committed')
+          stub_update_release(200)
+          stub_get_destination(200, 'store', 'Alpha')
+          stub_add_to_destination(200, 'store')
+          stub_get_release(200)
+
+          Fastlane::FastFile.new.parse("lane :test do
+            appcenter_upload({
+              api_token: 'xxx',
+              owner_name: 'owner',
+              app_name: 'app',
+              file: './spec/fixtures/appfiles/#{ext}_file_empty.#{ext}',
+              destinations: 'Alpha',
+              destination_type: 'store'
+            })
+          end").runner.execute(:test)
+        end.to raise_error("Can't distribute .#{ext} to stores, please use destination type 'group'")
+      end
     end
 
     it "uses GRADLE_APK_OUTPUT_PATH as default for apk" do
