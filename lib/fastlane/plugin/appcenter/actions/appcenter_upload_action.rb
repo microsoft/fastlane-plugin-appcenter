@@ -148,7 +148,7 @@ module Fastlane
           zip_file = file + ".zip"
           if File.exists? zip_file
             override = UI.interactive? ? UI.confirm("File '#{zip_file}' already exists, do you want to override it?") : true
-            UI.abort_with_message("Not overriding, aborting publishing operation") unless override
+            UI.abort_with_message!("Not overriding, aborting publishing operation") unless override
             UI.message("Deleting zip file: #{zip_file}")
             File.delete zip_file
           end
