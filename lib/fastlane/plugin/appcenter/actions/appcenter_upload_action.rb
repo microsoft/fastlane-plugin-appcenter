@@ -124,6 +124,14 @@ module Fastlane
 
         UI.user_error!("Couldn't find build file at path '#{file}'") unless file && File.exist?(file)
 
+        file_ext = Helper::AppcenterHelper.file_extname_full(file)
+        if file_ext == ".app" && File.directory?(file)
+          UI.message("app path is folder, zipping...")
+          app_zipped_path = Actions::ZipAction.run(path: file, output_path: file + ".zip")
+          UI.message("app package zipped")
+          file = app_zipped_path
+        end
+
         UI.message("Starting release upload...")
         upload_details = Helper::AppcenterHelper.create_release_upload(api_token, owner_name, app_name)
         if upload_details
@@ -294,7 +302,8 @@ module Fastlane
                             end,
                               verify_block: proc do |value|
                                 accepted_formats = [".apk"]
-                                UI.user_error!("Only \".apk\" formats are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? File.extname(value)
+                                file_extname_full = Helper::AppcenterHelper.file_extname_full(value)
+                                UI.user_error!("Only \".apk\" formats are allowed, you provided \"#{file_extname_full}\"") unless accepted_formats.include? file_extname_full
                               end),
 
           FastlaneCore::ConfigItem.new(key: :aab,
@@ -314,7 +323,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :ipa,
                                   env_name: "APPCENTER_DISTRIBUTE_IPA",
-                               description: "Build release path for ios build",
+                               description: "Build release path for iOS build. Also accepts macOS builds (.app or .app.zip)",
                              default_value: Actions.lane_context[SharedValues::IPA_OUTPUT_PATH],
                                   optional: true,
                                       type: String,
@@ -323,8 +332,9 @@ module Fastlane
                               UI.user_error!("You can't use 'ipa' and '#{value.key}' options in one run")
                             end,
                               verify_block: proc do |value|
-                                accepted_formats = [".ipa"]
-                                UI.user_error!("Only \".ipa\" formats are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? File.extname(value)
+                                accepted_formats = [".ipa", ".app", ".app.zip"]
+                                file_extname_full = Helper::AppcenterHelper.file_extname_full(value)
+                                UI.user_error!("Only \".ipa\"/\".app\"/\".app.zip\" formats are allowed, you provided \"#{file_extname_full}\"") unless accepted_formats.include? file_extname_full
                               end),
 
           FastlaneCore::ConfigItem.new(key: :dsym,

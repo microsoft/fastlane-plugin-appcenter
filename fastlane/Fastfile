@@ -27,6 +27,16 @@ lane :test_autocreation do
   )
 end
 
+lane :test_macos do
+  appcenter_upload(
+    api_token: ENV["TEST_APPCENTER_API_TOKEN"],
+    owner_name: ENV["APPCENTER_OWNER_NAME"],
+    app_name: ENV["APPCENTER_MACOS_APP_NAME"],
+    app_os: 'MacOS',
+    ipa: "./fastlane/macos-app.app.zip"
+  )
+end
+
 lane :test_autocreation_without_prompts do
   # app should be autocreated if not found, without asking user
   appcenter_upload(

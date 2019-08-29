@@ -9,7 +9,7 @@ end
 def stub_create_app(status, app_name = "app", app_display_name = "app", app_os = "Android", app_platform = "Java", owner_type = "user", owner_name = "owner")
   stub_request(:post, owner_type == "user" ? "https://api.appcenter.ms/v0.1/apps" : "https://api.appcenter.ms/v0.1/orgs/#{owner_name}/apps")
     .with(
-      body: "{\"display_name\":\"#{app_display_name}\",\"name\":\"#{app_name}\",\"os\":\"#{app_os}\",\"platform\":\"#{app_platform}\"}",
+      body: "{\"display_name\":\"#{app_display_name}\",\"name\":\"#{app_name}\",\"os\":\"#{app_os}\",\"platform\":\"#{app_platform}\"}"
     )
     .to_return(
       status: status,
@@ -40,7 +40,7 @@ end
 
 def stub_create_mapping_upload(status, version, build, file_name = "mapping.txt")
   stub_request(:post, "https://api.appcenter.ms/v0.1/apps/owner/app/symbol_uploads")
-    .with(body: "{\"symbol_type\":\"AndroidProguard\",\"file_name\":\"#{file_name}\",\"build\":\"3\",\"version\":\"1.0.0\"}",)
+    .with(body: "{\"symbol_type\":\"AndroidProguard\",\"file_name\":\"#{file_name}\",\"build\":\"3\",\"version\":\"1.0.0\"}")
     .to_return(
       status: status,
       body: "",
@@ -272,7 +272,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
             ipa: './spec/fixtures/appfiles/Appfile_empty'
           })
         end").runner.execute(:test)
-      end.to raise_error("Only \".ipa\" formats are allowed, you provided \"\"")
+      end.to raise_error("Only \".ipa\"/\".app\"/\".app.zip\" formats are allowed, you provided \"\"")
     end
 
     it "raises an error if both ipa and apk provided" do
@@ -340,7 +340,6 @@ describe Fastlane::Actions::AppcenterUploadAction do
 
     it "raises an error on update release upload error" do
       expect do
-
         stub_check_app(200)
         stub_create_release_upload(200)
         stub_upload_build(200)
@@ -363,7 +362,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       expect do
         stub_check_app(200)
         stub_create_release_upload(500)
-        
+
         Fastlane::FastFile.new.parse("lane :test do
           appcenter_upload({
             api_token: 'xxx',
@@ -539,7 +538,9 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
+      # rubocop:disable Metrics/LineLength
       stub_update_release(200, "______________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________...\\n\\n[read more](https://text.com)")
+      # rubocop:enable Metrics/LineLength
       stub_get_destination(200)
       stub_add_to_destination(200)
       stub_get_release(200)
@@ -659,7 +660,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)      
+      stub_update_release(200)
       stub_get_destination(200)
       stub_add_to_destination(200)
       stub_get_release(200)
@@ -684,7 +685,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)      
+      stub_update_release(200)
       stub_get_destination(200)
       stub_add_to_destination(200)
       stub_get_release(200)
@@ -710,7 +711,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)      
+      stub_update_release(200)
       stub_get_destination(200)
       stub_add_to_destination(200, 'group', true, false)
       stub_get_release(200)
@@ -737,7 +738,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)      
+      stub_update_release(200)
       stub_get_destination(200)
       stub_add_to_destination(200, 'group', false, true)
       stub_get_release(200)
@@ -764,7 +765,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)      
+      stub_update_release(200)
       stub_get_destination(200)
       stub_add_to_destination(200, 'group', true, true)
       stub_get_release(200)
@@ -787,12 +788,76 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end").runner.execute(:test)
     end
 
+    describe "uploading a macOS app" do
+      describe "not zipped" do
+        it "works with valid parameters" do
+          stub_check_app(200)
+          stub_create_release_upload(200)
+          stub_upload_build(200)
+          stub_update_release_upload(200, 'committed')
+          stub_update_release(200)
+          stub_get_destination(200)
+          stub_add_to_destination(200)
+          stub_get_release(200)
+          stub_create_dsym_upload(200)
+          stub_upload_dsym(200)
+          stub_update_dsym_upload(200, "committed")
+
+          expect(Fastlane::Actions::ZipAction).to receive(:run)
+            .with({
+              path: './spec/fixtures/appfiles/mac_app_empty.app',
+              output_path: './spec/fixtures/appfiles/mac_app_empty.app.zip'
+            })
+
+          Fastlane::FastFile.new.parse("lane :test do
+            appcenter_upload({
+              api_token: 'xxx',
+              owner_name: 'owner',
+              app_name: 'app',
+              ipa: './spec/fixtures/appfiles/mac_app_empty.app',
+              dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
+              destinations: 'Testers'
+            })
+          end").runner.execute(:test)
+        end
+      end
+
+      describe "zipped" do
+        it "works with valid parameters" do
+          stub_check_app(200)
+          stub_create_release_upload(200)
+          stub_upload_build(200)
+          stub_update_release_upload(200, 'committed')
+          stub_update_release(200)
+          stub_get_destination(200)
+          stub_add_to_destination(200)
+          stub_get_release(200)
+          stub_create_dsym_upload(200)
+          stub_upload_dsym(200)
+          stub_update_dsym_upload(200, "committed")
+
+          expect(Fastlane::Actions::ZipAction).not_to receive(:run)
+
+          Fastlane::FastFile.new.parse("lane :test do
+            appcenter_upload({
+              api_token: 'xxx',
+              owner_name: 'owner',
+              app_name: 'app',
+              ipa: './spec/fixtures/appfiles/mac_app_empty.app.zip',
+              dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
+              destinations: 'Testers'
+            })
+          end").runner.execute(:test)
+        end
+      end
+    end
+
     it "adds to all provided groups" do
       stub_check_app(200)
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)      
+      stub_update_release(200)
       stub_get_destination(200, 'group', 'Testers1')
       stub_get_destination(200, 'group', 'Testers2')
       stub_get_destination(200, 'group', 'Testers3')
@@ -822,7 +887,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)      
+      stub_update_release(200)
       stub_get_destination(200, 'group', 'Testers%201')
       stub_get_destination(200, 'group', 'Testers%202')
       stub_get_destination(200, 'group', 'Testers%203')
@@ -852,7 +917,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)      
+      stub_update_release(200)
       stub_get_destination(200, 'store')
       stub_add_to_destination(200, 'store')
       stub_get_release(200)
@@ -879,7 +944,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)      
+      stub_update_release(200)
       stub_get_destination(200)
       stub_add_to_destination(200)
       stub_get_release(200)
@@ -902,7 +967,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)      
+      stub_update_release(200)
       stub_get_destination(200)
       stub_add_to_destination(200)
       stub_get_release(200)
@@ -928,7 +993,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)      
+      stub_update_release(200)
       stub_get_destination(200)
       stub_add_to_destination(200)
       stub_get_release(200)
@@ -989,7 +1054,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)      
+      stub_update_release(200)
       stub_get_destination(200)
       stub_add_to_destination(200)
       stub_get_release(200)
@@ -1017,7 +1082,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)      
+      stub_update_release(200)
       stub_get_destination(200)
       stub_add_to_destination(200)
       stub_get_release(200)
@@ -1064,7 +1129,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)      
+      stub_update_release(200)
       stub_get_destination(200)
       stub_add_to_destination(200)
       stub_get_release(200)
