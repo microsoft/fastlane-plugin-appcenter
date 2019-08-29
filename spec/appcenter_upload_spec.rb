@@ -803,13 +803,11 @@ describe Fastlane::Actions::AppcenterUploadAction do
           stub_upload_dsym(200)
           stub_update_dsym_upload(200, "committed")
 
-          # rubocop:disable Layout/IndentHash
           expect(Fastlane::Actions::ZipAction).to receive(:run)
             .with({
-                path: './spec/fixtures/appfiles/mac_app_empty.app',
-                output_path: './spec/fixtures/appfiles/mac_app_empty.app.zip'
+              path: './spec/fixtures/appfiles/mac_app_empty.app',
+              output_path: './spec/fixtures/appfiles/mac_app_empty.app.zip'
             })
-          # rubocop:enable Layout/IndentHash
 
           Fastlane::FastFile.new.parse("lane :test do
             appcenter_upload({
