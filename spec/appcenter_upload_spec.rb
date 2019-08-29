@@ -282,15 +282,15 @@ describe Fastlane::Actions::AppcenterUploadAction do
             ipa: './spec/fixtures/appfiles/Appfile_empty'
           })
         end").runner.execute(:test)
-      end.to raise_error("Only \".ipa\"/\".app\"/\".app.zip\" formats are allowed, you provided \"\"")
+      end.to raise_error("Only \".ipa\" formats are allowed, you provided \"\"")
     end
 
     %w(aab apk ipa file).each do |type1|
       %w(aab apk ipa file).each do |type2|
         next if type1 == type2
 
-        ext1 = type1 == "file" && "zip" || type1
-        ext2 = type2 == "file" && "zip" || type2
+        ext1 = type1 == "file" ? "app" : type1
+        ext2 = type2 == "file" ? "app" : type2
         it "raises an error if both #{type1} and #{type2} provided" do
           expect do
             Fastlane::FastFile.new.parse("lane :test do
@@ -308,7 +308,6 @@ describe Fastlane::Actions::AppcenterUploadAction do
         end
       end
     end
-
 
     it "raises an error if both aab and apk provided" do
       expect do
@@ -645,10 +644,10 @@ describe Fastlane::Actions::AppcenterUploadAction do
             destination_type: 'group'
           })
         end").runner.execute(:test)
-      end.to raise_error("Can't distribute .aab to groups, please use destination type 'store'")
+      end.to raise_error("Can't distribute .aab to groups, please use `destination_type: 'store'`")
     end
 
-    it "works with valid parameters for a macOS .zip file" do
+    it "works with valid parameters for a macOS .app.zip file" do
       stub_check_app(200)
       stub_create_release_upload(200)
       stub_upload_build(200)
@@ -663,7 +662,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
           api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
-          file: './spec/fixtures/appfiles/zip_file_empty.zip',
+          file: './spec/fixtures/appfiles/app_file_empty.app.zip',
           destinations: 'Testers',
           destination_type: 'group'
         })
@@ -726,7 +725,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end
     end
 
-    %w(dmg pkg zip).each do |ext|
+    %w(app app.zip dmg pkg).each do |ext|
       it "raises an error when trying to upload a .#{ext} to a store" do
         expect do
           stub_check_app(200)
@@ -748,7 +747,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
               destination_type: 'store'
             })
           end").runner.execute(:test)
-        end.to raise_error("Can't distribute .#{ext} to stores, please use destination type 'group'")
+        end.to raise_error("Can't distribute .#{ext} to stores, please use `destination_type: 'group'`")
       end
     end
 
@@ -950,10 +949,13 @@ describe Fastlane::Actions::AppcenterUploadAction do
           stub_upload_dsym(200)
           stub_update_dsym_upload(200, "committed")
 
+          Fastlane::UI.stub(:interactive?).and_return false
+          expect(File).to receive(:delete).with('./spec/fixtures/appfiles/app_file_empty.app.zip')
+          File.stub(:delete)
           expect(Fastlane::Actions::ZipAction).to receive(:run)
             .with({
-              path: './spec/fixtures/appfiles/mac_app_empty.app',
-              output_path: './spec/fixtures/appfiles/mac_app_empty.app.zip'
+              path: './spec/fixtures/appfiles/app_file_empty.app',
+              output_path: './spec/fixtures/appfiles/app_file_empty.app.zip'
             })
 
           Fastlane::FastFile.new.parse("lane :test do
@@ -961,7 +963,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
               api_token: 'xxx',
               owner_name: 'owner',
               app_name: 'app',
-              ipa: './spec/fixtures/appfiles/mac_app_empty.app',
+              file: './spec/fixtures/appfiles/app_file_empty.app',
               dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
               destinations: 'Testers'
             })
@@ -990,7 +992,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
               api_token: 'xxx',
               owner_name: 'owner',
               app_name: 'app',
-              ipa: './spec/fixtures/appfiles/mac_app_empty.app.zip',
+              file: './spec/fixtures/appfiles/app_file_empty.app.zip',
               dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
               destinations: 'Testers'
             })

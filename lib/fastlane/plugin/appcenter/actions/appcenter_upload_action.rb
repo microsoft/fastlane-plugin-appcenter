@@ -126,11 +126,12 @@ module Fastlane
         ].detect { |e| !e.to_s.empty? }
 
         UI.user_error!("Couldn't find build file at path '#{file}'") unless file && File.exist?(file)
-        file_ext = File.extname(file)
+
+        file_ext = Helper::AppcenterHelper.file_extname_full(file)
         if destination_type == "group"
-          UI.user_error!("Can't distribute .aab to groups, please use destination type 'store'") unless params[:aab].to_s.empty?
+          UI.user_error!("Can't distribute #{file_ext} to groups, please use `destination_type: 'store'`") if %w(.aab).include? file_ext
         else
-          UI.user_error!("Can't distribute #{file_ext} to stores, please use destination type 'group'") if %w(.dmg .pkg .zip).include? file_ext
+          UI.user_error!("Can't distribute #{file_ext} to stores, please use `destination_type: 'group'`") if %w(.app .app.zip .dmg .pkg).include? file_ext
         end
 
         unless params[:file].to_s.empty?
@@ -142,12 +143,16 @@ module Fastlane
           end
         end
 
-        file_ext = Helper::AppcenterHelper.file_extname_full(file)
         if file_ext == ".app" && File.directory?(file)
-          UI.message("app path is folder, zipping...")
-          app_zipped_path = Actions::ZipAction.run(path: file, output_path: file + ".zip")
-          UI.message("app package zipped")
-          file = app_zipped_path
+          UI.message("App path is a directory, zipping it before upload")
+          zip_file = file + ".zip"
+          if File.exists? zip_file
+            override = UI.interactive? ? UI.confirm("File '#{zip_file}' already exists, do you want to override it?") : true
+            UI.abort_with_message("Not overriding, aborting publishing operation") unless override
+            UI.message("Deleting zip file: #{zip_file}")
+            File.delete zip_file
+          end
+          file = Actions::ZipAction.run(path: file, output_path: zip_file)
         end
 
         UI.message("Starting release upload...")
@@ -341,7 +346,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :ipa,
                                   env_name: "APPCENTER_DISTRIBUTE_IPA",
-                               description: "Build release path for iOS build. Also accepts macOS builds (.app or .app.zip)",
+                               description: "Build release path for iOS builds",
                              default_value: Actions.lane_context[SharedValues::IPA_OUTPUT_PATH],
                                   optional: true,
                                       type: String,
@@ -350,15 +355,13 @@ module Fastlane
                               UI.user_error!("You can't use 'ipa' and '#{value.key}' options in one run")
                             end,
                               verify_block: proc do |value|
-                                accepted_formats = [".ipa", ".app", ".app.zip"]
-                                file_extname_full = Helper::AppcenterHelper.file_extname_full(value)
-                                UI.user_error!("Only \".ipa\"/\".app\"/\".app.zip\" formats are allowed, you provided \"#{file_extname_full}\"") unless accepted_formats.include? file_extname_full
+                                accepted_formats = [".ipa"]
+                                UI.user_error!("Only \".ipa\" formats are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? File.extname(value)
                               end),
-
 
           FastlaneCore::ConfigItem.new(key: :file,
                                   env_name: "APPCENTER_DISTRIBUTE_FILE",
-                               description: "Build release path for generic builds (.aab, .apk, .dmg, .ipa, .pkg, .zip)",
+                               description: "Build release path for generic builds (.aab, .app, .app.zip, .apk, .dmg, .ipa, .pkg)",
                                   optional: true,
                                       type: String,
                        conflicting_options: [:apk, :aab, :ipa],
@@ -366,8 +369,9 @@ module Fastlane
                               UI.user_error!("You can't use 'file' and '#{value.key}' options in one run")
                             end,
                               verify_block: proc do |value|
-                                accepted_formats = %w(.aab .apk .dmg .ipa .pkg .zip)
-                                UI.user_error!("Only #{accepted_formats.to_s} formats are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? File.extname(value)
+                                accepted_formats = %w(.aab .app .app.zip .apk .dmg .ipa .pkg)
+                                file_ext = Helper::AppcenterHelper.file_extname_full(value)
+                                UI.user_error!("Only #{accepted_formats.to_s} formats are allowed, you provided \"#{file_ext}\"") unless accepted_formats.include? file_ext
                               end),
 
           FastlaneCore::ConfigItem.new(key: :dsym,
@@ -475,13 +479,13 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :build_number,
                                        env_name: "APPCENTER_DISTRIBUTE_BUILD_NUMBER",
-                                       description: "The build number, used and required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds",
+                                       description: "The build number, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds",
                                        optional: true,
                                        type: String),
 
           FastlaneCore::ConfigItem.new(key: :version,
                                        env_name: "APPCENTER_DISTRIBUTE_VERSION",
-                                       description: "The build version, used and required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds",
+                                       description: "The build version, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds",
                                        optional: true,
                                        type: String),
 
