@@ -44,7 +44,7 @@ module Fastlane
           values[:dsym_path] = dsym_path
 
           UI.message("Starting dSYM upload...")
-          
+
           # TODO: this should eventually be removed once we have warned of deprecation for long enough
           if File.extname(dsym_path) == ".txt"
             file_name = File.basename(dsym_path)
@@ -103,6 +103,8 @@ module Fastlane
         should_clip = params[:should_clip]
         release_notes_link = params[:release_notes_link]
         timeout = params[:timeout]
+        build_number = params[:build_number]
+        version = params[:version]
 
         if release_notes.length >= Constants::MAX_RELEASE_NOTES_LENGTH
           unless should_clip
@@ -119,21 +121,42 @@ module Fastlane
         file = [
           params[:ipa],
           params[:apk],
-          params[:aab]
+          params[:aab],
+          params[:file]
         ].detect { |e| !e.to_s.empty? }
 
         UI.user_error!("Couldn't find build file at path '#{file}'") unless file && File.exist?(file)
 
         file_ext = Helper::AppcenterHelper.file_extname_full(file)
+        if destination_type == "group"
+          UI.user_error!("Can't distribute #{file_ext} to groups, please use `destination_type: 'store'`") if %w(.aab).include? file_ext
+        else
+          UI.user_error!("Can't distribute #{file_ext} to stores, please use `destination_type: 'group'`") if %w(.app .app.zip .dmg .pkg).include? file_ext
+        end
+
+        unless params[:file].to_s.empty?
+          if %w[.dmg .pkg].include? file_ext
+            UI.user_error!("Fields `version` and `build_number` must be specified to upload a #{file_ext} file") if build_number.to_s.empty? || version.to_s.empty?
+            release_upload_body = { build_version: version, build_number: build_number }
+          else
+            UI.message("Fields `version` and `build_number` are not required for files of type #{file_ext}, ignored") unless build_number.to_s.empty? && version.to_s.empty?
+          end
+        end
+
         if file_ext == ".app" && File.directory?(file)
-          UI.message("app path is folder, zipping...")
-          app_zipped_path = Actions::ZipAction.run(path: file, output_path: file + ".zip")
-          UI.message("app package zipped")
-          file = app_zipped_path
+          UI.message("App path is a directory, zipping it before upload")
+          zip_file = file + ".zip"
+          if File.exists? zip_file
+            override = UI.interactive? ? UI.confirm("File '#{zip_file}' already exists, do you want to override it?") : true
+            UI.abort_with_message!("Not overriding, aborting publishing operation") unless override
+            UI.message("Deleting zip file: #{zip_file}")
+            File.delete zip_file
+          end
+          file = Actions::ZipAction.run(path: file, output_path: zip_file)
         end
 
         UI.message("Starting release upload...")
-        upload_details = Helper::AppcenterHelper.create_release_upload(api_token, owner_name, app_name)
+        upload_details = Helper::AppcenterHelper.create_release_upload(api_token, owner_name, app_name, release_upload_body)
         if upload_details
           upload_id = upload_details['upload_id']
           upload_url = upload_details['upload_url']
@@ -162,7 +185,7 @@ module Fastlane
                 UI.error("#{destination_type} '#{destination_name}' was not found")
               end
             end
-          else 
+          else
             UI.user_error!("Failed to upload release")
           end
         end
@@ -179,8 +202,9 @@ module Fastlane
         app_platform = params[:app_platform]
 
         platforms = {
-          "Android" => ['Java', 'React-Native', 'Xamarin'],
-          "iOS" => ['Objective-C-Swift', 'React-Native', 'Xamarin']
+          Android: %w[Java React-Native Xamarin],
+          iOS: %w[Objective-C-Swift React-Native Xamarin],
+          macOS: %w[Objective-C-Swift]
         }
 
         if Helper::AppcenterHelper.get_app(api_token, owner_name, app_name)
@@ -188,15 +212,14 @@ module Fastlane
         end
 
         should_create_app = !app_display_name.to_s.empty? || !app_os.to_s.empty? || !app_platform.to_s.empty?
-        
+
         if Helper.test? || should_create_app || UI.confirm("App with name #{app_name} not found, create one?")
           app_display_name = app_name if app_display_name.to_s.empty?
-          os = app_os.to_s.empty? ?
-            (Helper.test? ? "Android" : UI.select("Select OS", ["Android", "iOS"])) :
-            app_os
-          platform = app_platform.to_s.empty? ?
-            (Helper.test? ? "Java" : UI.select("Select Platform", platforms[os])) :
-            app_platform
+          os = app_os.to_s.empty? && (Helper.test? ? "Android" : UI.select("Select OS", platforms.keys)) || app_os.to_s
+          platform = app_platform.to_s.empty? && (Helper.test? ? "Java" : app_platform.to_s) || app_platform.to_s
+          if platform.to_s.empty?
+            platform = platforms[os].length == 1 ? platforms[os][0] : UI.select("Select Platform", platforms[os])
+          end
 
           Helper::AppcenterHelper.create_app(api_token, owner_type, owner_name, app_name, app_display_name, os, platform)
         else
@@ -296,7 +319,7 @@ module Fastlane
                              default_value: Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH],
                                   optional: true,
                                       type: String,
-                       conflicting_options: [:ipa, :aab],
+                       conflicting_options: [:ipa, :aab, :file],
                             conflict_block: proc do |value|
                               UI.user_error!("You can't use 'apk' and '#{value.key}' options in one run")
                             end,
@@ -308,11 +331,11 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :aab,
                                   env_name: "APPCENTER_DISTRIBUTE_AAB",
-                               description: "Build release path for android app bundle build (preview)",
+                               description: "Build release path for android app bundle build",
                              default_value: Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH],
                                   optional: true,
                                       type: String,
-                       conflicting_options: [:ipa, :apk],
+                       conflicting_options: [:ipa, :apk, :file],
                             conflict_block: proc do |value|
                               UI.user_error!("You can't use 'aab' and '#{value.key}' options in one run")
                             end,
@@ -323,18 +346,32 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :ipa,
                                   env_name: "APPCENTER_DISTRIBUTE_IPA",
-                               description: "Build release path for iOS build. Also accepts macOS builds (.app or .app.zip)",
+                               description: "Build release path for iOS builds",
                              default_value: Actions.lane_context[SharedValues::IPA_OUTPUT_PATH],
                                   optional: true,
                                       type: String,
-                       conflicting_options: [:apk, :aab],
+                       conflicting_options: [:apk, :aab, :file],
                             conflict_block: proc do |value|
                               UI.user_error!("You can't use 'ipa' and '#{value.key}' options in one run")
                             end,
                               verify_block: proc do |value|
-                                accepted_formats = [".ipa", ".app", ".app.zip"]
-                                file_extname_full = Helper::AppcenterHelper.file_extname_full(value)
-                                UI.user_error!("Only \".ipa\"/\".app\"/\".app.zip\" formats are allowed, you provided \"#{file_extname_full}\"") unless accepted_formats.include? file_extname_full
+                                accepted_formats = [".ipa"]
+                                UI.user_error!("Only \".ipa\" formats are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? File.extname(value)
+                              end),
+
+          FastlaneCore::ConfigItem.new(key: :file,
+                                  env_name: "APPCENTER_DISTRIBUTE_FILE",
+                               description: "Build release path for generic builds (.aab, .app, .app.zip, .apk, .dmg, .ipa, .pkg)",
+                                  optional: true,
+                                      type: String,
+                       conflicting_options: [:apk, :aab, :ipa],
+                            conflict_block: proc do |value|
+                              UI.user_error!("You can't use 'file' and '#{value.key}' options in one run")
+                            end,
+                              verify_block: proc do |value|
+                                accepted_formats = %w(.aab .app .app.zip .apk .dmg .ipa .pkg)
+                                file_ext = Helper::AppcenterHelper.file_extname_full(value)
+                                UI.user_error!("Only #{accepted_formats.to_s} formats are allowed, you provided \"#{file_ext}\"") unless accepted_formats.include? file_ext
                               end),
 
           FastlaneCore::ConfigItem.new(key: :dsym,
@@ -442,13 +479,13 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :build_number,
                                        env_name: "APPCENTER_DISTRIBUTE_BUILD_NUMBER",
-                                       description: "The build number. Used (and required) for uploading Android ProGuard mapping file",
+                                       description: "The build number, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds",
                                        optional: true,
                                        type: String),
 
           FastlaneCore::ConfigItem.new(key: :version,
                                        env_name: "APPCENTER_DISTRIBUTE_VERSION",
-                                       description: "The version number. Used (and required) for uploading Android ProGuard mapping file",
+                                       description: "The build version, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds",
                                        optional: true,
                                        type: String),
 
