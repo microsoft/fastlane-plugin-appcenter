@@ -29,27 +29,53 @@ appcenter_upload(
 )
 ```
 
-The action parameters `api_token` and `owner_name` can also be omitted when their values are [set as environment variables](https://docs.fastlane.tools/advanced/#environment-variables). Below a list of all available environment variables:
+### Help
 
-- `APPCENTER_API_TOKEN` - API Token for App Center
-- `APPCENTER_OWNER_TYPE` - Owner type - `user` or `organization` (default value is `user`)
-- `APPCENTER_OWNER_NAME` - Owner name
-- `APPCENTER_APP_NAME` - App name. If there is no app with such name, you will be prompted to create one
-- `APPCENTER_DISTRIBUTE_APK` - Build release path for android build
-- `APPCENTER_DISTRIBUTE_AAB` - Build release path for android app bundle build
-- `APPCENTER_DISTRIBUTE_IPA` - Build release path for ios build
-- `APPCENTER_DISTRIBUTE_DSYM` - Path to your symbols (app.dSYM.zip) file
-- `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` - Flag to upload only the dSYM file to App Center
-- `APPCENTER_DISTRIBUTE_ANDROID_MAPPING` - Path to your Android mapping.txt file
-- `APPCENTER_DISTRIBUTE_UPLOAD_ANDROID_MAPPING_ONLY` - Flag to upload only the mapping file to App Center
-- `APPCENTER_DISTRIBUTE_DESTINATIONS` - Comma separated list of destination names. Both distribution groups and stores are supported. All names are required to be of the same destination type. Default is `Collaborators`.
-- `APPCENTER_DISTRIBUTE_DESTINATION_TYPE` - Destination type of distribution destination. `group` and `store` are supported. Default is `group`
-- `APPCENTER_DISTRIBUTE_MANDATORY_UPDATE` - Require users to update to this release
-- `APPCENTER_DISTRIBUTE_NOTIFY_TESTERS` - Send email notification about release (default: `false`)
-- `APPCENTER_DISTRIBUTE_RELEASE_NOTES` - Release notes
-- `APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING` - Clip release notes if its length is more then 5000, `true` by default
-- `APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK` - Additional release notes link
-- `APPCENTER_DISTRIBUTE_TIMEOUT` - Sets the request timeout in seconds. Used when uploading builds to App Center.
+Once installed, information and help can be printed out with this command:
+```bash
+fastlane action appcenter_upload
+```
+
+### A note on App Name
+
+The `app_name` and `owner_name` as set in the Fastfile come from the app's URL in App Center, in the below form:
+```
+https://appcenter.ms/users/{owner_name}/apps/{app_name}
+```
+They should not be confused with the displayed name on App Center pages, which is called `app_display_name ` instead.
+
+### Parameters
+
+The action parameters `api_token` and `owner_name` can also be omitted when their values are [set as environment variables](https://docs.fastlane.tools/advanced/#environment-variables).
+Here is the list of all existing parameters:
+
+| Key                   | Description                                      | Env Var                                          | Default            |
+|-----------------------|--------------------------------------------------|--------------------------------------------------|--------------------|
+| `api_token`           | API Token for App Center                                                                              | `APPCENTER_API_TOKEN`                              |                    |
+| `owner_type`          | Owner type, either 'user' or 'organization'                                                           | `APPCENTER_OWNER_TYPE`                             | `user`               |
+| `owner_name`          | Owner name, as found in the App's URL in App Center                                                   | `APPCENTER_OWNER_NAME`                             |                    |
+| `app_name`            | App name as found in the App's URL in App Center, if there is no app with such name, you will be prompted to create one     | `APPCENTER_APP_NAME`                               |                    |
+| `app_display_name`    | App display name to use when creating a new app                                                       | `APPCENTER_APP_DISPLAY_NAME`                       |                    |
+| `app_os`              | App OS. Used for new app creation, if app 'app_name' was not found                                    | `APPCENTER_APP_OS`                                 |                    |
+| `app_platform`        | App Platform. Used for new app creation, if app 'app_name' was not found                              | `APPCENTER_APP_PLATFORM`                           |                    |
+| `apk`                 | Build release path for android build                                                                  | `APPCENTER_DISTRIBUTE_APK`                         |                    |
+| `aab`                 | Build release path for android app bundle build                                                       | `APPCENTER_DISTRIBUTE_AAB`                         |                    |
+| `ipa`                 | Build release path for iOS builds                                                                     | `APPCENTER_DISTRIBUTE_IPA`                         |                    |
+| `file`                | Build release path for generic builds (.aab, .app, .app.zip, .apk, .dmg, .ipa, .pkg)                  | `APPCENTER_DISTRIBUTE_FILE`                        |                    |
+| `dsym`                | Path to your symbols file. For iOS provide path to app.dSYM.zip                                       | `APPCENTER_DISTRIBUTE_DSYM`                        |                    |
+| `upload_dsym_only`    | Flag to upload only the dSYM file to App Center                                                       | `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY`            | `false`              |
+| `mapping`             | Path to your Android mapping.txt                                                                      | `APPCENTER_DISTRIBUTE_ANDROID_MAPPING`             |                    |
+| `upload_mapping_only` | Flag to upload only the mapping.txt file to App Center                                                | `APPCENTER_DISTRIBUTE_UPLOAD_ANDROID_MAPPING_ONLY` | `false`              |
+| `destinations`        | Comma separated list of destination names. Both distribution groups and stores are supported. All names are required to be of the same destination type    | `APPCENTER_DISTRIBUTE_DESTINATIONS`                | `Collaborators`      |
+| `destination_type`    | Destination type of distribution destination. 'group' and 'store' are supported                       | `APPCENTER_DISTRIBUTE_DESTINATION_TYPE`            | `group`              |
+| `mandatory_update`    | Require users to update to this release. Ignored if destination type is 'store'                       | `APPCENTER_DISTRIBUTE_MANDATORY_UPDATE`            | `false`              |
+| `notify_testers`      | Send email notification about release. Ignored if destination type is 'store'                         | `APPCENTER_DISTRIBUTE_NOTIFY_TESTERS`              | `false`              |
+| `release_notes`       | Release notes                                                                                         | `APPCENTER_DISTRIBUTE_RELEASE_NOTES`               | No changelog given |
+| `should_clip`         | Clip release notes if its length is more then 5000, true by default                                   | `APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING`      | `true`               |
+| `release_notes_link`  | Additional release notes link                                                                         | `APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK`          |                    |
+| `build_number`        | The build number, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds  | `APPCENTER_DISTRIBUTE_BUILD_NUMBER`                |                    |
+| `version`             | The build version, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds | `APPCENTER_DISTRIBUTE_VERSION`                     |                    |
+| `timeout`             | Request timeout in seconds                                                                            | `APPCENTER_DISTRIBUTE_TIMEOUT`                     |                    |
 
 ## Example
 

@@ -268,7 +268,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :owner_type,
                                   env_name: "APPCENTER_OWNER_TYPE",
-                               description: "Owner type",
+                               description: "Owner type, either 'user' or 'organization'",
                                   optional: true,
                              default_value: "user",
                                       type: String,
@@ -279,7 +279,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :owner_name,
                                   env_name: "APPCENTER_OWNER_NAME",
-                               description: "Owner name",
+                               description: "Owner name, as found in the App's URL in App Center",
                                   optional: false,
                                       type: String,
                               verify_block: proc do |value|
@@ -288,7 +288,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :app_name,
                                   env_name: "APPCENTER_APP_NAME",
-                               description: "App name. If there is no app with such name, you will be prompted to create one",
+                               description: "App name as found in the App's URL in App Center, if there is no app with such name, you will be prompted to create one",
                                   optional: false,
                                       type: String,
                               verify_block: proc do |value|
@@ -303,13 +303,13 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :app_os,
                                   env_name: "APPCENTER_APP_OS",
-                               description: "App OS. Used for new app creation, if app with 'app_name' name was not found",
+                               description: "App OS. Used for new app creation, if app 'app_name' was not found",
                                   optional: true,
                                       type: String),
 
           FastlaneCore::ConfigItem.new(key: :app_platform,
                                   env_name: "APPCENTER_APP_PLATFORM",
-                               description: "App Platform. Used for new app creation, if app with 'app_name' name was not found",
+                               description: "App Platform. Used for new app creation, if app 'app_name' was not found",
                                   optional: true,
                                       type: String),
 
