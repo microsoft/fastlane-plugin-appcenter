@@ -22,9 +22,9 @@ To get started, first, [obtain an API token](https://appcenter.ms/settings/apito
 ```ruby
 appcenter_upload(
   api_token: "<appcenter token>",
-  owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
-  app_name: "<appcenter app name>",
-  apk: "<path to android build binary>",
+  owner_name: "<appcenter owner name of the app (as seen in app URL)>",
+  app_name: "<appcenter app name (as seen in app URL)>",
+  file: "<path to android build binary>",
   notify_testers: true # Set to false if you don't want to notify testers of your new release (default: `false`)
 )
 ```
@@ -49,33 +49,33 @@ They should not be confused with the displayed name on App Center pages, which i
 The action parameters `api_token` and `owner_name` can also be omitted when their values are [set as environment variables](https://docs.fastlane.tools/advanced/#environment-variables).
 Here is the list of all existing parameters:
 
-| Key                   | Description                                      | Env Var                                          | Default            |
-|-----------------------|--------------------------------------------------|--------------------------------------------------|--------------------|
-| `api_token`           | API Token for App Center                                                                              | `APPCENTER_API_TOKEN`                              |                    |
-| `owner_type`          | Owner type, either 'user' or 'organization'                                                           | `APPCENTER_OWNER_TYPE`                             | `user`               |
-| `owner_name`          | Owner name, as found in the App's URL in App Center                                                   | `APPCENTER_OWNER_NAME`                             |                    |
-| `app_name`            | App name as found in the App's URL in App Center, if there is no app with such name, you will be prompted to create one     | `APPCENTER_APP_NAME`                               |                    |
-| `app_display_name`    | App display name to use when creating a new app                                                       | `APPCENTER_APP_DISPLAY_NAME`                       |                    |
-| `app_os`              | App OS. Used for new app creation, if app 'app_name' was not found                                    | `APPCENTER_APP_OS`                                 |                    |
-| `app_platform`        | App Platform. Used for new app creation, if app 'app_name' was not found                              | `APPCENTER_APP_PLATFORM`                           |                    |
-| `apk`                 | Build release path for android build                                                                  | `APPCENTER_DISTRIBUTE_APK`                         |                    |
-| `aab`                 | Build release path for android app bundle build                                                       | `APPCENTER_DISTRIBUTE_AAB`                         |                    |
-| `ipa`                 | Build release path for iOS builds                                                                     | `APPCENTER_DISTRIBUTE_IPA`                         |                    |
-| `file`                | Build release path for generic builds (.aab, .app, .app.zip, .apk, .dmg, .ipa, .pkg)                  | `APPCENTER_DISTRIBUTE_FILE`                        |                    |
-| `dsym`                | Path to your symbols file. For iOS provide path to app.dSYM.zip                                       | `APPCENTER_DISTRIBUTE_DSYM`                        |                    |
-| `upload_dsym_only`    | Flag to upload only the dSYM file to App Center                                                       | `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY`            | `false`              |
-| `mapping`             | Path to your Android mapping.txt                                                                      | `APPCENTER_DISTRIBUTE_ANDROID_MAPPING`             |                    |
-| `upload_mapping_only` | Flag to upload only the mapping.txt file to App Center                                                | `APPCENTER_DISTRIBUTE_UPLOAD_ANDROID_MAPPING_ONLY` | `false`              |
-| `destinations`        | Comma separated list of destination names. Both distribution groups and stores are supported. All names are required to be of the same destination type    | `APPCENTER_DISTRIBUTE_DESTINATIONS`                | `Collaborators`      |
-| `destination_type`    | Destination type of distribution destination. 'group' and 'store' are supported                       | `APPCENTER_DISTRIBUTE_DESTINATION_TYPE`            | `group`              |
-| `mandatory_update`    | Require users to update to this release. Ignored if destination type is 'store'                       | `APPCENTER_DISTRIBUTE_MANDATORY_UPDATE`            | `false`              |
-| `notify_testers`      | Send email notification about release. Ignored if destination type is 'store'                         | `APPCENTER_DISTRIBUTE_NOTIFY_TESTERS`              | `false`              |
-| `release_notes`       | Release notes                                                                                         | `APPCENTER_DISTRIBUTE_RELEASE_NOTES`               | No changelog given |
-| `should_clip`         | Clip release notes if its length is more then 5000, true by default                                   | `APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING`      | `true`               |
-| `release_notes_link`  | Additional release notes link                                                                         | `APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK`          |                    |
-| `build_number`        | The build number, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds  | `APPCENTER_DISTRIBUTE_BUILD_NUMBER`                |                    |
-| `version`             | The build version, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds | `APPCENTER_DISTRIBUTE_VERSION`                     |                    |
-| `timeout`             | Request timeout in seconds                                                                            | `APPCENTER_DISTRIBUTE_TIMEOUT`                     |                    |
+| Key & Env Var | Description |
+|-----------------|--------------------|
+| `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
+| `owner_type` <br/> `APPCENTER_OWNER_TYPE` | Owner type, either 'user' or 'organization' (default: `user`) |
+| `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name, as found in the App's URL in App Center |
+| `app_name` <br/> `APPCENTER_APP_NAME` | App name as found in the App's URL in App Center, if there is no app with such name, you will be prompted to create one |
+| `app_display_name` <br/> `APPCENTER_APP_DISPLAY_NAME` | App display name to use when creating a new app |
+| `app_os` <br/> `APPCENTER_APP_OS` | App OS. Used for new app creation, if app 'app_name' was not found |
+| `app_platform` <br/> `APPCENTER_APP_PLATFORM` | App Platform. Used for new app creation, if app 'app_name' was not found |
+| `apk` <br/> `APPCENTER_DISTRIBUTE_APK` | Build release path for android build |
+| `aab` <br/> `APPCENTER_DISTRIBUTE_AAB` | Build release path for android app bundle build |
+| `ipa` <br/> `APPCENTER_DISTRIBUTE_IPA` | Build release path for iOS builds |
+| `file` <br/> `APPCENTER_DISTRIBUTE_FILE` | Build release path for generic builds (.aab, .app, .app.zip, .apk, .dmg, .ipa, .pkg) |
+| `dsym` <br/> `APPCENTER_DISTRIBUTE_DSYM` | Path to your symbols file. For iOS provide path to app.dSYM.zip |
+| `upload_dsym_only` <br/> `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` | Flag to upload only the dSYM file to App Center (default: `false`) |
+| `mapping` <br/> `APPCENTER_DISTRIBUTE_ANDROID_MAPPING` | Path to your Android mapping.txt |
+| `upload_mapping_only` <br/> `APPCENTER_DISTRIBUTE_UPLOAD_ANDROID_MAPPING_ONLY` | Flag to upload only the mapping.txt file to App Center (default: `false`) |
+| `destinations` <br/> `APPCENTER_DISTRIBUTE_DESTINATIONS` | Comma separated list of destination names. Both distribution groups and stores are supported. All names are required to be of the same destination type (default: `Collaborators`) |
+| `destination_type` <br/> `APPCENTER_DISTRIBUTE_DESTINATION_TYPE` | Destination type of distribution destination. 'group' and 'store' are supported (default: `group`) |
+| `mandatory_update` <br/> `APPCENTER_DISTRIBUTE_MANDATORY_UPDATE` | Require users to update to this release. Ignored if destination type is 'store' (default: `false`) |
+| `notify_testers` <br/> `APPCENTER_DISTRIBUTE_NOTIFY_TESTERS` | Send email notification about release. Ignored if destination type is 'store' (default: `false`) |
+| `release_notes` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES` | Release notes (default: `No changelog given`) |
+| `should_clip` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING` | Clip release notes if its length is more then 5000, true by default (default: `true`) |
+| `release_notes_link` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK` | Additional release notes link |
+| `build_number` <br/> `APPCENTER_DISTRIBUTE_BUILD_NUMBER` | The build number, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds |
+| `version` <br/> `APPCENTER_DISTRIBUTE_VERSION` | The build version, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds |
+| `timeout` <br/> `APPCENTER_DISTRIBUTE_TIMEOUT` | Request timeout in seconds |
 
 ## Example
 
