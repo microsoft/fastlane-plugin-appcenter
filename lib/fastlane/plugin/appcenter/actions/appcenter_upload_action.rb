@@ -94,6 +94,7 @@ module Fastlane
         values = params.values
         api_token = params[:api_token]
         owner_name = params[:owner_name]
+        owner_type = params[:owner_type]
         app_name = params[:app_name]
         destinations = params[:destinations]
         destination_type = params[:destination_type]
@@ -166,7 +167,8 @@ module Fastlane
 
           if uploaded
             release_id = uploaded['release_id']
-            UI.message("Release '#{release_id}' committed")
+            release_url = Helper::AppcenterHelper.get_release_url(owner_type, owner_name, app_name, release_id)
+            UI.message("Release '#{release_id}' committed: #{release_url}")
 
             Helper::AppcenterHelper.update_release(api_token, owner_name, app_name, release_id, release_notes)
 
@@ -177,14 +179,17 @@ module Fastlane
                 destination_id = destination['id']
                 distributed_release = Helper::AppcenterHelper.add_to_destination(api_token, owner_name, app_name, release_id, destination_type, destination_id, mandatory_update, notify_testers)
                 if distributed_release
-                  UI.success("Release #{distributed_release['short_version']} was successfully distributed to #{destination_type} \"#{destination_name}\"")
+                  UI.success("Release '#{release_id}' (#{distributed_release['short_version']}) was successfully distributed to #{destination_type} \"#{destination_name}\"")
                 else
-                  UI.error("Release '#{release_id}' was not found")
+                  UI.error("Release '#{release_id}' was not found for destination '#{destination_name}'")
                 end
               else
                 UI.error("#{destination_type} '#{destination_name}' was not found")
               end
             end
+
+            safe_download_url = Helper::AppcenterHelper.get_install_url(owner_type, owner_name, app_name)
+            UI.message("Release '#{release_id}' is available for download at: #{safe_download_url}")
           else
             UI.user_error!("Failed to upload release")
           end
