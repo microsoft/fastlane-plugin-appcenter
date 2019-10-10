@@ -16,12 +16,12 @@ module Fastlane
       end
 
       # create request
-      def self.connection(upload_url = false, dsym = false)
+      def self.connection(upload_url = nil, dsym = false)
         require 'faraday'
         require 'faraday_middleware'
 
         options = {
-          url: upload_url ? upload_url : ENV.fetch('APPCENTER_UPLOAD_URL', "https://api.appcenter.ms")
+          url: upload_url || ENV.fetch('APPCENTER_UPLOAD_URL', "https://api.appcenter.ms")
         }
 
         Faraday.new(options) do |builder|
@@ -291,7 +291,7 @@ module Fastlane
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
           req.body = {
-            "release_notes" => release_notes
+            release_notes: release_notes
           }
         end
 
@@ -308,7 +308,7 @@ module Fastlane
           Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
           Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_BUILD_INFORMATION] = release
 
-          UI.message("Release #{release['short_version']} was successfully updated")
+          UI.message("Release '#{release_id}' (#{release['short_version']}) was successfully updated")
 
           release
         when 404
@@ -350,6 +350,8 @@ module Fastlane
 
           Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
           Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_BUILD_INFORMATION] = release
+
+          UI.message("Release '#{release_id}' (#{release['short_version']}) was successfully distributed'")
 
           release
         when 404
@@ -410,6 +412,18 @@ module Fastlane
           UI.error("Error creating app #{response.status}: #{response.body}")
           false
         end
+      end
+
+      # Note: This does not support testing environment (INT)
+      def self.get_release_url(owner_type, owner_name, app_name, release_id)
+        owner_path = owner_type == "user" ? "users/#{owner_name}" : "orgs/#{owner_name}"
+        return "https://appcenter.ms/#{owner_path}/apps/#{app_name}/distribute/releases/#{release_id}"
+      end
+
+      # Note: This does not support testing environment (INT)
+      def self.get_install_url(owner_type, owner_name, app_name)
+        owner_path = owner_type == "user" ? "users/#{owner_name}" : "orgs/#{owner_name}"
+        return "https://install.appcenter.ms/#{owner_path}/apps/#{app_name}"
       end
     end
   end
