@@ -300,6 +300,7 @@ module Fastlane
           # get full release info
           release = self.get_release(api_token, owner_name, app_name, release_id)
           return false unless release
+
           download_url = release['download_url']
 
           UI.message("DEBUG: #{JSON.pretty_generate(release)}") if ENV['DEBUG']
@@ -342,14 +343,13 @@ module Fastlane
           # get full release info
           release = self.get_release(api_token, owner_name, app_name, release_id)
           return false unless release
+
           download_url = release['download_url']
 
           UI.message("DEBUG: received release #{JSON.pretty_generate(release)}") if ENV['DEBUG']
 
           Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
           Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_BUILD_INFORMATION] = release
-
-          UI.message("Public Download URL: #{download_url}") if download_url
 
           release
         when 404
