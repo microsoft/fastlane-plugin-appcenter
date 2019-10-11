@@ -320,6 +320,41 @@ module Fastlane
         end
       end
 
+      # updates release metadata
+      def self.update_release_metadata(api_token, owner_name, app_name, release_id, dsa_signature)
+
+        release_metadata = nil
+        if dsa_signature.to_s != ''
+          release_metadata = {
+            dsa_signature: dsa_signature
+          }
+        end
+
+        if release_metadata.nil?
+          return
+        end
+
+        connection = self.connection
+        response = connection.patch("v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}") do |req|
+          req.headers['X-API-Token'] = api_token
+          req.headers['internal-request-source'] = "fastlane"
+          req.body = {
+            metadata: release_metadata
+          }
+        end
+
+        case response.status
+        when 200...300
+          UI.message("Release Metadata was successfully updated for release '#{release_id}'")
+        when 404
+          UI.error("Not found, invalid release id")
+          false
+        else
+          UI.error("Error adding updating release metadata #{response.status}: #{response.body}")
+          false
+        end
+      end
+      
       # add release to distribution group or store
       def self.add_to_destination(api_token, owner_name, app_name, release_id, destination_type, destination_id, mandatory_update = false, notify_testers = false)
         connection = self.connection
