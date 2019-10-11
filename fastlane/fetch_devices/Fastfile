@@ -2,11 +2,12 @@ desc "Example of automatically provisioning test devices as well as building and
 lane :distribute do
   # Any actions used in this example outside of appcenter_fetch_devices and appcenter_upload ship with fastlane
 
-  # Fetch the list of iOS devices your app is distributed to
+  # Fetch the list of all iOS devices your app is distributed to
   appcenter_fetch_devices(
     api_token: "<appcenter token>",
     owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
     app_name: "<appcenter app name>",
+    destinations: "*",
     devices_file: "test-devices.txt"
   )
 
@@ -20,5 +21,7 @@ lane :distribute do
   gym
 
   # Upload the app
-  appcenter_upload(app_name: appcenter_app_name)
+  appcenter_upload(
+    # All required parameters are propagated from the above actions
+  )
 end

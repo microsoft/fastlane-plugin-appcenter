@@ -81,7 +81,9 @@ module Fastlane
       end
 
       def self.details
-        "List is a tab-delimited CSV file containing every device from every distribution group for an app in App Center. Especially useful when combined with register_devices and match to automatically register and provision devices with Apple."
+        "List is a tab-delimited CSV file containing every device from specified distribution groups for an app in App Center. " +
+          "Especially useful when combined with register_devices and match to automatically register and provision devices with Apple. " +
+          "By default, only the Collaborators group will be included, use `destination: '*'` to match all groups."
       end
 
       def self.available_options
