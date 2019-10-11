@@ -8,6 +8,7 @@ module Fastlane
       APPCENTER_API_TOKEN = :APPCENTER_API_TOKEN
       APPCENTER_OWNER_NAME = :APPCENTER_OWNER_NAME
       APPCENTER_APP_NAME = :APPCENTER_APP_NAME
+      APPCENTER_DISTRIBUTE_DESTINATIONS = :APPCENTER_DISTRIBUTE_DESTINATIONS
     end
 
     class AppcenterFetchDevicesAction < Action
@@ -15,54 +16,42 @@ module Fastlane
         api_token = params[:api_token]
         owner_name = params[:owner_name]
         app_name = params[:app_name]
+        destinations = params[:destinations]
 
         Actions.lane_context[SharedValues::APPCENTER_API_TOKEN] = api_token
         Actions.lane_context[SharedValues::APPCENTER_OWNER_NAME] = owner_name
         Actions.lane_context[SharedValues::APPCENTER_APP_NAME] = app_name
+        Actions.lane_context[SharedValues::APPCENTER_DISTRIBUTE_DESTINATIONS] = destinations
 
-        distribution_groups = JSON.parse(
-          self.fetch_distribution_groups(
+        group_names = []
+        if destinations == '*'
+          UI.message("Looking up all distribution groups for #{owner_name}/#{app_name}")
+          distribution_groups = Helper::AppcenterHelper.fetch_distribution_groups(
             api_token: api_token,
             owner_name: owner_name,
             app_name: app_name
           )
-        )
+          UI.abort_with_message!("Failed to list distribution groups for #{owner_name}/#{app_name}") unless distribution_groups
+          distribution_groups.each do |group|
+            group_names << group['name']
+          end
+        else
+          group_names += destinations.split(',')
+        end
 
         devices = []
-        distribution_groups.each do |group|
-          group_name = group['name']
-
-          devices << self.fetch_devices(
+        group_names.each do |group_name|
+          group_devices = Helper::AppcenterHelper.fetch_devices(
             api_token: api_token,
             owner_name: owner_name,
             app_name: app_name,
             distribution_group: group_name
           )
+          UI.abort_with_message!("Failed to get devices for group '#{group_name}'") unless group_devices
+          devices << group_devices
         end
 
         self.write_devices(devices: devices, devices_file: params[:devices_file])
-      end
-
-      def self.fetch_distribution_groups(api_token:, owner_name:, app_name:)
-        conn = Faraday.new(url: 'https://api.appcenter.ms')
-
-        response = conn.get do |req|
-          req.url "/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups/"
-          req.headers['X-API-Token'] = api_token
-        end
-
-        return response.body
-      end
-
-      def self.fetch_devices(api_token:, owner_name:, app_name:, distribution_group:)
-        conn = Faraday.new(url: 'https://api.appcenter.ms')
-
-        response = conn.get do |req|
-          req.url "/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups/#{distribution_group}/devices/download_devices_list"
-          req.headers['X-API-Token'] = api_token
-        end
-
-        return response.body
       end
 
       def self.write_devices(devices:, devices_file:)
@@ -129,7 +118,13 @@ module Fastlane
                              default_value: "devices.txt",
                               verify_block: proc do |value|
                                 UI.important("Important: Devices file is #{value}. If you plan to upload this file to Apple Developer Center, the file must have the .txt extension") unless value && value.end_with?('.txt')
-                              end)
+                              end),
+          FastlaneCore::ConfigItem.new(key: :destinations,
+                                  env_name: "APPCENTER_DISTRIBUTE_DESTINATIONS",
+                               description: "Comma separated list of distribution group names. Default is 'Collaborators', use '*' for all distribution groups",
+                             default_value: "Collaborators",
+                                  optional: true,
+                                      type: String)
         ]
       end
 
