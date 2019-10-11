@@ -20,7 +20,6 @@ module Fastlane
         dsym = params[:dsym]
         build_number = params[:build_number]
         version = params[:version]
-        dsa_signature = params[:dsa_signature]
 
         dsym_path = nil
         if dsym
@@ -107,6 +106,7 @@ module Fastlane
         timeout = params[:timeout]
         build_number = params[:build_number]
         version = params[:version]
+        dsa_signature = params[:dsa_signature]
 
         if release_notes.length >= Constants::MAX_RELEASE_NOTES_LENGTH
           unless should_clip
