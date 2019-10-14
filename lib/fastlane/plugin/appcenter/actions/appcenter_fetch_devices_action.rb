@@ -21,7 +21,6 @@ module Fastlane
         Actions.lane_context[SharedValues::APPCENTER_API_TOKEN] = api_token
         Actions.lane_context[SharedValues::APPCENTER_OWNER_NAME] = owner_name
         Actions.lane_context[SharedValues::APPCENTER_APP_NAME] = app_name
-        Actions.lane_context[SharedValues::APPCENTER_DISTRIBUTE_DESTINATIONS] = destinations
 
         group_names = []
         if destinations == '*'
@@ -36,8 +35,10 @@ module Fastlane
             group_names << group['name']
           end
         else
-          group_names += destinations.split(',')
+          group_names += destinations.split(',').map(&:strip)
         end
+
+        Actions.lane_context[SharedValues::APPCENTER_DISTRIBUTE_DESTINATIONS] = group_names.join(',')
 
         devices = []
         group_names.each do |group_name|
