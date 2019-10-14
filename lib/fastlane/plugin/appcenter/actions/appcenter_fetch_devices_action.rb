@@ -69,7 +69,7 @@ module Fastlane
       end
 
       def self.description
-        "Fetches a list of devices from App Center to distribute an iOS app to."
+        "Fetches a list of devices from App Center to distribute an iOS app to"
       end
 
       def self.authors

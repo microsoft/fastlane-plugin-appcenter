@@ -253,7 +253,7 @@ module Fastlane
       end
 
       def self.authors
-        ["Microsoft", "benkane"]
+        ["Microsoft"]
       end
 
       def self.details
@@ -436,7 +436,7 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :destinations,
                                   env_name: "APPCENTER_DISTRIBUTE_DESTINATIONS",
                                description: "Comma separated list of destination names. Both distribution groups and stores are supported. All names are required to be of the same destination type",
-                             default_value: "Collaborators",
+                             default_value: Actions.lane_context[SharedValues::APPCENTER_DISTRIBUTE_DESTINATIONS] || "Collaborators",
                                   optional: true,
                                       type: String),
 
