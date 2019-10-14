@@ -1036,9 +1036,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           stub_upload_dsym(200)
           stub_update_dsym_upload(200, "committed")
 
-          Fastlane::UI.stub(:interactive?).and_return false
+          allow(Fastlane::UI).to receive(:interactive?).and_return(false)
           expect(File).to receive(:delete).with('./spec/fixtures/appfiles/app_file_empty.app.zip')
-          File.stub(:delete)
           expect(Fastlane::Actions::ZipAction).to receive(:run)
             .with({
               path: './spec/fixtures/appfiles/app_file_empty.app',
