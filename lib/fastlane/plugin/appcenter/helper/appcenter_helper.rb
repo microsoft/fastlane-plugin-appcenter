@@ -16,7 +16,7 @@ module Fastlane
       end
 
       # create request
-      def self.connection(upload_url = nil, dsym = false)
+      def self.connection(upload_url = nil, dsym = false, csv = false)
         require 'faraday'
         require 'faraday_middleware'
 
@@ -31,7 +31,7 @@ module Fastlane
           else
             builder.request :json
           end
-          builder.response :json, content_type: /\bjson$/
+          builder.response :json, content_type: /\bjson$/ unless csv
           builder.use FaradayMiddleware::FollowRedirects
           builder.adapter :net_http
         end
@@ -472,6 +472,58 @@ module Fastlane
           false
         else
           UI.error("Error creating app #{response.status}: #{response.body}")
+          false
+        end
+      end
+
+      def self.fetch_distribution_groups(api_token:, owner_name:, app_name:)
+        connection = self.connection
+
+        endpoint = "/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups"
+
+        response = connection.get(endpoint) do |req|
+          req.headers['X-API-Token'] = api_token
+          req.headers['internal-request-source'] = "fastlane"
+        end
+
+        case response.status
+        when 200...300
+          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+          response.body
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+          false
+        when 404
+          UI.error("Not found, invalid owner or application name")
+          false
+        else
+          UI.error("Error #{response.status}: #{response.body}")
+          false
+        end
+      end
+
+      def self.fetch_devices(api_token:, owner_name:, app_name:, distribution_group:)
+        connection = self.connection(nil, false, true)
+
+        endpoint = "/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups/#{ERB::Util.url_encode(distribution_group)}/devices/download_devices_list"
+
+        response = connection.get(endpoint) do |req|
+          req.headers['X-API-Token'] = api_token
+          req.headers['internal-request-source'] = "fastlane"
+        end
+
+        case response.status
+        when 200...300
+          UI.message("DEBUG: #{response.body.inspect}") if ENV['DEBUG']
+          response.body
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+          false
+        when 404
+          UI.error("Not found, invalid owner, application or distribution group name")
+          false
+        else
+          UI.error("Error #{response.status}: #{response.body}")
           false
         end
       end
