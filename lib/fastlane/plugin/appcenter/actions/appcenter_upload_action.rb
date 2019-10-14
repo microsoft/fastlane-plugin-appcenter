@@ -253,7 +253,7 @@ module Fastlane
       end
 
       def self.authors
-        ["Microsoft"]
+        ["Microsoft", "benkane"]
       end
 
       def self.details
@@ -265,6 +265,7 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :api_token,
                                   env_name: "APPCENTER_API_TOKEN",
                                description: "API Token for App Center",
+                             default_value: Actions.lane_context[SharedValues::APPCENTER_API_TOKEN],
                                   optional: false,
                                       type: String,
                               verify_block: proc do |value|
@@ -284,7 +285,8 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :owner_name,
                                   env_name: "APPCENTER_OWNER_NAME",
-                               description: "Owner name, as found in the App's URL in App Center",
+                               description: "Owner name as found in the App's URL in App Center",
+                             default_value: Actions.lane_context[SharedValues::APPCENTER_OWNER_NAME],
                                   optional: false,
                                       type: String,
                               verify_block: proc do |value|
@@ -293,7 +295,8 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :app_name,
                                   env_name: "APPCENTER_APP_NAME",
-                               description: "App name as found in the App's URL in App Center, if there is no app with such name, you will be prompted to create one",
+                               description: "App name as found in the App's URL in App Center. If there is no app with such name, you will be prompted to create one",
+                             default_value: Actions.lane_context[SharedValues::APPCENTER_APP_NAME],
                                   optional: false,
                                       type: String,
                               verify_block: proc do |value|

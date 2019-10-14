@@ -13,11 +13,24 @@ fastlane add_plugin appcenter
 ```
 
 ## About App Center
-With [App Center](https://appcenter.ms) you can continuously build, test, release, and monitor your apps. This plugin provides an `appcenter_upload` action which allows you to upload and [release distribute](https://docs.microsoft.com/en-us/appcenter/distribution/uploading) apps to your testers on App Center as well as to upload .dSYM files to [collect detailed crash reports](https://docs.microsoft.com/en-us/appcenter/crashes/ios) in App Center.
+With [App Center](https://appcenter.ms) you can continuously build, test, release, and monitor your apps. This plugin provides a set of actions to interact with App Center.
+
+`appcenter_fetch_devices` allows you to obtain the list of iOS devices to distribute an app to (useful for automatic provisioning of testers' devices).
+
+`appcenter_upload` allows you to upload and [distribute](https://docs.microsoft.com/en-us/appcenter/distribution/uploading) apps to your testers on App Center as well as to upload .dSYM files to [collect detailed crash reports](https://docs.microsoft.com/en-us/appcenter/crashes/ios) in App Center.
 
 ## Usage
 
 To get started, first, [obtain an API token](https://appcenter.ms/settings/apitokens) in App Center. The API Token is used to authenticate with the App Center API in each call.
+
+```ruby
+appcenter_fetch_devices(
+  api_token: "<appcenter token>",
+  owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
+  app_name: "<appcenter app name>",
+  devices_file: "devices.txt" # Default. If you customize, the extension must be .txt
+)
+```
 
 ```ruby
 appcenter_upload(
@@ -31,9 +44,10 @@ appcenter_upload(
 
 ### Help
 
-Once installed, information and help can be printed out with this command:
+Once installed, information and help for an action can be printed out with this command:
+
 ```bash
-fastlane action appcenter_upload
+fastlane action appcenter_upload # or any action included with this plugin
 ```
 
 ### A note on App Name
@@ -46,8 +60,20 @@ They should not be confused with the displayed name on App Center pages, which i
 
 ### Parameters
 
-The action parameters `api_token` and `owner_name` can also be omitted when their values are [set as environment variables](https://docs.fastlane.tools/advanced/#environment-variables).
+The action parameters `api_token`, `owner_name`, `app_name`, and others can also be omitted when their values are [set as environment variables](https://docs.fastlane.tools/advanced/#environment-variables). By default, `appcenter_upload` will use the same `api_token`, `owner_name`, and `app_name` you used in `appcenter_fetch_devices`.
+
 Here is the list of all existing parameters:
+
+#### `appcenter_fetch_devices`
+
+| Key & Env Var | Description |
+|-----------------|--------------------|
+| `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
+| `owner_type` <br/> `APPCENTER_OWNER_TYPE` | Owner type, either 'user' or 'organization' (default: `user`) |
+| `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name, as found in the App's URL in App Center |
+| `devices_file` <br/> `FL_REGISTER_DEVICES_FILE` | File to save the devices list to. Same environment variable as _fastlane_'s `register_devices` action |
+
+#### `appcenter_upload`
 
 | Key & Env Var | Description |
 |-----------------|--------------------|
@@ -79,7 +105,7 @@ Here is the list of all existing parameters:
 
 ## Example
 
-Check out the [example `Fastfile`](fastlane/Fastfile) to see how to use this plugin. Try it by cloning the repo, running `fastlane install_plugins` and `bundle exec fastlane test`.
+Check out this [example `Fastfile`](fastlane/Fastfile) to see how to use the `appcenter_upload` action. Try it by cloning the repo, running `fastlane install_plugins` and `bundle exec fastlane test`.
 
 Sample uses `.env` for setting private variables like API token, owner name, .etc. You need to replace it in `Fastfile` by your own values.
 
@@ -87,6 +113,8 @@ There are three examples in `test` lane:
 - upload release for android with minimum required parameters
 - upload release for ios with all set parameters
 - upload only dSYM file for ios
+
+Check out this [example `Fastfile`](fastlane/fetch_devices/Fastfile) for a full example of fetching devices, registering them with Apple, provisioning the devices, and signing an app.
 
 ## Run tests for this plugin
 
