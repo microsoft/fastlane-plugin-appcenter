@@ -32,7 +32,7 @@ module Fastlane
             UI.message("dSYM is found")
           end
         end
-        
+
         # if we provided valid dsym path, or <ipa_path>.dSYM.zip was found, start dSYM upload
         if dsym_path && File.exist?(dsym_path)
           if File.directory?(dsym_path)
@@ -504,7 +504,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :dsa_signature,
                                        env_name: "APPCENTER_DISTRIBUTE_DSA_SIGNATURE",
-                                       description: "dsa_signature of the macOS or Windows releases for Sparkle feed",
+                                       description: "DSA signature of the macOS or Windows releases for Sparkle update feed",
                                        optional: true,
                                        type: String)
         ]
