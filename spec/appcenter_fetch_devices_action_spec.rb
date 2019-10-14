@@ -1,14 +1,14 @@
 def stub_fetch_distribution_groups(owner_name:, app_name:)
-  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups/")
+  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups")
     .to_return(
       status: 200,
       headers: { 'Content-Type' => 'application/json' },
-      body: "[{\"name\": \"test-group-1\"}, {\"name\": \"test-group-2\"}]"
+      body: "[{\"name\": \"Collaborators\"}, {\"name\": \"test-group-1\"}, {\"name\": \"test group 2\"}]"
     )
 end
 
-def stub_fetch_devices(api_token:, owner_name:, app_name:, distribution_group:)
-  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups/#{distribution_group}/devices/download_devices_list")
+def stub_fetch_devices(owner_name:, app_name:, distribution_group:)
+  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups/#{ERB::Util.url_encode(distribution_group)}/devices/download_devices_list")
     .to_return(
       status: 200,
       headers: { 'Content-Type' => 'text/csv; charset=utf-8' },
@@ -78,40 +78,13 @@ describe Fastlane::Actions::AppcenterFetchDevicesAction do
       end.to raise_error("No App name given, pass using `app_name: 'app name'`")
     end
 
-    context "with valid token, owner name, and app name" do
+    context "with valid token, owner name, app name, and default group" do
       before(:each) do
-        stub_fetch_distribution_groups(
-          owner_name: 'owner',
-          app_name: 'app'
-        )
         stub_fetch_devices(
-          api_token: 'xxx',
           owner_name: 'owner',
           app_name: 'app',
-          distribution_group: 'test-group-1'
+          distribution_group: 'Collaborators'
         )
-        stub_fetch_devices(
-          api_token: 'xxx',
-          owner_name: 'owner',
-          app_name: 'app',
-          distribution_group: 'test-group-2'
-        )
-      end
-
-      it "prints an important message when devices file extension is not .txt" do
-        expect(Fastlane::UI).to receive(:important).with("Important: Devices file is ./test.abc. If you plan to upload this file to Apple Developer Center, the file must have the .txt extension")
-
-        Fastlane::FastFile.new.parse("
-        lane :test do
-          appcenter_fetch_devices(
-            api_token: 'xxx',
-            owner_name: 'owner',
-            app_name: 'app',
-            devices_file: './test.abc'
-          )
-        end").runner.execute(:test)
-
-        File.delete('./fastlane/test.abc')
       end
 
       it "writes a devices file with a default name" do
@@ -126,6 +99,99 @@ describe Fastlane::Actions::AppcenterFetchDevicesAction do
             )
           end").runner.execute(:test)
       end
+    end
+
+    context "with valid token, owner name, app name, and all groups" do
+      before(:each) do
+        stub_fetch_distribution_groups(
+          owner_name: 'owner',
+          app_name: 'app'
+        )
+        stub_fetch_devices(
+          owner_name: 'owner',
+          app_name: 'app',
+          distribution_group: 'Collaborators'
+        )
+        stub_fetch_devices(
+          owner_name: 'owner',
+          app_name: 'app',
+          distribution_group: 'test-group-1'
+        )
+        stub_fetch_devices(
+          owner_name: 'owner',
+          app_name: 'app',
+          distribution_group: 'test group 2'
+        )
+      end
+
+      it "writes a devices file with a default name" do
+        allow_devices_file('devices.txt')
+
+        Fastlane::FastFile.new.parse("
+          lane :test do
+            appcenter_fetch_devices(
+              api_token: 'xxx',
+              owner_name: 'owner',
+              app_name: 'app',
+              destinations: '*'
+            )
+          end").runner.execute(:test)
+      end
+    end
+
+    context "with valid token, owner name, and app name" do
+      before(:each) do
+        stub_fetch_distribution_groups(
+          owner_name: 'owner',
+          app_name: 'app'
+        )
+        stub_fetch_devices(
+          owner_name: 'owner',
+          app_name: 'app',
+          distribution_group: 'Collaborators'
+        )
+        stub_fetch_devices(
+          owner_name: 'owner',
+          app_name: 'app',
+          distribution_group: 'test-group-1'
+        )
+        stub_fetch_devices(
+          owner_name: 'owner',
+          app_name: 'app',
+          distribution_group: 'test group 2'
+        )
+      end
+
+      it "prints an important message when devices file extension is not .txt" do
+        expect(Fastlane::UI).to receive(:important).with("Important: Devices file is ./test.abc. If you plan to upload this file to Apple Developer Center, the file must have the .txt extension")
+
+        Fastlane::FastFile.new.parse("
+        lane :test do
+          appcenter_fetch_devices(
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            devices_file: './test.abc',
+            destinations: '*'
+          )
+        end").runner.execute(:test)
+
+        File.delete('./fastlane/test.abc')
+      end
+
+      it "writes a devices file with a default name" do
+        allow_devices_file('devices.txt')
+
+        Fastlane::FastFile.new.parse("
+          lane :test do
+            appcenter_fetch_devices(
+              api_token: 'xxx',
+              owner_name: 'owner',
+              app_name: 'app',
+              destinations: '*'
+            )
+          end").runner.execute(:test)
+      end
 
       it "writes a devices file with a custom name" do
         allow_devices_file('custom-name.txt')
@@ -136,7 +202,8 @@ describe Fastlane::Actions::AppcenterFetchDevicesAction do
               api_token: 'xxx',
               owner_name: 'owner',
               app_name: 'app',
-              devices_file: 'custom-name.txt'
+              devices_file: 'custom-name.txt',
+              destinations: '*'
             )
           end").runner.execute(:test)
       end

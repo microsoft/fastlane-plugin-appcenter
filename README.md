@@ -28,6 +28,7 @@ appcenter_fetch_devices(
   api_token: "<appcenter token>",
   owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
   app_name: "<appcenter app name>",
+  destinations: "*", # Default is 'Collaborators', use '*' for all distribution groups
   devices_file: "devices.txt" # Default. If you customize, the extension must be .txt
 )
 ```
@@ -71,6 +72,7 @@ Here is the list of all existing parameters:
 | `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
 | `owner_type` <br/> `APPCENTER_OWNER_TYPE` | Owner type, either 'user' or 'organization' (default: `user`) |
 | `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name, as found in the App's URL in App Center |
+| `destinations` <br/> `APPCENTER_DISTRIBUTE_DESTINATIONS` | Comma separated list of distribution group names. Default is 'Collaborators', use '*' for all distribution groups |
 | `devices_file` <br/> `FL_REGISTER_DEVICES_FILE` | File to save the devices list to. Same environment variable as _fastlane_'s `register_devices` action |
 
 #### `appcenter_upload`
