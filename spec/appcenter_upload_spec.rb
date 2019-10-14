@@ -138,6 +138,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
         Actions.lane_context[SharedValues::IPA_OUTPUT_PATH] = nil
         Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH] = nil
         Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH] = nil
+        Actions.lane_context[SharedValues::DSYM_OUTPUT_PATH] = nil
       end").runner.execute(:test)
     end
 
