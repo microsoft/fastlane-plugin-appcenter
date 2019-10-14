@@ -151,6 +151,9 @@ module Fastlane
         when 200...300
           UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
           response.body
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+          false
         else
           UI.error("Error #{response.status}: #{response.body}")
           false
@@ -177,6 +180,9 @@ module Fastlane
         when 200...300
           self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, 'committed')
           UI.success("#{logType} uploaded")
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+          false
         else
           UI.error("Error uploading #{logType} #{response.status}: #{response.body}")
           self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, 'aborted')
@@ -206,6 +212,9 @@ module Fastlane
         when 200...300
           UI.message("Binary uploaded")
           self.update_release_upload(api_token, owner_name, app_name, upload_id, 'committed')
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+          false
         else
           UI.error("Error uploading binary #{response.status}: #{response.body}")
           self.update_release_upload(api_token, owner_name, app_name, upload_id, 'aborted')
@@ -230,6 +239,9 @@ module Fastlane
         when 200...300
           UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
           response.body
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+          false
         when 500...600
           UI.crash!("Internal Service Error, please try again later")
         else
@@ -254,6 +266,9 @@ module Fastlane
         when 404
           UI.error("Not found, invalid release url")
           false
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+          false
         else
           UI.error("Error fetching information about release #{response.status}: #{response.body}")
           false
@@ -276,6 +291,9 @@ module Fastlane
           destination
         when 404
           UI.error("Not found, invalid distribution #{destination_type} name")
+          false
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
           false
         else
           UI.error("Error getting #{destination_type} #{response.status}: #{response.body}")
@@ -314,6 +332,9 @@ module Fastlane
         when 404
           UI.error("Not found, invalid release id")
           false
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+          false
         else
           UI.error("Error adding updating release #{response.status}: #{response.body}")
           false
@@ -322,17 +343,11 @@ module Fastlane
 
       # updates release metadata
       def self.update_release_metadata(api_token, owner_name, app_name, release_id, dsa_signature)
+        return if dsa_signature.to_s == ''
 
-        release_metadata = nil
-        if dsa_signature.to_s != ''
-          release_metadata = {
-            dsa_signature: dsa_signature
-          }
-        end
-
-        if release_metadata.nil?
-          return
-        end
+        release_metadata = {
+          dsa_signature: dsa_signature
+        }
 
         connection = self.connection
         response = connection.patch("v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}") do |req|
@@ -348,6 +363,9 @@ module Fastlane
           UI.message("Release Metadata was successfully updated for release '#{release_id}'")
         when 404
           UI.error("Not found, invalid release id")
+          false
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
           false
         else
           UI.error("Error adding updating release metadata #{response.status}: #{response.body}")
@@ -392,6 +410,9 @@ module Fastlane
         when 404
           UI.error("Not found, invalid distribution #{destination_type} name")
           false
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+          false
         else
           UI.error("Error adding to #{destination_type} #{response.status}: #{response.body}")
           false
@@ -413,6 +434,9 @@ module Fastlane
           true
         when 404
           UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+          false
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
           false
         else
           UI.error("Error getting app #{owner_name}/#{app_name}, #{response.status}: #{response.body}")
@@ -443,6 +467,9 @@ module Fastlane
           UI.message("DEBUG: #{JSON.pretty_generate(created)}") if ENV['DEBUG']
           UI.success("Created #{os}/#{platform} app with name \"#{created['name']}\" and display name \"#{created['display_name']}\" for #{owner_type} \"#{owner_name}\"")
           true
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+          false
         else
           UI.error("Error creating app #{response.status}: #{response.body}")
           false
