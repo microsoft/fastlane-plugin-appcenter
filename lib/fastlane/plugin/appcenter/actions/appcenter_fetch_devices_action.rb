@@ -126,7 +126,6 @@ module Fastlane
                                   env_name: "APPCENTER_DISTRIBUTE_DESTINATIONS",
                                description: "Comma separated list of distribution group names. Default is 'Collaborators', use '*' for all distribution groups",
                              default_value: "Collaborators",
-                                  optional: true,
                                       type: String)
         ]
       end
