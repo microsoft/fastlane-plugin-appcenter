@@ -12,6 +12,8 @@ This project is a [_fastlane_](https://github.com/fastlane/fastlane) plugin. To 
 fastlane add_plugin appcenter
 ```
 
+fastlane v2.96.0 or higher is required for all plugin-actions to function properly.
+
 ## About App Center
 With [App Center](https://appcenter.ms) you can continuously build, test, release, and monitor your apps. This plugin provides a set of actions to interact with App Center.
 
