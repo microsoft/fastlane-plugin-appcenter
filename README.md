@@ -25,6 +25,7 @@ To get started, first, [obtain an API token](https://appcenter.ms/settings/apito
 
 ```ruby
 appcenter_fetch_devices(
+  owner_type: "user", # Default is user - set to organisation for appcenter organisations
   api_token: "<appcenter token>",
   owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
   app_name: "<appcenter app name>",
@@ -35,6 +36,7 @@ appcenter_fetch_devices(
 
 ```ruby
 appcenter_upload(
+  owner_type: "user", # Default is user - set to organisation for appcenter organisations
   api_token: "<appcenter token>",
   owner_name: "<appcenter owner name of the app (as seen in app URL)>",
   app_name: "<appcenter app name (as seen in app URL)>",
