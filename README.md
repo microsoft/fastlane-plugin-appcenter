@@ -36,9 +36,9 @@ appcenter_fetch_devices(
 
 ```ruby
 appcenter_upload(
-  owner_type: "user", # Default is user - set to organisation for appcenter organisations
   api_token: "<appcenter token>",
-  owner_name: "<appcenter owner name of the app (as seen in app URL)>",
+  owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
+  owner_type: "user", # Default is user - set to organization for appcenter organizations
   app_name: "<appcenter app name (as seen in app URL)>",
   file: "<path to android build binary>",
   notify_testers: true # Set to false if you don't want to notify testers of your new release (default: `false`)
