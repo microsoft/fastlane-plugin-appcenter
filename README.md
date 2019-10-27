@@ -83,15 +83,12 @@ Here is the list of all existing parameters:
 |-----------------|--------------------|
 | `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
 | `owner_type` <br/> `APPCENTER_OWNER_TYPE` | Owner type, either 'user' or 'organization' (default: `user`) |
-| `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name, as found in the App's URL in App Center |
+| `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name as found in the App's URL in App Center |
 | `app_name` <br/> `APPCENTER_APP_NAME` | App name as found in the App's URL in App Center, if there is no app with such name, you will be prompted to create one |
 | `app_display_name` <br/> `APPCENTER_APP_DISPLAY_NAME` | App display name to use when creating a new app |
 | `app_os` <br/> `APPCENTER_APP_OS` | App OS. Used for new app creation, if app 'app_name' was not found |
 | `app_platform` <br/> `APPCENTER_APP_PLATFORM` | App Platform. Used for new app creation, if app 'app_name' was not found |
-| `apk` <br/> `APPCENTER_DISTRIBUTE_APK` | Build release path for android build |
-| `aab` <br/> `APPCENTER_DISTRIBUTE_AAB` | Build release path for android app bundle build |
-| `ipa` <br/> `APPCENTER_DISTRIBUTE_IPA` | Build release path for iOS builds |
-| `file` <br/> `APPCENTER_DISTRIBUTE_FILE` | Build release path for generic builds (.aab, .app, .app.zip, .apk, .dmg, .ipa, .pkg) |
+| `file` <br/> `APPCENTER_DISTRIBUTE_FILE` | Build release path for generic builds |
 | `dsym` <br/> `APPCENTER_DISTRIBUTE_DSYM` | Path to your symbols file. For iOS provide path to app.dSYM.zip |
 | `upload_dsym_only` <br/> `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` | Flag to upload only the dSYM file to App Center (default: `false`) |
 | `mapping` <br/> `APPCENTER_DISTRIBUTE_ANDROID_MAPPING` | Path to your Android mapping.txt |

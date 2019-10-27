@@ -313,7 +313,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :app_name,
                                   env_name: "APPCENTER_APP_NAME",
-                               description: "App name as found in the App's URL in App Center. If there is no app with such name, you will be prompted to create one",
+                               description: "App name as found in the App's URL in App Center, if there is no app with such name, you will be prompted to create one",
                              default_value: Actions.lane_context[SharedValues::APPCENTER_APP_NAME],
                                   optional: false,
                                       type: String,
@@ -344,6 +344,7 @@ module Fastlane
                                description: "Build release path for android build",
                              default_value: Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH],
                                   optional: true,
+                                deprecated: true,
                                       type: String,
                        conflicting_options: [:ipa, :aab, :file],
                             conflict_block: proc do |value|
@@ -360,6 +361,7 @@ module Fastlane
                                description: "Build release path for android app bundle build",
                              default_value: Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH],
                                   optional: true,
+                                deprecated: true,
                                       type: String,
                        conflicting_options: [:ipa, :apk, :file],
                             conflict_block: proc do |value|
@@ -375,6 +377,7 @@ module Fastlane
                                description: "Build release path for iOS builds",
                              default_value: Actions.lane_context[SharedValues::IPA_OUTPUT_PATH],
                                   optional: true,
+                                deprecated: true,
                                       type: String,
                        conflicting_options: [:apk, :aab, :file],
                             conflict_block: proc do |value|
@@ -387,7 +390,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :file,
                                   env_name: "APPCENTER_DISTRIBUTE_FILE",
-                               description: "Build release path for generic builds",
+                               description: "Path to the build file to upload",
                                   optional: true,
                                       type: String,
                        conflicting_options: [:apk, :aab, :ipa],
