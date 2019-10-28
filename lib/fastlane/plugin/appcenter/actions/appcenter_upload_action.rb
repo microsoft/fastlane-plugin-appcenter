@@ -503,7 +503,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :timeout,
                                        env_name: "APPCENTER_DISTRIBUTE_TIMEOUT",
-                                       description: "Request timeout in seconds",
+                                       description: "Request timeout in seconds. Used when uploading builds and dSYM files",
                                        optional: true,
                                        type: Integer),
 
