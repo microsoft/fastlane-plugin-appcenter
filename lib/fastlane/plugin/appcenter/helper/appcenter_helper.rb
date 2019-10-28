@@ -108,10 +108,11 @@ module Fastlane
       # symbol_upload_id
       # upload_url
       # expiration_date
-      def self.create_dsym_upload(api_token, owner_name, app_name)
+      def self.create_dsym_upload(api_token, owner_name, app_name, timeout)
         connection = self.connection
 
         response = connection.post("v0.1/apps/#{owner_name}/#{app_name}/symbol_uploads") do |req|
+          req.options.timeout = timeout
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
           req.body = {
@@ -136,10 +137,11 @@ module Fastlane
       end
 
       # commits or aborts symbol upload
-      def self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, status)
+      def self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, status, timeout)
         connection = self.connection
 
         response = connection.patch("v0.1/apps/#{owner_name}/#{app_name}/symbol_uploads/#{symbol_upload_id}") do |req|
+          req.options.timeout = timeout
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
           req.body = {
@@ -163,7 +165,7 @@ module Fastlane
       # upload symbol (dSYM or mapping) files to specified upload url
       # if succeed, then commits the upload
       # otherwise aborts
-      def self.upload_symbol(api_token, owner_name, app_name, symbol, symbol_type, symbol_upload_id, upload_url)
+      def self.upload_symbol(api_token, owner_name, app_name, symbol, symbol_type, symbol_upload_id, upload_url, timeout)
         connection = self.connection(upload_url, true)
 
         response = connection.put do |req|
@@ -178,14 +180,14 @@ module Fastlane
 
         case response.status
         when 200...300
-          self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, 'committed')
+          self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, 'committed', timeout)
           UI.success("#{logType} uploaded")
         when 401
           UI.user_error!("Auth Error, provided invalid token")
           false
         else
           UI.error("Error uploading #{logType} #{response.status}: #{response.body}")
-          self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, 'aborted')
+          self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, 'aborted', timeout)
           UI.error("#{logType} upload aborted")
           false
         end

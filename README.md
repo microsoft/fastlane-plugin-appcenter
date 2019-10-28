@@ -105,7 +105,7 @@ Here is the list of all existing parameters:
 | `release_notes_link` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK` | Additional release notes link |
 | `build_number` <br/> `APPCENTER_DISTRIBUTE_BUILD_NUMBER` | The build number, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds |
 | `version` <br/> `APPCENTER_DISTRIBUTE_VERSION` | The build version, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds |
-| `timeout` <br/> `APPCENTER_DISTRIBUTE_TIMEOUT` | Request timeout in seconds |
+| `timeout` <br/> `APPCENTER_DISTRIBUTE_TIMEOUT` | Request timeout in seconds. Used when uploading builds and dSYM files |
 | `dsa_signature` <br/> `APPCENTER_DISTRIBUTE_DSA_SIGNATURE` | DSA signature of the macOS or Windows releases for Sparkle update feed |
 
 

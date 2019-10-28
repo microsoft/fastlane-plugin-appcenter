@@ -20,6 +20,7 @@ module Fastlane
         dsym = params[:dsym]
         build_number = params[:build_number]
         version = params[:version]
+        timeout = params[:timeout]
 
         dsym_path = nil
         if dsym
@@ -50,7 +51,7 @@ module Fastlane
             file_name = File.basename(dsym_path)
             dsym_upload_details = Helper::AppcenterHelper.create_mapping_upload(api_token, owner_name, app_name, file_name ,build_number, version)
           else
-            dsym_upload_details = Helper::AppcenterHelper.create_dsym_upload(api_token, owner_name, app_name)
+            dsym_upload_details = Helper::AppcenterHelper.create_dsym_upload(api_token, owner_name, app_name, timeout)
           end
 
           if dsym_upload_details
@@ -58,7 +59,7 @@ module Fastlane
             upload_url = dsym_upload_details['upload_url']
 
             UI.message("Uploading dSYM...")
-            Helper::AppcenterHelper.upload_symbol(api_token, owner_name, app_name, dsym_path, "Apple", symbol_upload_id, upload_url)
+            Helper::AppcenterHelper.upload_symbol(api_token, owner_name, app_name, dsym_path, "Apple", symbol_upload_id, upload_url, timeout)
           end
         end
       end
@@ -71,6 +72,7 @@ module Fastlane
         mapping = params[:mapping]
         build_number = params[:build_number]
         version = params[:version]
+        timeout = params[:timeout]
 
         if mapping == nil
           return
@@ -85,7 +87,7 @@ module Fastlane
           upload_url = symbol_upload_details['upload_url']
 
           UI.message("Uploading mapping...")
-          Helper::AppcenterHelper.upload_symbol(api_token, owner_name, app_name, mapping, "Android", symbol_upload_id, upload_url)
+          Helper::AppcenterHelper.upload_symbol(api_token, owner_name, app_name, mapping, "Android", symbol_upload_id, upload_url, timeout)
         end
       end
 
