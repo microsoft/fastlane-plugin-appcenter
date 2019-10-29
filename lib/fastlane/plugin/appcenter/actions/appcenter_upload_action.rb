@@ -551,9 +551,9 @@ module Fastlane
       def self.example_code
         [
           'appcenter_upload(
-            api_token: "<your-appcenter-token>",
-            owner_name: "<your-appcenter-name>",
-            app_name: "testing_app",
+            api_token: "...",
+            owner_name: "appcenter_owner",
+            app_name: "testing_android_app",
             file: "./app-release.apk",
             destinations: "Testers",
             destination_type: "group",
@@ -566,9 +566,9 @@ module Fastlane
           'appcenter_upload(
             api_token: "...",
             owner_name: "appcenter_owner",
-            app_name: "testing_app",
+            app_name: "testing_ios_app",
             file: "./app-release.ipa",
-            destinations: "Testers, Public",
+            destinations: "Testers,Public",
             destination_type: "group",
             dsym: "./app.dSYM.zip",
             release_notes: "release notes",
@@ -577,15 +577,11 @@ module Fastlane
           'appcenter_upload(
             api_token: "...",
             owner_name: "appcenter_owner",
-            app_name: "testing_app",
+            app_name: "testing_google_play_app",
             file: "./app.aab",
             destinations: "Alpha",
             destination_type: "store",
-            build_number: "3",
-            version: "1.0.0",
-            mapping: "./mapping.txt",
-            release_notes: "release notes",
-            notify_testers: false
+            release_notes: "this is a store release"
           )'
         ]
       end
