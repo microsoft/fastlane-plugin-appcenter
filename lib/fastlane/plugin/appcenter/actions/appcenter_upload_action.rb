@@ -51,7 +51,7 @@ module Fastlane
             file_name = File.basename(dsym_path)
             dsym_upload_details = Helper::AppcenterHelper.create_mapping_upload(api_token, owner_name, app_name, file_name ,build_number, version)
           else
-            dsym_upload_details = Helper::AppcenterHelper.create_dsym_upload(api_token, owner_name, app_name, timeout)
+            dsym_upload_details = Helper::AppcenterHelper.create_dsym_upload(api_token, owner_name, app_name)
           end
 
           if dsym_upload_details
@@ -503,7 +503,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :timeout,
                                        env_name: "APPCENTER_DISTRIBUTE_TIMEOUT",
-                                       description: "Request timeout in seconds. Used when uploading builds and dSYM files",
+                                       description: "Request timeout in seconds. Used when uploading builds and dSYM/mapping files",
                                        optional: true,
                                        type: Integer),
 
