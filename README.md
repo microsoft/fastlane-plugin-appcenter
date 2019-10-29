@@ -137,6 +137,8 @@ To automatically fix many of the styling issues, use
 rubocop -a
 ```
 
+For CI, the tests are run with `rake ci` and produce JUnit output.
+
 ## Issues and Feedback
 
 For any other issues and feedback about this plugin, please open a [GitHub issue](https://github.com/microsoft/fastlane-plugin-appcenter/issues).
