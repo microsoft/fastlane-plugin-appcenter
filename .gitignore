@@ -9,6 +9,7 @@ Gemfile.lock
 /rdoc/
 fastlane/README.md
 fastlane/report.xml
+/.idea/
 
 # IDE
 .idea/
@@ -17,3 +18,4 @@ fastlane/report.xml
 **/test*.xml
 
 .env
+.DS_Store

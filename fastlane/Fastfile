@@ -14,6 +14,40 @@ lane :test_autocreation do
     app_name: "MyApplication-notfound-2",
     apk: "./fastlane/app-release.apk"
   )
+
+  # app should be created for "fastlane-test-org" organization
+  appcenter_upload(
+    api_token: ENV["TEST_APPCENTER_API_TOKEN"],
+    owner_type: "organization",
+    owner_name: "fastlane-test-org",
+    app_os: 'Android',
+    app_platform: 'Java',
+    app_name: "MyApplication-notfound-3",
+    apk: "./fastlane/app-release.apk"
+  )
+end
+
+lane :test_macos do
+  appcenter_upload(
+    api_token: ENV["TEST_APPCENTER_API_TOKEN"],
+    owner_name: ENV["APPCENTER_OWNER_NAME"],
+    app_name: ENV["APPCENTER_MACOS_APP_NAME"],
+    app_os: 'MacOS',
+    ipa: "./fastlane/macos-app.app.zip"
+  )
+end
+
+lane :test_macos_sparkle do
+  appcenter_upload(
+    api_token: ENV["TEST_APPCENTER_API_TOKEN"],
+    owner_name: ENV["APPCENTER_OWNER_NAME"],
+    app_name: ENV["APPCENTER_MACOS_APP_NAME"],
+    destinations: ENV["TEST_APPCENTER_DISTRIBUTE_GROUP"],
+    destination_type: "group",
+    app_os: 'MacOS',
+    file: "./fastlane/macos-app.app.zip",
+    dsa_signature: "test_dsa_signature_value"
+  )
 end
 
 lane :test_autocreation_without_prompts do

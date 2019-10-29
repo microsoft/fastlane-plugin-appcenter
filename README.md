@@ -12,47 +12,108 @@ This project is a [_fastlane_](https://github.com/fastlane/fastlane) plugin. To 
 fastlane add_plugin appcenter
 ```
 
+fastlane v2.96.0 or higher is required for all plugin-actions to function properly.
+
 ## About App Center
-With [App Center](https://appcenter.ms) you can continuously build, test, release, and monitor your apps. This plugin provides an `appcenter_upload` action which allows you to upload and [release distribute](https://docs.microsoft.com/en-us/appcenter/distribution/uploading) apps to your testers on App Center as well as to upload .dSYM files to [collect detailed crash reports](https://docs.microsoft.com/en-us/appcenter/crashes/ios) in App Center.
+With [App Center](https://appcenter.ms) you can continuously build, test, release, and monitor your apps. This plugin provides a set of actions to interact with App Center.
+
+`appcenter_fetch_devices` allows you to obtain the list of iOS devices to distribute an app to (useful for automatic provisioning of testers' devices).
+
+`appcenter_upload` allows you to upload and [distribute](https://docs.microsoft.com/en-us/appcenter/distribution/uploading) apps to your testers on App Center as well as to upload .dSYM files to [collect detailed crash reports](https://docs.microsoft.com/en-us/appcenter/crashes/ios) in App Center.
 
 ## Usage
 
 To get started, first, [obtain an API token](https://appcenter.ms/settings/apitokens) in App Center. The API Token is used to authenticate with the App Center API in each call.
 
 ```ruby
+appcenter_fetch_devices(
+  api_token: "<appcenter token>",
+  owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
+  owner_type: "user", # Default is user - set to organization for appcenter organizations
+  app_name: "<appcenter app name>",
+  destinations: "*", # Default is 'Collaborators', use '*' for all distribution groups
+  devices_file: "devices.txt" # Default. If you customize, the extension must be .txt
+)
+```
+
+```ruby
 appcenter_upload(
   api_token: "<appcenter token>",
-  owner_name: "<your appcenter account name>",
-  app_name: "<your app name>",
-  apk: "<path to android build binary>",
+  owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
+  owner_type: "user", # Default is user - set to organization for appcenter organizations
+  app_name: "<appcenter app name (as seen in app URL)>",
+  file: "<path to android build binary>",
   notify_testers: true # Set to false if you don't want to notify testers of your new release (default: `false`)
 )
 ```
 
-The action parameters `api_token` and `owner_name` can also be omitted when their values are [set as environment variables](https://docs.fastlane.tools/advanced/#environment-variables). Below a list of all available environment variables:
+### Help
 
-- `APPCENTER_API_TOKEN` - API Token for App Center
-- `APPCENTER_OWNER_NAME` - Owner name
-- `APPCENTER_APP_NAME` - App name. If there is no app with such name, you will be prompted to create one
-- `APPCENTER_DISTRIBUTE_APK` - Build release path for android build
-- `APPCENTER_DISTRIBUTE_AAB` - Build release path for android app bundle build (preview)
-- `APPCENTER_DISTRIBUTE_IPA` - Build release path for ios build
-- `APPCENTER_DISTRIBUTE_DSYM` - Path to your symbols (app.dSYM.zip) file 
-- `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` - Flag to upload only the dSYM file to App Center
-- `APPCENTER_DISTRIBUTE_ANDROID_MAPPING` - Path to your Android mapping.txt file 
-- `APPCENTER_DISTRIBUTE_UPLOAD_ANDROID_MAPPING_ONLY` - Flag to upload only the mapping file to App Center
-- `APPCENTER_DISTRIBUTE_DESTINATIONS` - Comma separated list of destination names. Both distribution groups and stores are supported. All names are required to be of the same destination type. Default is `Collaborators`.
-- `APPCENTER_DISTRIBUTE_DESTINATION_TYPE` - Destination type of distribution destination. `group` and `store` are supported. Default is `group`
-- `APPCENTER_DISTRIBUTE_MANDATORY_UPDATE` - Require users to update to this release
-- `APPCENTER_DISTRIBUTE_NOTIFY_TESTERS` - Send email notification about release (default: `false`)
-- `APPCENTER_DISTRIBUTE_RELEASE_NOTES` - Release notes
-- `APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING` - Clip release notes if its length is more then 5000, `true` by default
-- `APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK` - Additional release notes link
-- `APPCENTER_DISTRIBUTE_TIMEOUT` - Sets the request timeout in seconds. Used when uploading builds to App Center.
+Once installed, information and help for an action can be printed out with this command:
+
+```bash
+fastlane action appcenter_upload # or any action included with this plugin
+```
+
+### A note on App Name
+
+The `app_name` and `owner_name` as set in the Fastfile come from the app's URL in App Center, in the below form:
+```
+https://appcenter.ms/users/{owner_name}/apps/{app_name}
+```
+They should not be confused with the displayed name on App Center pages, which is called `app_display_name ` instead.
+
+### Parameters
+
+The action parameters `api_token`, `owner_name`, `app_name`, and others can also be omitted when their values are [set as environment variables](https://docs.fastlane.tools/advanced/#environment-variables). By default, `appcenter_upload` will use the same `api_token`, `owner_name`, and `app_name` you used in `appcenter_fetch_devices`.
+
+Here is the list of all existing parameters:
+
+#### `appcenter_fetch_devices`
+
+| Key & Env Var | Description |
+|-----------------|--------------------|
+| `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
+| `owner_type` <br/> `APPCENTER_OWNER_TYPE` | Owner type, either 'user' or 'organization' (default: `user`) |
+| `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name, as found in the App's URL in App Center |
+| `destinations` <br/> `APPCENTER_DISTRIBUTE_DESTINATIONS` | Comma separated list of distribution group names. Default is 'Collaborators', use '*' for all distribution groups |
+| `devices_file` <br/> `FL_REGISTER_DEVICES_FILE` | File to save the devices list to. Same environment variable as _fastlane_'s `register_devices` action |
+
+#### `appcenter_upload`
+
+| Key & Env Var | Description |
+|-----------------|--------------------|
+| `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
+| `owner_type` <br/> `APPCENTER_OWNER_TYPE` | Owner type, either 'user' or 'organization' (default: `user`) |
+| `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name, as found in the App's URL in App Center |
+| `app_name` <br/> `APPCENTER_APP_NAME` | App name as found in the App's URL in App Center, if there is no app with such name, you will be prompted to create one |
+| `app_display_name` <br/> `APPCENTER_APP_DISPLAY_NAME` | App display name to use when creating a new app |
+| `app_os` <br/> `APPCENTER_APP_OS` | App OS. Used for new app creation, if app 'app_name' was not found |
+| `app_platform` <br/> `APPCENTER_APP_PLATFORM` | App Platform. Used for new app creation, if app 'app_name' was not found |
+| `apk` <br/> `APPCENTER_DISTRIBUTE_APK` | Build release path for android build |
+| `aab` <br/> `APPCENTER_DISTRIBUTE_AAB` | Build release path for android app bundle build |
+| `ipa` <br/> `APPCENTER_DISTRIBUTE_IPA` | Build release path for iOS builds |
+| `file` <br/> `APPCENTER_DISTRIBUTE_FILE` | Build release path for generic builds (.aab, .app, .app.zip, .apk, .dmg, .ipa, .pkg) |
+| `dsym` <br/> `APPCENTER_DISTRIBUTE_DSYM` | Path to your symbols file. For iOS provide path to app.dSYM.zip |
+| `upload_dsym_only` <br/> `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` | Flag to upload only the dSYM file to App Center (default: `false`) |
+| `mapping` <br/> `APPCENTER_DISTRIBUTE_ANDROID_MAPPING` | Path to your Android mapping.txt |
+| `upload_mapping_only` <br/> `APPCENTER_DISTRIBUTE_UPLOAD_ANDROID_MAPPING_ONLY` | Flag to upload only the mapping.txt file to App Center (default: `false`) |
+| `destinations` <br/> `APPCENTER_DISTRIBUTE_DESTINATIONS` | Comma separated list of destination names. Both distribution groups and stores are supported. All names are required to be of the same destination type (default: `Collaborators`) |
+| `destination_type` <br/> `APPCENTER_DISTRIBUTE_DESTINATION_TYPE` | Destination type of distribution destination. 'group' and 'store' are supported (default: `group`) |
+| `mandatory_update` <br/> `APPCENTER_DISTRIBUTE_MANDATORY_UPDATE` | Require users to update to this release. Ignored if destination type is 'store' (default: `false`) |
+| `notify_testers` <br/> `APPCENTER_DISTRIBUTE_NOTIFY_TESTERS` | Send email notification about release. Ignored if destination type is 'store' (default: `false`) |
+| `release_notes` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES` | Release notes (default: `No changelog given`) |
+| `should_clip` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING` | Clip release notes if its length is more then 5000, true by default (default: `true`) |
+| `release_notes_link` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK` | Additional release notes link |
+| `build_number` <br/> `APPCENTER_DISTRIBUTE_BUILD_NUMBER` | The build number, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds |
+| `version` <br/> `APPCENTER_DISTRIBUTE_VERSION` | The build version, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds |
+| `timeout` <br/> `APPCENTER_DISTRIBUTE_TIMEOUT` | Request timeout in seconds |
+| `dsa_signature` <br/> `APPCENTER_DISTRIBUTE_DSA_SIGNATURE` | DSA signature of the macOS or Windows releases for Sparkle update feed |
+
 
 ## Example
 
-Check out the [example `Fastfile`](fastlane/Fastfile) to see how to use this plugin. Try it by cloning the repo, running `fastlane install_plugins` and `bundle exec fastlane test`.
+Check out this [example `Fastfile`](fastlane/Fastfile) to see how to use the `appcenter_upload` action. Try it by cloning the repo, running `fastlane install_plugins` and `bundle exec fastlane test`.
 
 Sample uses `.env` for setting private variables like API token, owner name, .etc. You need to replace it in `Fastfile` by your own values.
 
@@ -60,6 +121,8 @@ There are three examples in `test` lane:
 - upload release for android with minimum required parameters
 - upload release for ios with all set parameters
 - upload only dSYM file for ios
+
+Check out this [example `Fastfile`](fastlane/fetch_devices/Fastfile) for a full example of fetching devices, registering them with Apple, provisioning the devices, and signing an app.
 
 ## Run tests for this plugin
 
