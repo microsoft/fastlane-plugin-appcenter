@@ -84,11 +84,11 @@ Here is the list of all existing parameters:
 | `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
 | `owner_type` <br/> `APPCENTER_OWNER_TYPE` | Owner type, either 'user' or 'organization' (default: `user`) |
 | `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name as found in the App's URL in App Center |
-| `app_name` <br/> `APPCENTER_APP_NAME` | App name as found in the App's URL in App Center, if there is no app with such name, you will be prompted to create one |
+| `app_name` <br/> `APPCENTER_APP_NAME` | App name as found in the App's URL in App Center. If there is no app with such name, you will be prompted to create one |
 | `app_display_name` <br/> `APPCENTER_APP_DISPLAY_NAME` | App display name to use when creating a new app |
 | `app_os` <br/> `APPCENTER_APP_OS` | App OS. Used for new app creation, if app 'app_name' was not found |
 | `app_platform` <br/> `APPCENTER_APP_PLATFORM` | App Platform. Used for new app creation, if app 'app_name' was not found |
-| `file` <br/> `APPCENTER_DISTRIBUTE_FILE` | Build release path for generic builds |
+| `file` <br/> `APPCENTER_DISTRIBUTE_FILE` | File path to the release build to publish |
 | `dsym` <br/> `APPCENTER_DISTRIBUTE_DSYM` | Path to your symbols file. For iOS provide path to app.dSYM.zip |
 | `upload_dsym_only` <br/> `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` | Flag to upload only the dSYM file to App Center (default: `false`) |
 | `mapping` <br/> `APPCENTER_DISTRIBUTE_ANDROID_MAPPING` | Path to your Android mapping.txt |
@@ -101,9 +101,9 @@ Here is the list of all existing parameters:
 | `should_clip` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING` | Clip release notes if its length is more then 5000, true by default (default: `true`) |
 | `release_notes_link` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK` | Additional release notes link |
 | `build_number` <br/> `APPCENTER_DISTRIBUTE_BUILD_NUMBER` | The build number, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds |
-| `version` <br/> `APPCENTER_DISTRIBUTE_VERSION` | The build version, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds |
+| `version` <br/> `APPCENTER_DISTRIBUTE_VERSION` | The build version, required for Android ProGuard mapping files, as well as .pkg, .dmg, .zip and .msi builds |
 | `timeout` <br/> `APPCENTER_DISTRIBUTE_TIMEOUT` | Request timeout in seconds |
-| `dsa_signature` <br/> `APPCENTER_DISTRIBUTE_DSA_SIGNATURE` | DSA signature of the macOS or Windows releases for Sparkle update feed |
+| `dsa_signature` <br/> `APPCENTER_DISTRIBUTE_DSA_SIGNATURE` | DSA signature of the macOS or Windows release for Sparkle update feed |
 
 
 ## Example

@@ -313,7 +313,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :app_name,
                                   env_name: "APPCENTER_APP_NAME",
-                               description: "App name as found in the App's URL in App Center, if there is no app with such name, you will be prompted to create one",
+                               description: "App name as found in the App's URL in App Center. If there is no app with such name, you will be prompted to create one",
                              default_value: Actions.lane_context[SharedValues::APPCENTER_APP_NAME],
                                   optional: false,
                                       type: String,
@@ -390,7 +390,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :file,
                                   env_name: "APPCENTER_DISTRIBUTE_FILE",
-                               description: "Path to the build file to upload",
+                               description: "File path to the release build to publish",
                                   optional: true,
                                       type: String,
                        conflicting_options: [:apk, :aab, :ipa],
@@ -519,7 +519,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :version,
                                        env_name: "APPCENTER_DISTRIBUTE_VERSION",
-                                       description: "The build version, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds",
+                                       description: "The build version, required for Android ProGuard mapping files, as well as .pkg, .dmg, .zip and .msi builds",
                                        optional: true,
                                        type: String),
 
@@ -531,7 +531,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :dsa_signature,
                                        env_name: "APPCENTER_DISTRIBUTE_DSA_SIGNATURE",
-                                       description: "DSA signature of the macOS or Windows releases for Sparkle update feed",
+                                       description: "DSA signature of the macOS or Windows release for Sparkle update feed",
                                        optional: true,
                                        type: String)
         ]
