@@ -38,11 +38,17 @@ steps:
   - task: Bash@3
     inputs:
       targetType: 'inline'
-      script: 'gem build *gemspec'
+      script: 'gem build *.gemspec'
     displayName: 'Build gem file'
 
-  - task: PublishPipelineArtifact@1
+  - task: CopyFiles@2
     inputs:
-      targetPath: '$(Pipeline.Workspace)/*.gem'
-      artifact: 'fastlane-plugin-gem'
-    displayName: 'Create gem file and publish to AzDO'
+      contents: '*.gem'
+      targetFolder: '$(Build.ArtifactStagingDirectory)'
+    displayName: 'Copy gem file'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: 'fastlane-plugin-gem'
+    displayName: 'Publish gem file as AzDO artifact'
