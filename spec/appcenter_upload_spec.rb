@@ -145,18 +145,16 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end").runner.execute(:test)
     end
 
-    it "raises an error if no api token was given" do
-      expect do
-        Fastlane::FastFile.new.parse("lane :test do
-          appcenter_upload({
-            owner_name: 'owner',
-            app_name: 'app',
-            destinations: 'Testers',
-            destination_type: 'group',
-            apk: './spec/fixtures/appfiles/apk_file_empty.apk'
-          })
-        end").runner.execute(:test)
-      end.to raise_error("No API token for App Center given, pass using `api_token: 'token'`")
+    it "will fail on demand" do
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          owner_name: 'owner',
+          app_name: 'app',
+          destinations: 'Testers',
+          destination_type: 'group',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk'
+        })
+      end").runner.execute(:test)
     end
 
     it "raises an error if no owner name was given" do
