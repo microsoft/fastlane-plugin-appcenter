@@ -4,20 +4,45 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/ruby
 
 trigger:
-- master
+  - master
 
 pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- task: UseRubyVersion@0
-  inputs:
-    versionSpec: '>= 2.5'
+  - task: UseRubyVersion@0
+    inputs:
+      versionSpec: '>= 2.5'
 
-- script: |
-    gem install bundler
-    bundle install --retry=3 --jobs=4
-  displayName: 'bundle install'
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: |
+        gem install bundler
+        bundle install --retry=3 --jobs=4
+    displayName: 'Install dependencies'
 
-- script: bundle exec rake
-  displayName: 'bundle exec rake'
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: 'bundle exec rake ci || true'
+    displayName: 'Run unit tests'
+
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/test*.xml'
+      failTaskOnFailedTests: true
+    displayName: 'Verify and publish test results'
+
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: 'gem build *gemspec'
+    displayName: 'Build gem file'
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(Pipeline.Workspace)/*.gem'
+      artifact: 'fastlane-plugin-gem'
+    displayName: 'Create gem file and publish to AzDO'

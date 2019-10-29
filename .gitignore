@@ -13,4 +13,7 @@ fastlane/report.xml
 # IDE
 .idea/
 
+# Test results
+**/test*.xml
+
 .env
