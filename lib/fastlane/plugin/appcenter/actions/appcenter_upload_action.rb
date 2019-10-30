@@ -158,8 +158,8 @@ module Fastlane
             UI.message("Fields `version` and `build_number` are not required for files of type #{file_ext}, ignored") unless build_number.to_s.empty? && version.to_s.empty?
           end
 
-          release_upload_body = { build_version: version, build_number: build_number } if !version.nil? && !build_number.nil?
           release_upload_body = { build_version: version } unless version.nil?
+          release_upload_body = { build_version: version, build_number: build_number } if !version.nil? && !build_number.nil?
         end
 
         if file_ext == ".app" && File.directory?(file)
@@ -211,7 +211,7 @@ module Fastlane
             safe_download_url = Helper::AppcenterHelper.get_install_url(owner_type, owner_name, app_name)
             UI.message("Release '#{release_id}' is available for download at: #{safe_download_url}")
           else
-            UI.error("Failed to upload release")
+            UI.user_error!("Failed to upload release")
           end
         end
       end
