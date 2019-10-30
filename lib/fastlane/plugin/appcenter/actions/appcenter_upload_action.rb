@@ -143,21 +143,23 @@ module Fastlane
 
         file_ext = Helper::AppcenterHelper.file_extname_full(file)
         if destination_type == "group"
-          UI.user_error!("Can't distribute #{file_ext} to groups, please use `destination_type: 'store'`") if Constants::STORE_ONLY_EXTENSIONS.include? file_ext
+          self.optional_error("Can't distribute #{file_ext} to groups, please use `destination_type: 'store'`") if Constants::STORE_ONLY_EXTENSIONS.include? file_ext
         else
-          UI.user_error!("Can't distribute #{file_ext} to stores, please use `destination_type: 'group'`") unless Constants::STORE_SUPPORTED_EXTENSIONS.include? file_ext
+          self.optional_error("Can't distribute #{file_ext} to stores, please use `destination_type: 'group'`") unless Constants::STORE_SUPPORTED_EXTENSIONS.include? file_ext
         end
 
+        release_upload_body = nil
         unless params[:file].to_s.empty?
           if Constants::FULL_VERSION_REQUIRED_EXTENSIONS.include? file_ext
-            UI.user_error!("Fields `version` and `build_number` must be specified to upload a #{file_ext} file") if build_number.to_s.empty? || version.to_s.empty?
-            release_upload_body = { build_version: version, build_number: build_number }
+            self.optional_error("Fields `version` and `build_number` must be specified to upload a #{file_ext} file") if build_number.to_s.empty? || version.to_s.empty?
           elsif Constants::VERSION_REQUIRED_EXTENSIONS.include? file_ext
-            UI.user_error!("Field `version` must be specified to upload a #{file_ext} file") if version.to_s.empty?
-            release_upload_body = { build_version: version }
+            self.optional_error("Field `version` must be specified to upload a #{file_ext} file") if version.to_s.empty?
           else
             UI.message("Fields `version` and `build_number` are not required for files of type #{file_ext}, ignored") unless build_number.to_s.empty? && version.to_s.empty?
           end
+
+          release_upload_body = { build_version: version, build_number: build_number } if !version.nil? && !build_number.nil?
+          release_upload_body = { build_version: version } unless version.nil?
         end
 
         if file_ext == ".app" && File.directory?(file)
@@ -209,7 +211,7 @@ module Fastlane
             safe_download_url = Helper::AppcenterHelper.get_install_url(owner_type, owner_name, app_name)
             UI.message("Release '#{release_id}' is available for download at: #{safe_download_url}")
           else
-            UI.user_error!("Failed to upload release")
+            UI.error("Failed to upload release")
           end
         end
       end
@@ -255,6 +257,8 @@ module Fastlane
         values = params.values
         upload_dsym_only = params[:upload_dsym_only]
         upload_mapping_only = params[:upload_mapping_only]
+
+        Options.strict_mode(params[:strict])
 
         # if app found or successfully created
         if self.get_or_create_app(params)
@@ -353,7 +357,7 @@ module Fastlane
                               verify_block: proc do |value|
                                 accepted_formats = [".apk"]
                                 file_extname_full = Helper::AppcenterHelper.file_extname_full(value)
-                                UI.user_error!("Only \".apk\" formats are allowed, you provided \"#{file_extname_full}\"") unless accepted_formats.include? file_extname_full
+                                self.optional_error("Only \".apk\" formats are allowed, you provided \"#{file_extname_full}\"") unless accepted_formats.include? file_extname_full
                               end),
 
           FastlaneCore::ConfigItem.new(key: :aab,
@@ -369,7 +373,7 @@ module Fastlane
                             end,
                               verify_block: proc do |value|
                                 accepted_formats = [".aab"]
-                                UI.user_error!("Only \".aab\" formats are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? File.extname(value)
+                                self.optional_error("Only \".aab\" formats are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? File.extname(value)
                               end),
 
           FastlaneCore::ConfigItem.new(key: :ipa,
@@ -385,7 +389,7 @@ module Fastlane
                             end,
                               verify_block: proc do |value|
                                 accepted_formats = [".ipa"]
-                                UI.user_error!("Only \".ipa\" formats are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? File.extname(value)
+                                self.optional_error("Only \".ipa\" formats are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? File.extname(value)
                               end),
 
           FastlaneCore::ConfigItem.new(key: :file,
@@ -405,7 +409,7 @@ module Fastlane
                                   accepted_formats = Constants::ALL_SUPPORTED_EXTENSIONS
                                 end
                                 file_ext = Helper::AppcenterHelper.file_extname_full(value)
-                                UI.user_error!("Extension not supported: '#{file_ext}'. Supported formats for platform '#{platform}': #{accepted_formats.join ' '}") unless accepted_formats.include? file_ext
+                                self.optional_error("Extension not supported: '#{file_ext}'. Supported formats for platform '#{platform}': #{accepted_formats.join ' '}") unless accepted_formats.include? file_ext
                               end),
 
           FastlaneCore::ConfigItem.new(key: :dsym,
@@ -533,6 +537,12 @@ module Fastlane
                                        env_name: "APPCENTER_DISTRIBUTE_DSA_SIGNATURE",
                                        description: "DSA signature of the macOS or Windows release for Sparkle update feed",
                                        optional: true,
+                                       type: String),
+
+          FastlaneCore::ConfigItem.new(key: :strict,
+                                       env_name: "APPCENTER_STRICT_MODE",
+                                       description: "Strict mode, set to 'true' to fail early in case a potential error was detected",
+                                       optional: true,
                                        type: String)
         ]
       end
@@ -545,6 +555,8 @@ module Fastlane
       end
 
       def self.is_supported?(platform)
+        return Constants::SUPPORTED_EXTENSIONS.keys.include?(platform) if Options.strict
+
         true
       end
 
@@ -584,6 +596,28 @@ module Fastlane
             release_notes: "this is a store release"
           )'
         ]
+      end
+
+      class Options
+        include Singleton
+
+        def self.strict_mode(mode)
+          @strict = mode.to_s == "true"
+          UI.message("Enabled strict mode") if @strict
+        end
+
+        def self.strict
+          @strict
+        end
+      end
+
+      def self.optional_error(message)
+        if Options.strict
+          UI.user_error!(message)
+        else
+          UI.important(message)
+          UI.important("The current operation might fail, trying anyway...")
+        end
       end
     end
   end
