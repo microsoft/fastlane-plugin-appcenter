@@ -76,7 +76,6 @@ module Fastlane
       end
 
       def self.run_mapping_upload(params)
-        values = params.values
         api_token = params[:api_token]
         owner_name = params[:owner_name]
         app_name = params[:app_name]
@@ -165,7 +164,7 @@ module Fastlane
         if file_ext == ".app" && File.directory?(file)
           UI.message("App path is a directory, zipping it before upload")
           zip_file = file + ".zip"
-          if File.exists? zip_file
+          if File.exist? zip_file
             override = UI.interactive? ? UI.confirm("File '#{zip_file}' already exists, do you want to override it?") : true
             UI.abort_with_message!("Not overriding, aborting publishing operation") unless override
             UI.message("Deleting zip archive: #{zip_file}")
@@ -189,7 +188,7 @@ module Fastlane
             release_url = Helper::AppcenterHelper.get_release_url(owner_type, owner_name, app_name, release_id)
             UI.message("Release '#{release_id}' committed: #{release_url}")
 
-            Helper::AppcenterHelper.update_release(api_token, owner_name, app_name, release_id, release_notes)
+            release = Helper::AppcenterHelper.update_release(api_token, owner_name, app_name, release_id, release_notes)
             Helper::AppcenterHelper.update_release_metadata(api_token, owner_name, app_name, release_id, dsa_signature)
 
             destinations_array = destinations.split(',')
@@ -214,6 +213,8 @@ module Fastlane
             UI.user_error!("Failed to upload release")
           end
         end
+
+        release
       end
 
       # checks app existance, if ther is no such - creates it
@@ -262,7 +263,10 @@ module Fastlane
 
         # if app found or successfully created
         if self.get_or_create_app(params)
-          self.run_release_upload(params) unless upload_dsym_only || upload_mapping_only
+          release = self.run_release_upload(params) unless upload_dsym_only || upload_mapping_only
+          params[:version] = release['short_version'] if release
+          params[:build_number] = release['version'] if release
+
           self.run_dsym_upload(params) unless upload_mapping_only
           self.run_mapping_upload(params) unless upload_dsym_only
         end
@@ -517,13 +521,13 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :build_number,
                                        env_name: "APPCENTER_DISTRIBUTE_BUILD_NUMBER",
-                                       description: "The build number, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds",
+                                       description: "The build number, required for macOS .pkg and .dmg builds, as well as Android ProGuard `mapping.txt` when using `upload_mapping_only`",
                                        optional: true,
                                        type: String),
 
           FastlaneCore::ConfigItem.new(key: :version,
                                        env_name: "APPCENTER_DISTRIBUTE_VERSION",
-                                       description: "The build version, required for Android ProGuard mapping files, as well as .pkg, .dmg, .zip and .msi builds",
+                                       description: "The build version, required for .pkg, .dmg, .zip and .msi builds, as well as Android ProGuard `mapping.txt` when using `upload_mapping_only`",
                                        optional: true,
                                        type: String),
 
@@ -569,8 +573,6 @@ module Fastlane
             file: "./app-release.apk",
             destinations: "Testers",
             destination_type: "group",
-            build_number: "3",
-            version: "1.0.0",
             mapping: "./mapping.txt",
             release_notes: "release notes",
             notify_testers: false

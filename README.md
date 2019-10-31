@@ -97,11 +97,11 @@ Here is the list of all existing parameters:
 | `destination_type` <br/> `APPCENTER_DISTRIBUTE_DESTINATION_TYPE` | Destination type of distribution destination. 'group' and 'store' are supported (default: `group`) |
 | `mandatory_update` <br/> `APPCENTER_DISTRIBUTE_MANDATORY_UPDATE` | Require users to update to this release. Ignored if destination type is 'store' (default: `false`) |
 | `notify_testers` <br/> `APPCENTER_DISTRIBUTE_NOTIFY_TESTERS` | Send email notification about release. Ignored if destination type is 'store' (default: `false`) |
-| `release_notes` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES` | Release notes  (default: `No changelog given`) |
+| `release_notes` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES` | Release notes (default: `No changelog given`) |
 | `should_clip` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING` | Clip release notes if its length is more then 5000, true by default (default: `true`) |
 | `release_notes_link` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK` | Additional release notes link |
-| `build_number` <br/> `APPCENTER_DISTRIBUTE_BUILD_NUMBER` | The build number, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds |
-| `version` <br/> `APPCENTER_DISTRIBUTE_VERSION` | The build version, required for Android ProGuard mapping files, as well as .pkg, .dmg, .zip and .msi builds |
+| `build_number` <br/> `APPCENTER_DISTRIBUTE_BUILD_NUMBER` | The build number, required for macOS .pkg and .dmg builds, as well as Android ProGuard `mapping.txt` when using `upload_mapping_only` |
+| `version` <br/> `APPCENTER_DISTRIBUTE_VERSION` | The build version, required for .pkg, .dmg, .zip and .msi builds, as well as Android ProGuard `mapping.txt` when using `upload_mapping_only` |
 | `timeout` <br/> `APPCENTER_DISTRIBUTE_TIMEOUT` | Request timeout in seconds |
 | `dsa_signature` <br/> `APPCENTER_DISTRIBUTE_DSA_SIGNATURE` | DSA signature of the macOS or Windows release for Sparkle update feed |
 | `strict` <br/> `APPCENTER_STRICT_MODE` | Strict mode, set to 'true' to fail early in case a potential error was detected |
