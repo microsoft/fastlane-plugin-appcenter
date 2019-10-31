@@ -25,8 +25,9 @@ steps:
   - task: Bash@3
     inputs:
       targetType: 'inline'
-      script: 'bundle exec rake ci || true'
+      script: 'bundle exec rake ci'
     displayName: 'Run unit tests'
+    continueOnError: true
 
   - task: PublishTestResults@2
     inputs:
@@ -34,21 +35,3 @@ steps:
       testResultsFiles: '**/test*.xml'
       failTaskOnFailedTests: true
     displayName: 'Verify and publish test results'
-
-  - task: Bash@3
-    inputs:
-      targetType: 'inline'
-      script: 'gem build *.gemspec'
-    displayName: 'Build gem file'
-
-  - task: CopyFiles@2
-    inputs:
-      contents: '*.gem'
-      targetFolder: '$(Build.ArtifactStagingDirectory)'
-    displayName: 'Copy gem file'
-
-  - task: PublishBuildArtifacts@1
-    inputs:
-      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-      ArtifactName: 'fastlane-plugin-gem'
-    displayName: 'Publish gem file as AzDO artifact'
