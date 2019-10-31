@@ -1,8 +1,13 @@
 #!/bin/bash
 
-ALL_DOCS=`fastlane action appcenter_upload | grep -A200 "appcenter_upload Options" | grep -B200 "appcenter_upload Output Variables"`
-ALL_LINES=()
+# Disable color tags
+export FASTLANE_DISABLE_COLORS=1
 
+# Run fastlane to get the docs
+ALL_DOCS=`fastlane action appcenter_upload | grep -A200 "appcenter_upload Options" | grep -B200 "appcenter_upload Output Variables"`
+
+# Parse output. Note: does not work with appcenter_fetch yet
+ALL_LINES=()
 HEADER_COUNT=4
 TAIL_COUNT=5
 

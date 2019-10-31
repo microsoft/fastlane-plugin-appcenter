@@ -12,6 +12,8 @@ This project is a [_fastlane_](https://github.com/fastlane/fastlane) plugin. To 
 fastlane add_plugin appcenter
 ```
 
+fastlane v2.96.0 or higher is required for all plugin-actions to function properly.
+
 ## About App Center
 With [App Center](https://appcenter.ms) you can continuously build, test, release, and monitor your apps. This plugin provides a set of actions to interact with App Center.
 
@@ -83,15 +85,12 @@ Here is the list of all existing parameters:
 |-----------------|--------------------|
 | `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
 | `owner_type` <br/> `APPCENTER_OWNER_TYPE` | Owner type, either 'user' or 'organization' (default: `user`) |
-| `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name, as found in the App's URL in App Center |
-| `app_name` <br/> `APPCENTER_APP_NAME` | App name as found in the App's URL in App Center, if there is no app with such name, you will be prompted to create one |
+| `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name as found in the App's URL in App Center |
+| `app_name` <br/> `APPCENTER_APP_NAME` | App name as found in the App's URL in App Center. If there is no app with such name, you will be prompted to create one |
 | `app_display_name` <br/> `APPCENTER_APP_DISPLAY_NAME` | App display name to use when creating a new app |
 | `app_os` <br/> `APPCENTER_APP_OS` | App OS. Used for new app creation, if app 'app_name' was not found |
 | `app_platform` <br/> `APPCENTER_APP_PLATFORM` | App Platform. Used for new app creation, if app 'app_name' was not found |
-| `apk` <br/> `APPCENTER_DISTRIBUTE_APK` | Build release path for android build |
-| `aab` <br/> `APPCENTER_DISTRIBUTE_AAB` | Build release path for android app bundle build |
-| `ipa` <br/> `APPCENTER_DISTRIBUTE_IPA` | Build release path for iOS builds |
-| `file` <br/> `APPCENTER_DISTRIBUTE_FILE` | Build release path for generic builds (.aab, .app, .app.zip, .apk, .dmg, .ipa, .pkg) |
+| `file` <br/> `APPCENTER_DISTRIBUTE_FILE` | File path to the release build to publish |
 | `dsym` <br/> `APPCENTER_DISTRIBUTE_DSYM` | Path to your symbols file. For iOS provide path to app.dSYM.zip |
 | `upload_dsym_only` <br/> `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` | Flag to upload only the dSYM file to App Center (default: `false`) |
 | `mapping` <br/> `APPCENTER_DISTRIBUTE_ANDROID_MAPPING` | Path to your Android mapping.txt |
@@ -103,10 +102,11 @@ Here is the list of all existing parameters:
 | `release_notes` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES` | Release notes (default: `No changelog given`) |
 | `should_clip` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING` | Clip release notes if its length is more then 5000, true by default (default: `true`) |
 | `release_notes_link` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK` | Additional release notes link |
-| `build_number` <br/> `APPCENTER_DISTRIBUTE_BUILD_NUMBER` | The build number, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds |
-| `version` <br/> `APPCENTER_DISTRIBUTE_VERSION` | The build version, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds |
+| `build_number` <br/> `APPCENTER_DISTRIBUTE_BUILD_NUMBER` | The build number, required for macOS .pkg and .dmg builds, as well as Android ProGuard `mapping.txt` when using `upload_mapping_only` |
+| `version` <br/> `APPCENTER_DISTRIBUTE_VERSION` | The build version, required for .pkg, .dmg, .zip and .msi builds, as well as Android ProGuard `mapping.txt` when using `upload_mapping_only` |
 | `timeout` <br/> `APPCENTER_DISTRIBUTE_TIMEOUT` | Request timeout in seconds. Used when uploading builds and dSYM/mapping files |
-| `dsa_signature` <br/> `APPCENTER_DISTRIBUTE_DSA_SIGNATURE` | DSA signature of the macOS or Windows releases for Sparkle update feed |
+| `dsa_signature` <br/> `APPCENTER_DISTRIBUTE_DSA_SIGNATURE` | DSA signature of the macOS or Windows release for Sparkle update feed |
+| `strict` <br/> `APPCENTER_STRICT_MODE` | Strict mode, set to 'true' to fail early in case a potential error was detected |
 
 
 ## Example
