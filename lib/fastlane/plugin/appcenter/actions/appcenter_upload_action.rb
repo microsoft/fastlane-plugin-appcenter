@@ -2,6 +2,18 @@ module Fastlane
   module Actions
     module Constants
       MAX_RELEASE_NOTES_LENGTH = 5000
+      SUPPORTED_EXTENSIONS = {
+          android: %w(.aab .apk),
+          ios: %w(.ipa),
+          mac: %w(.app .app.zip .dmg .pkg),
+          windows: %w(.appx .appxbundle .appxupload .msix .msixbundle .msixupload .zip .msi),
+          custom: %w(.zip)
+      }
+      ALL_SUPPORTED_EXTENSIONS = SUPPORTED_EXTENSIONS.values.flatten.sort!.uniq!
+      STORE_ONLY_EXTENSIONS = %w(.aab)
+      STORE_SUPPORTED_EXTENSIONS = %w(.aab .apk .ipa)
+      VERSION_REQUIRED_EXTENSIONS = %w(.msi .zip)
+      FULL_VERSION_REQUIRED_EXTENSIONS = %w(.dmg .pkg)
     end
 
     module SharedValues
@@ -64,7 +76,6 @@ module Fastlane
       end
 
       def self.run_mapping_upload(params)
-        values = params.values
         api_token = params[:api_token]
         owner_name = params[:owner_name]
         app_name = params[:app_name]
@@ -131,29 +142,35 @@ module Fastlane
 
         file_ext = Helper::AppcenterHelper.file_extname_full(file)
         if destination_type == "group"
-          UI.user_error!("Can't distribute #{file_ext} to groups, please use `destination_type: 'store'`") if %w(.aab).include? file_ext
+          self.optional_error("Can't distribute #{file_ext} to groups, please use `destination_type: 'store'`") if Constants::STORE_ONLY_EXTENSIONS.include? file_ext
         else
-          UI.user_error!("Can't distribute #{file_ext} to stores, please use `destination_type: 'group'`") if %w(.app .app.zip .dmg .pkg).include? file_ext
+          self.optional_error("Can't distribute #{file_ext} to stores, please use `destination_type: 'group'`") unless Constants::STORE_SUPPORTED_EXTENSIONS.include? file_ext
         end
 
+        release_upload_body = nil
         unless params[:file].to_s.empty?
-          if %w[.dmg .pkg].include? file_ext
-            UI.user_error!("Fields `version` and `build_number` must be specified to upload a #{file_ext} file") if build_number.to_s.empty? || version.to_s.empty?
-            release_upload_body = { build_version: version, build_number: build_number }
+          if Constants::FULL_VERSION_REQUIRED_EXTENSIONS.include? file_ext
+            self.optional_error("Fields `version` and `build_number` must be specified to upload a #{file_ext} file") if build_number.to_s.empty? || version.to_s.empty?
+          elsif Constants::VERSION_REQUIRED_EXTENSIONS.include? file_ext
+            self.optional_error("Field `version` must be specified to upload a #{file_ext} file") if version.to_s.empty?
           else
-            UI.message("Fields `version` and `build_number` are not required for files of type #{file_ext}, ignored") unless build_number.to_s.empty? && version.to_s.empty?
+            self.optional_error("Fields `version` and `build_number` are not supported for files of type #{file_ext}") unless build_number.to_s.empty? && version.to_s.empty?
           end
+
+          release_upload_body = { build_version: version } unless version.nil?
+          release_upload_body = { build_version: version, build_number: build_number } if !version.nil? && !build_number.nil?
         end
 
         if file_ext == ".app" && File.directory?(file)
           UI.message("App path is a directory, zipping it before upload")
           zip_file = file + ".zip"
-          if File.exists? zip_file
+          if File.exist? zip_file
             override = UI.interactive? ? UI.confirm("File '#{zip_file}' already exists, do you want to override it?") : true
             UI.abort_with_message!("Not overriding, aborting publishing operation") unless override
-            UI.message("Deleting zip file: #{zip_file}")
+            UI.message("Deleting zip archive: #{zip_file}")
             File.delete zip_file
           end
+          UI.message("Creating zip archive: #{zip_file}")
           file = Actions::ZipAction.run(path: file, output_path: zip_file)
         end
 
@@ -171,7 +188,7 @@ module Fastlane
             release_url = Helper::AppcenterHelper.get_release_url(owner_type, owner_name, app_name, release_id)
             UI.message("Release '#{release_id}' committed: #{release_url}")
 
-            Helper::AppcenterHelper.update_release(api_token, owner_name, app_name, release_id, release_notes)
+            release = Helper::AppcenterHelper.update_release(api_token, owner_name, app_name, release_id, release_notes)
             Helper::AppcenterHelper.update_release_metadata(api_token, owner_name, app_name, release_id, dsa_signature)
 
             destinations_array = destinations.split(',')
@@ -196,6 +213,8 @@ module Fastlane
             UI.user_error!("Failed to upload release")
           end
         end
+
+        release
       end
 
       # checks app existance, if ther is no such - creates it
@@ -240,9 +259,14 @@ module Fastlane
         upload_dsym_only = params[:upload_dsym_only]
         upload_mapping_only = params[:upload_mapping_only]
 
+        Options.strict_mode(params[:strict])
+
         # if app found or successfully created
         if self.get_or_create_app(params)
-          self.run_release_upload(params) unless upload_dsym_only || upload_mapping_only
+          release = self.run_release_upload(params) unless upload_dsym_only || upload_mapping_only
+          params[:version] = release['short_version'] if release
+          params[:build_number] = release['version'] if release
+
           self.run_dsym_upload(params) unless upload_mapping_only
           self.run_mapping_upload(params) unless upload_dsym_only
         end
@@ -282,7 +306,7 @@ module Fastlane
                                       type: String,
                               verify_block: proc do |value|
                                 accepted_formats = ["user", "organization"]
-                                UI.user_error!("Only \"user\" and \"organization\" types are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? value
+                                UI.user_error!("Only \"user\" and \"organization\" types are allowed, you provided \"#{value}\"") unless accepted_formats.include? value
                               end),
 
           FastlaneCore::ConfigItem.new(key: :owner_name,
@@ -328,6 +352,7 @@ module Fastlane
                                description: "Build release path for android build",
                              default_value: Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH],
                                   optional: true,
+                                deprecated: true,
                                       type: String,
                        conflicting_options: [:ipa, :aab, :file],
                             conflict_block: proc do |value|
@@ -336,7 +361,7 @@ module Fastlane
                               verify_block: proc do |value|
                                 accepted_formats = [".apk"]
                                 file_extname_full = Helper::AppcenterHelper.file_extname_full(value)
-                                UI.user_error!("Only \".apk\" formats are allowed, you provided \"#{file_extname_full}\"") unless accepted_formats.include? file_extname_full
+                                self.optional_error("Only \".apk\" formats are allowed, you provided \"#{file_extname_full}\"") unless accepted_formats.include? file_extname_full
                               end),
 
           FastlaneCore::ConfigItem.new(key: :aab,
@@ -344,6 +369,7 @@ module Fastlane
                                description: "Build release path for android app bundle build",
                              default_value: Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH],
                                   optional: true,
+                                deprecated: true,
                                       type: String,
                        conflicting_options: [:ipa, :apk, :file],
                             conflict_block: proc do |value|
@@ -351,7 +377,7 @@ module Fastlane
                             end,
                               verify_block: proc do |value|
                                 accepted_formats = [".aab"]
-                                UI.user_error!("Only \".aab\" formats are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? File.extname(value)
+                                self.optional_error("Only \".aab\" formats are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? File.extname(value)
                               end),
 
           FastlaneCore::ConfigItem.new(key: :ipa,
@@ -359,6 +385,7 @@ module Fastlane
                                description: "Build release path for iOS builds",
                              default_value: Actions.lane_context[SharedValues::IPA_OUTPUT_PATH],
                                   optional: true,
+                                deprecated: true,
                                       type: String,
                        conflicting_options: [:apk, :aab, :file],
                             conflict_block: proc do |value|
@@ -366,12 +393,12 @@ module Fastlane
                             end,
                               verify_block: proc do |value|
                                 accepted_formats = [".ipa"]
-                                UI.user_error!("Only \".ipa\" formats are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? File.extname(value)
+                                self.optional_error("Only \".ipa\" formats are allowed, you provided \"#{File.extname(value)}\"") unless accepted_formats.include? File.extname(value)
                               end),
 
           FastlaneCore::ConfigItem.new(key: :file,
                                   env_name: "APPCENTER_DISTRIBUTE_FILE",
-                               description: "Build release path for generic builds (.aab, .app, .app.zip, .apk, .dmg, .ipa, .pkg)",
+                               description: "File path to the release build to publish",
                                   optional: true,
                                       type: String,
                        conflicting_options: [:apk, :aab, :ipa],
@@ -379,9 +406,14 @@ module Fastlane
                               UI.user_error!("You can't use 'file' and '#{value.key}' options in one run")
                             end,
                               verify_block: proc do |value|
-                                accepted_formats = %w(.aab .app .app.zip .apk .dmg .ipa .pkg)
+                                platform = Actions.lane_context[SharedValues::PLATFORM_NAME]
+                                accepted_formats = Constants::SUPPORTED_EXTENSIONS[platform.to_sym] if platform
+                                unless accepted_formats
+                                  UI.important("Unknown platform '#{platform}', consider using one of: #{Constants::SUPPORTED_EXTENSIONS.keys}")
+                                  accepted_formats = Constants::ALL_SUPPORTED_EXTENSIONS
+                                end
                                 file_ext = Helper::AppcenterHelper.file_extname_full(value)
-                                UI.user_error!("Only #{accepted_formats.to_s} formats are allowed, you provided \"#{file_ext}\"") unless accepted_formats.include? file_ext
+                                self.optional_error("Extension not supported: '#{file_ext}'. Supported formats for platform '#{platform}': #{accepted_formats.join ' '}") unless accepted_formats.include? file_ext
                               end),
 
           FastlaneCore::ConfigItem.new(key: :dsym,
@@ -489,13 +521,13 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :build_number,
                                        env_name: "APPCENTER_DISTRIBUTE_BUILD_NUMBER",
-                                       description: "The build number, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds",
+                                       description: "The build number, required for macOS .pkg and .dmg builds, as well as Android ProGuard `mapping.txt` when using `upload_mapping_only`",
                                        optional: true,
                                        type: String),
 
           FastlaneCore::ConfigItem.new(key: :version,
                                        env_name: "APPCENTER_DISTRIBUTE_VERSION",
-                                       description: "The build version, required for Android ProGuard mapping files, as well as macOS .pkg and .dmg builds",
+                                       description: "The build version, required for .pkg, .dmg, .zip and .msi builds, as well as Android ProGuard `mapping.txt` when using `upload_mapping_only`",
                                        optional: true,
                                        type: String),
 
@@ -507,7 +539,13 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :dsa_signature,
                                        env_name: "APPCENTER_DISTRIBUTE_DSA_SIGNATURE",
-                                       description: "DSA signature of the macOS or Windows releases for Sparkle update feed",
+                                       description: "DSA signature of the macOS or Windows release for Sparkle update feed",
+                                       optional: true,
+                                       type: String),
+
+          FastlaneCore::ConfigItem.new(key: :strict,
+                                       env_name: "APPCENTER_STRICT_MODE",
+                                       description: "Strict mode, set to 'true' to fail early in case a potential error was detected",
                                        optional: true,
                                        type: String)
         ]
@@ -521,6 +559,8 @@ module Fastlane
       end
 
       def self.is_supported?(platform)
+        return Constants::SUPPORTED_EXTENSIONS.keys.include?(platform) if Options.strict
+
         true
       end
 
@@ -529,12 +569,10 @@ module Fastlane
           'appcenter_upload(
             api_token: "...",
             owner_name: "appcenter_owner",
-            app_name: "testing_app",
-            apk: "./app-release.apk",
+            app_name: "testing_android_app",
+            file: "./app-release.apk",
             destinations: "Testers",
             destination_type: "group",
-            build_number: "3",
-            version: "1.0.0",
             mapping: "./mapping.txt",
             release_notes: "release notes",
             notify_testers: false
@@ -542,9 +580,9 @@ module Fastlane
           'appcenter_upload(
             api_token: "...",
             owner_name: "appcenter_owner",
-            app_name: "testing_app",
-            apk: "./app-release.ipa",
-            destinations: "Testers,Alpha",
+            app_name: "testing_ios_app",
+            file: "./app-release.ipa",
+            destinations: "Testers,Public",
             destination_type: "group",
             dsym: "./app.dSYM.zip",
             release_notes: "release notes",
@@ -553,17 +591,35 @@ module Fastlane
           'appcenter_upload(
             api_token: "...",
             owner_name: "appcenter_owner",
-            app_name: "testing_app",
-            aab: "./app.aab",
+            app_name: "testing_google_play_app",
+            file: "./app.aab",
             destinations: "Alpha",
             destination_type: "store",
-            build_number: "3",
-            version: "1.0.0",
-            mapping: "./mapping.txt",
-            release_notes: "release notes",
-            notify_testers: false
+            release_notes: "this is a store release"
           )'
         ]
+      end
+
+      class Options
+        include Singleton
+
+        def self.strict_mode(mode)
+          @strict = mode.to_s == "true"
+          UI.message("Enabled strict mode") if @strict
+        end
+
+        def self.strict
+          @strict
+        end
+      end
+
+      def self.optional_error(message)
+        if Options.strict
+          UI.user_error!(message)
+        else
+          UI.important(message)
+          UI.important("The current operation might fail, trying anyway...")
+        end
       end
     end
   end
