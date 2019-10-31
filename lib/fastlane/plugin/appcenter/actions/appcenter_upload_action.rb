@@ -155,7 +155,7 @@ module Fastlane
           elsif Constants::VERSION_REQUIRED_EXTENSIONS.include? file_ext
             self.optional_error("Field `version` must be specified to upload a #{file_ext} file") if version.to_s.empty?
           else
-            UI.message("Fields `version` and `build_number` are not required for files of type #{file_ext}, ignored") unless build_number.to_s.empty? && version.to_s.empty?
+            self.optional_error("Fields `version` and `build_number` are not supported for files of type #{file_ext}") unless build_number.to_s.empty? && version.to_s.empty?
           end
 
           release_upload_body = { build_version: version } unless version.nil?
