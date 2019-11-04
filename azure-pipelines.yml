@@ -35,3 +35,17 @@ steps:
       testResultsFiles: '**/test*.xml'
       failTaskOnFailedTests: true
     displayName: 'Verify and publish test results'
+
+  - task: ComponentGovernanceComponentDetection@0
+    inputs:
+      scanType: 'Register'
+      verbosity: 'Verbose'
+      alertWarningLevel: 'Low'
+
+  - task: ComponentGovernanceComponentDetection@0
+    inputs:
+      scanType: 'Register'
+      verbosity: 'Verbose'
+      alertWarningLevel: 'High'
+      failOnAlert: true
+
