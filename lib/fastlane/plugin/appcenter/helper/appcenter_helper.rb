@@ -6,7 +6,9 @@ module Fastlane
       # accounting for file types that can and should be zip-compressed
       # before they are uploaded
       def self.file_extname_full(path)
-        return ".app.zip" if path.end_with? ".app.zip"
+        %w(.app.zip .dSYM.zip).each do |suffix|
+          return suffix if path.to_s.downcase.end_with? suffix.downcase
+        end
 
         File.extname path
       end
