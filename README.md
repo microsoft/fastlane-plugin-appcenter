@@ -157,7 +157,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
 ## Security
 
-Check out [SECURITY.md](SECURITY.md) for all any security concerns with this project.
+Check out [SECURITY.md](SECURITY.md) for any security concern with this project.
 
 ## Contact
 
