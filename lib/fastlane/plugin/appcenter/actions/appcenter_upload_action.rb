@@ -191,7 +191,24 @@ module Fastlane
             release = Helper::AppcenterHelper.update_release(api_token, owner_name, app_name, release_id, release_notes)
             Helper::AppcenterHelper.update_release_metadata(api_token, owner_name, app_name, release_id, dsa_signature)
 
-            destinations_array = destinations.split(',')
+            destinations_array = []
+            if destinations == '*'
+              UI.message("Looking up all distribution groups for #{owner_name}/#{app_name}")
+              distribution_groups = Helper::AppcenterHelper.fetch_distribution_groups(
+                api_token: api_token,
+                owner_name: owner_name,
+                app_name: app_name
+              )
+
+              destination_excludes_array = destination_excludes.split(',').map(&:strip).map(&:downcase)
+              UI.abort_with_message!("Failed to list distribution groups for #{owner_name}/#{app_name}") unless distribution_groups
+              distribution_groups.each do |group|
+                destinations_array << group['name'] unless destination_excludes_array.include? group['name'].downcase 
+              end
+            else
+              destinations_array = destinations.split(',')
+            end
+            
             destinations_array.each do |destination_name|
               destination = Helper::AppcenterHelper.get_destination(api_token, owner_name, app_name, destination_type, destination_name)
               if destination
@@ -469,11 +486,17 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :destinations,
                                   env_name: "APPCENTER_DISTRIBUTE_DESTINATIONS",
-                               description: "Comma separated list of destination names. Both distribution groups and stores are supported. All names are required to be of the same destination type",
+                               description: "Comma separated list of destination names, use '*' for all distribution groups and exclude groups with destination_excludes. Both distribution groups and stores are supported. All names are required to be of the same destination type",
                              default_value: Actions.lane_context[SharedValues::APPCENTER_DISTRIBUTE_DESTINATIONS] || "Collaborators",
                                   optional: true,
                                       type: String),
 
+          FastlaneCore::ConfigItem.new(key: :destination_excludes,
+                                  env_name: "APPCENTER_DISTRIBUTE_DESTINATION_EXCLUDES",
+                               description: "Comma separated list of destination names to be excluded, if destinations is '*'",
+                             default_value: "",
+                                  optional: true,
+                                      type: String),
 
           FastlaneCore::ConfigItem.new(key: :destination_type,
                                   env_name: "APPCENTER_DISTRIBUTE_DESTINATION_TYPE",
@@ -596,7 +619,17 @@ module Fastlane
             destinations: "Alpha",
             destination_type: "store",
             release_notes: "this is a store release"
-          )'
+          )',
+          'appcenter_upload(
+            api_token: "...",
+            owner_name: "appcenter_owner",
+            app_name: "testing_google_play_app",
+            file: "./app.aab",
+            destinations: "*",
+            destination_excludes: "Collaborators",
+            destination_type: "store",
+            release_notes: "this is a store release"
+           )'
         ]
       end
 
