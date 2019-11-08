@@ -108,6 +108,7 @@ module Fastlane
         owner_type = params[:owner_type]
         app_name = params[:app_name]
         destinations = params[:destinations]
+        destination_excludes = params[:destination_excludes]
         destination_type = params[:destination_type]
         mandatory_update = params[:mandatory_update]
         notify_testers = params[:notify_testers]
