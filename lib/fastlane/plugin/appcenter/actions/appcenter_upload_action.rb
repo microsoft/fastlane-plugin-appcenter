@@ -132,10 +132,10 @@ module Fastlane
         end
 
         file = [
+          params[:file],
           params[:ipa],
           params[:apk],
           params[:aab],
-          params[:file]
         ].detect { |e| !e.to_s.empty? }
 
         UI.user_error!("Couldn't find build file at path '#{file}'") unless file && File.exist?(file)
