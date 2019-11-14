@@ -232,7 +232,7 @@ module Fastlane
           iOS: %w[Objective-C-Swift React-Native Xamarin],
           macOS: %w[Objective-C-Swift]
         }
-
+        
         if Helper::AppcenterHelper.get_app(api_token, owner_name, app_name)
           return true
         end
@@ -244,7 +244,7 @@ module Fastlane
           os = app_os.to_s.empty? && (Helper.test? ? "Android" : UI.select("Select OS", platforms.keys)) || app_os.to_s
           platform = app_platform.to_s.empty? && (Helper.test? ? "Java" : app_platform.to_s) || app_platform.to_s
           if platform.to_s.empty?
-            platform = platforms[os].length == 1 ? platforms[os][0] : UI.select("Select Platform", platforms[os])
+            platform = platforms[os.to_sym].length == 1 ? platforms[os.to_sym][0] : UI.select("Select Platform", platforms[os.to_sym])
           end
 
           Helper::AppcenterHelper.create_app(api_token, owner_type, owner_name, app_name, app_display_name, os, platform)
