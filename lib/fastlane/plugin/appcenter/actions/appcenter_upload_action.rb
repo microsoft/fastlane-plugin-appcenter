@@ -410,7 +410,7 @@ module Fastlane
                                 if platform
                                   accepted_formats = Constants::SUPPORTED_EXTENSIONS[platform.to_sym]
                                   unless accepted_formats
-                                    UI.important("Unknown platform '#{platform}', consider using one of: #{Constants::SUPPORTED_EXTENSIONS.keys}")
+                                    UI.important("Unknown platform '#{platform}', Supported are #{Constants::SUPPORTED_EXTENSIONS.keys}")
                                     accepted_formats = Constants::ALL_SUPPORTED_EXTENSIONS
                                   end
                                   file_ext = Helper::AppcenterHelper.file_extname_full(value)
