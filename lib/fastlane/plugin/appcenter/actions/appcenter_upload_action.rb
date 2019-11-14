@@ -407,13 +407,15 @@ module Fastlane
                             end,
                               verify_block: proc do |value|
                                 platform = Actions.lane_context[SharedValues::PLATFORM_NAME]
-                                accepted_formats = Constants::SUPPORTED_EXTENSIONS[platform.to_sym] if platform
-                                unless accepted_formats
-                                  UI.important("Unknown platform '#{platform}', consider using one of: #{Constants::SUPPORTED_EXTENSIONS.keys}")
-                                  accepted_formats = Constants::ALL_SUPPORTED_EXTENSIONS
+                                if platform
+                                  accepted_formats = Constants::SUPPORTED_EXTENSIONS[platform.to_sym]
+                                  unless accepted_formats
+                                    UI.important("Unknown platform '#{platform}', consider using one of: #{Constants::SUPPORTED_EXTENSIONS.keys}")
+                                    accepted_formats = Constants::ALL_SUPPORTED_EXTENSIONS
+                                  end
+                                  file_ext = Helper::AppcenterHelper.file_extname_full(value)
+                                  self.optional_error("Extension not supported: '#{file_ext}'. Supported formats for platform '#{platform}': #{accepted_formats.join ' '}") unless accepted_formats.include? file_ext
                                 end
-                                file_ext = Helper::AppcenterHelper.file_extname_full(value)
-                                self.optional_error("Extension not supported: '#{file_ext}'. Supported formats for platform '#{platform}': #{accepted_formats.join ' '}") unless accepted_formats.include? file_ext
                               end),
 
           FastlaneCore::ConfigItem.new(key: :dsym,
