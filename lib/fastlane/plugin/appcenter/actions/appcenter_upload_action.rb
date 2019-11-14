@@ -242,7 +242,7 @@ module Fastlane
         if Helper.test? || should_create_app || UI.confirm("App with name #{app_name} not found, create one?")
           app_display_name = app_name if app_display_name.to_s.empty?
           os = app_os.to_s.empty? && (Helper.test? ? "Android" : UI.select("Select OS", platforms.keys)) || app_os.to_s
-          platform = app_platform.to_s.empty? && (Helper.test? ? "Java" : app_platform.to_s) || app_platform.to_s
+          platform = app_platform.to_s.empty? && (Helper.test? && os == "Android" ? "Java" : app_platform.to_s) || app_platform.to_s
           if platform.to_s.empty?
             platform = platforms[os.to_sym].length == 1 ? platforms[os.to_sym][0] : UI.select("Select Platform", platforms[os.to_sym])
           end

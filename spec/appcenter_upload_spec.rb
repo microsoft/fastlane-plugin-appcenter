@@ -1249,6 +1249,31 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end").runner.execute(:test)
     end
 
+    it "creates app if it was not found with specified macOS that supports only one platform" do
+      stub_check_app(404)
+      stub_create_app(200, "app", "App Name", "macOS", "Objective-C-Swift")
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          app_display_name: 'App Name',
+          app_os: 'macOS',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
     it "creates app in organization if it was not found with specified os, platform and display_name" do
       stub_check_app(404)
       stub_create_app(200, "app", "App Name", "Android", "Java", "organization", "owner")
