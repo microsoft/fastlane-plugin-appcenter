@@ -232,7 +232,7 @@ module Fastlane
           iOS: %w[Objective-C-Swift React-Native Xamarin],
           macOS: %w[Objective-C-Swift]
         }
-        
+
         if Helper::AppcenterHelper.get_app(api_token, owner_name, app_name)
           return true
         end
