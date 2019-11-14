@@ -1267,7 +1267,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
           app_name: 'app',
           app_display_name: 'App Name',
           app_os: 'macOS',
-          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          file: './spec/fixtures/appfiles/app.zip_file_empty.app.zip',
           destinations: 'Testers',
           destination_type: 'group'
         })
