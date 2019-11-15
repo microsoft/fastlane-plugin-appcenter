@@ -146,6 +146,7 @@ module Fastlane
           self.optional_error("Can't distribute #{file_ext} to groups, please use `destination_type: 'store'`") if Constants::STORE_ONLY_EXTENSIONS.include? file_ext
         else
           self.optional_error("Can't distribute #{file_ext} to stores, please use `destination_type: 'group'`") unless Constants::STORE_SUPPORTED_EXTENSIONS.include? file_ext
+          UI.user_error!("The combination of `destinations: '*'` and `destination_type: 'store'` is invalid, please use `destination_type: 'group'` or explicitly specify the destinations") if destinations == "*"
         end
 
         release_upload_body = nil
@@ -205,6 +206,11 @@ module Fastlane
               UI.abort_with_message!("Failed to list distribution groups for #{owner_name}/#{app_name}") unless distribution_groups
               distribution_groups.each do |group|
                 destinations_array << group['name'] unless destination_excludes_array.include? group['name'].downcase 
+              end
+
+              distribution_group_names = distribution_groups.map {|h| h['name'].downcase }
+              destination_excludes_array.each do |group|
+                UI.important("Could not find the excluded distribution group: #{group}") unless distribution_group_names.include? group.downcase 
               end
             else
               destinations_array = destinations.split(',')
@@ -615,22 +621,23 @@ module Fastlane
           'appcenter_upload(
             api_token: "...",
             owner_name: "appcenter_owner",
-            app_name: "testing_google_play_app",
-            file: "./app.aab",
-            destinations: "Alpha",
-            destination_type: "store",
-            release_notes: "this is a store release"
+            app_name: "testing_ios_app",
+            file: "./app-release.ipa",
+            destinations: "*",
+            destination_excludes: "Collaborators",
+            destination_type: "group",
+            release_notes: "release notes",
+            notify_testers: false
           )',
           'appcenter_upload(
             api_token: "...",
             owner_name: "appcenter_owner",
             app_name: "testing_google_play_app",
             file: "./app.aab",
-            destinations: "*",
-            destination_excludes: "Collaborators",
+            destinations: "Alpha",
             destination_type: "store",
             release_notes: "this is a store release"
-           )'
+          )'
         ]
       end
 
