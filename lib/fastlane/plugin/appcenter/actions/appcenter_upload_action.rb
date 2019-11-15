@@ -233,8 +233,13 @@ module Fastlane
           macOS: %w[Objective-C-Swift]
         }
 
-        if Helper::AppcenterHelper.get_app(api_token, owner_name, app_name)
-          return true
+        begin
+          if Helper::AppcenterHelper.get_app(api_token, owner_name, app_name)
+            return true
+          end
+        rescue URI::InvalidURIError
+          UI.error("Provided app_name: '#{app_name}' is not in a valid format. Please ensure no spaces in the app_name.")
+          return false
         end
 
         should_create_app = !app_display_name.to_s.empty? || !app_os.to_s.empty? || !app_platform.to_s.empty?
