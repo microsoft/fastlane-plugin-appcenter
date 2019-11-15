@@ -1549,5 +1549,20 @@ describe Fastlane::Actions::AppcenterUploadAction do
         })
       end").runner.execute(:test)
     end
+
+    it "Handles invalid app name error" do
+      expect do
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'appname with space',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error(/Please ensure no special characters or spaces in the app_name./)
+    end
   end
 end
