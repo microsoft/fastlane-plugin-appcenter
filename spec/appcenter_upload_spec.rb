@@ -1498,7 +1498,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       expect(values[:dsym_path]).to eq('./spec/fixtures/symbols/Themoji.dSYM.zip')
     end
 
-    it "allows to upload build only even if dsym provided when upload_build_only is true"  do
+    it "allows to upload build only even if dsym provided when upload_build_only is true" do
       stub_check_app(200)
       stub_create_release_upload(200)
       stub_upload_build(200)
