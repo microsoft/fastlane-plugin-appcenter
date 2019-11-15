@@ -1300,7 +1300,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end").runner.execute(:test)
     end
 
-    it "creates app when app_os is Windows amd selects the app_platform" do
+    it "creates app when app_os is Windows and selects the app_platform" do
       stub_check_app(404)
       stub_create_app(200, "app", "App Name", "Windows", "UWP")
       stub_create_release_upload(200, { build_version: "1.0" })
