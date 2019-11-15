@@ -28,7 +28,7 @@ module Fastlane
         api_token = params[:api_token]
         owner_name = params[:owner_name]
         app_name = params[:app_name]
-        file = params[:ipa]
+        file = params[:file] || params[:ipa]
         dsym = params[:dsym]
         build_number = params[:build_number]
         version = params[:version]
@@ -261,6 +261,7 @@ module Fastlane
 
       def self.run(params)
         values = params.values
+        upload_build_only = params[:upload_build_only]
         upload_dsym_only = params[:upload_dsym_only]
         upload_mapping_only = params[:upload_mapping_only]
 
@@ -272,8 +273,8 @@ module Fastlane
           params[:version] = release['short_version'] if release
           params[:build_number] = release['version'] if release
 
-          self.run_dsym_upload(params) unless upload_mapping_only
-          self.run_mapping_upload(params) unless upload_dsym_only
+          self.run_dsym_upload(params) unless upload_mapping_only || upload_build_only
+          self.run_mapping_upload(params) unless upload_dsym_only || upload_build_only
         end
 
         return values if Helper.test?
@@ -422,6 +423,17 @@ module Fastlane
                                   self.optional_error("Extension not supported: '#{file_ext}'. Supported formats for platform '#{platform}': #{accepted_formats.join ' '}") unless accepted_formats.include? file_ext
                                 end
                               end),
+          
+          FastlaneCore::ConfigItem.new(key: :upload_build_only,
+                                  env_name: "APPCENTER_DISTRIBUTE_UPLOAD_BUILD_ONLY",
+                               description: "Flag to upload only the build to App Center. Skips uploading symbols or mapping",
+                                  optional: true,
+                                 is_string: false,
+                             default_value: false,
+                       conflicting_options: [:upload_dsym_only, :upload_mapping_only],
+                            conflict_block: proc do |value|
+                              UI.user_error!("You can't use 'upload_build_only' and '#{value.key}' options in one run")
+                            end),
 
           FastlaneCore::ConfigItem.new(key: :dsym,
                                   env_name: "APPCENTER_DISTRIBUTE_DSYM",
