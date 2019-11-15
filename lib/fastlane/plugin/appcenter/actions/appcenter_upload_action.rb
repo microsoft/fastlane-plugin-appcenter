@@ -238,7 +238,7 @@ module Fastlane
             return true
           end
         rescue URI::InvalidURIError
-          UI.user_error!("Provided app_name: '#{app_name}' is not in a valid format. Please ensure no special charecters and spaces in the app_name.")
+          UI.user_error!("Provided app_name: '#{app_name}' is not in a valid format. Please ensure no special characters or spaces in the app_name.")
           return false
         end
 

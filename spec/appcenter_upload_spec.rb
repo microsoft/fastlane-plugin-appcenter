@@ -1562,7 +1562,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
             destination_type: 'group'
           })
         end").runner.execute(:test)
-      end.to raise_error(/Please ensure no special charecters and spaces in the app_name./)
+      end.to raise_error(/Please ensure no special characters or spaces in the app_name./)
     end
   end
 end
