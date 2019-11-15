@@ -1300,6 +1300,32 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end").runner.execute(:test)
     end
 
+    it "creates app when app_os is Windows amd selects the app_platform" do
+      stub_check_app(404)
+      stub_create_app(200, "app", "App Name", "Windows", "UWP")
+      stub_create_release_upload(200, { build_version: "1.0" })
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          app_display_name: 'App Name',
+          app_os: 'Windows',
+          file: './spec/fixtures/appfiles/zip_file_empty.zip',
+          version: '1.0',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
     it "creates app in organization if it was not found with specified os, platform and display_name" do
       stub_check_app(404)
       stub_create_app(200, "app", "App Name", "Android", "Java", "organization", "owner")
