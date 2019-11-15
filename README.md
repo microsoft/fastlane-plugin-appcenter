@@ -91,6 +91,7 @@ Here is the list of all existing parameters:
 | `app_os` <br/> `APPCENTER_APP_OS` | App OS. Used for new app creation, if app 'app_name' was not found |
 | `app_platform` <br/> `APPCENTER_APP_PLATFORM` | App Platform. Used for new app creation, if app 'app_name' was not found |
 | `file` <br/> `APPCENTER_DISTRIBUTE_FILE` | File path to the release build to publish |
+| `upload_build_only` <br/> `APPCENTER_DISTRIBUTE_UPLOAD_BUILD_ONLY` | Flag to upload only the build to App Center. Skips uploading symbols or mapping (default: `false`) |
 | `dsym` <br/> `APPCENTER_DISTRIBUTE_DSYM` | Path to your symbols file. For iOS provide path to app.dSYM.zip |
 | `upload_dsym_only` <br/> `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` | Flag to upload only the dSYM file to App Center (default: `false`) |
 | `mapping` <br/> `APPCENTER_DISTRIBUTE_ANDROID_MAPPING` | Path to your Android mapping.txt |

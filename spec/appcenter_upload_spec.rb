@@ -1498,6 +1498,30 @@ describe Fastlane::Actions::AppcenterUploadAction do
       expect(values[:dsym_path]).to eq('./spec/fixtures/symbols/Themoji.dSYM.zip')
     end
 
+    it "allows to upload build only" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
+          dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
+          destinations: 'Testers',
+          destination_type: 'group',
+          upload_build_only: true
+        })
+      end").runner.execute(:test)
+    end
+
     it "handles invalid token error" do
       expect do
         stub_check_app(200)
@@ -1563,6 +1587,23 @@ describe Fastlane::Actions::AppcenterUploadAction do
           })
         end").runner.execute(:test)
       end.to raise_error(/Please ensure no special characters or spaces in the app_name./)
+    end
+
+    it "Handles conflicting options of upload_build_only and upload_dysm_only" do
+      expect do
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'appname',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group',
+            upload_build_only: true,
+            upload_dsym_only: true
+          })
+        end").runner.execute(:test)
+      end.to raise_error(/can't use 'upload_build_only' and 'upload_dsym_only' options in one run/)
     end
   end
 end
