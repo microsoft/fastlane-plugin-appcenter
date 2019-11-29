@@ -213,7 +213,7 @@ module Fastlane
                 UI.important("Could not find the excluded distribution group: #{group}") unless distribution_group_names.include? group.downcase 
               end
             else
-              destinations_array = destinations.split(',')
+              destinations_array = destinations.split(',').map(&:strip)
             end
             
             destinations_array.each do |destination_name|

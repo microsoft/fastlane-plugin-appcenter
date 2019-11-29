@@ -1498,5 +1498,100 @@ describe Fastlane::Actions::AppcenterUploadAction do
         })
       end").runner.execute(:test)
     end
+
+    it "asterik as destination" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)
+      stub_fetch_distribution_groups(owner_name: 'owner', app_name: 'app')
+      stub_get_destination(200, 'app', 'owner', 'group', 'Collaborators')
+      stub_get_destination(200, 'app', 'owner', 'group', 'test-group-1')
+      stub_get_destination(200, 'app', 'owner', 'group', 'test group 2')
+      stub_add_to_destination(200)
+      stub_add_to_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+      stub_create_dsym_upload(200)
+      stub_upload_dsym(200)
+      stub_update_dsym_upload(200, "committed")
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
+          dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
+          destinations: '*',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "asterik as destination and exclude" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)
+      stub_fetch_distribution_groups(owner_name: 'owner', app_name: 'app')
+      stub_get_destination(200, 'app', 'owner', 'group', 'Collaborators')
+      stub_get_destination(200, 'app', 'owner', 'group', 'test-group-1')
+      stub_add_to_destination(200)
+      stub_add_to_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+      stub_create_dsym_upload(200)
+      stub_upload_dsym(200)
+      stub_update_dsym_upload(200, "committed")
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
+          dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
+          destinations: '*',
+          destination_excludes: 'Test Group 2',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "asterik as destination for store type" do
+      expect do
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_upload_build(200)
+        stub_update_release_upload(200, 'committed')
+        stub_update_release(200)
+        stub_fetch_distribution_groups(owner_name: 'owner', app_name: 'app')
+        stub_get_destination(200, 'app', 'owner', 'group', 'Collaborators')
+        stub_get_destination(200, 'app', 'owner', 'group', 'test-group-1')
+        stub_get_destination(200, 'app', 'owner', 'group', 'test group 2')
+        stub_add_to_destination(200)
+        stub_add_to_destination(200)
+        stub_add_to_destination(200)
+        stub_get_release(200)
+        stub_create_dsym_upload(200)
+        stub_upload_dsym(200)
+        stub_update_dsym_upload(200, "committed")
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
+            dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
+            destinations: '*',
+            destination_type: 'store'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("The combination of `destinations: '*'` and `destination_type: 'store'` is invalid, please use `destination_type: 'group'` or explicitly specify the destinations")
+    end
   end
 end
