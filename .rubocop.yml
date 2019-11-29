@@ -69,10 +69,10 @@ Lint/UselessAssignment:
     - '**/spec/**/*'
 
 # We could potentially enable the 2 below:
-Layout/FirstHashElementIndentation:
+Layout/IndentFirstHashElement:
   Enabled: false
 
-Layout/HashAlignment:
+Layout/AlignHash:
   Enabled: false
 
 # HoundCI doesn't like this rule
@@ -88,7 +88,7 @@ Style/SymbolArray:
   Enabled: false
 
 # We still support Ruby 2.0.0
-Layout/HeredocIndentation:
+Layout/IndentHeredoc:
   Enabled: false
 
 # This cop would not work fine with rspec
@@ -97,7 +97,7 @@ Style/MixinGrouping:
     - '**/spec/**/*'
 
 # Sometimes we allow a rescue block that doesn't contain code
-Lint/SuppressedException:
+Lint/HandleExceptions:
   Enabled: false
 
 # Cop supports --auto-correct.

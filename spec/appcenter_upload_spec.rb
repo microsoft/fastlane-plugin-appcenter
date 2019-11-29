@@ -1718,7 +1718,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
         end").runner.execute(:test)
       end.to raise_error("The combination of `destinations: '*'` and `destination_type: 'store'` is invalid, please use `destination_type: 'group'` or explicitly specify the destinations")
     end
-    
+
     it "Handles invalid app name error" do
       expect do
         Fastlane::FastFile.new.parse("lane :test do
