@@ -913,6 +913,32 @@ describe Fastlane::Actions::AppcenterUploadAction do
       expect(values[:ipa]).to eq('./spec/fixtures/appfiles/ipa_file_empty.ipa')
     end
 
+    it "uses file parameter over default IPA_OUTPUT_PATH and doesn't raise error" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      values = Fastlane::FastFile.new.parse("lane :test do
+        Actions.lane_context[SharedValues::IPA_OUTPUT_PATH] = 'raise_error_if_used.ipa'
+
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          file: './spec/fixtures/appfiles/ipa_file_empty.ipa',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+
+      expect(values[:file]).to eq('./spec/fixtures/appfiles/ipa_file_empty.ipa')
+    end
+
     it "works with valid parameters for ios" do
       stub_check_app(200)
       stub_create_release_upload(200)
@@ -1249,6 +1275,57 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end").runner.execute(:test)
     end
 
+    it "creates app if it was not found with specified macOS that supports only one platform" do
+      stub_check_app(404)
+      stub_create_app(200, "app", "App Name", "macOS", "Objective-C-Swift")
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          app_display_name: 'App Name',
+          app_os: 'macOS',
+          file: './spec/fixtures/appfiles/app.zip_file_empty.app.zip',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
+    it "creates app when app_os is Windows and selects the app_platform" do
+      stub_check_app(404)
+      stub_create_app(200, "app", "App Name", "Windows", "UWP")
+      stub_create_release_upload(200, { build_version: "1.0" })
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          app_display_name: 'App Name',
+          app_os: 'Windows',
+          file: './spec/fixtures/appfiles/zip_file_empty.zip',
+          version: '1.0',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+    end
+
     it "creates app in organization if it was not found with specified os, platform and display_name" do
       stub_check_app(404)
       stub_create_app(200, "app", "App Name", "Android", "Java", "organization", "owner")
@@ -1447,6 +1524,54 @@ describe Fastlane::Actions::AppcenterUploadAction do
       expect(values[:dsym_path]).to eq('./spec/fixtures/symbols/Themoji.dSYM.zip')
     end
 
+    it "allows to upload build only even if dsym provided when upload_build_only is true" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
+          dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
+          destinations: 'Testers',
+          destination_type: 'group',
+          upload_build_only: true
+        })
+      end").runner.execute(:test)
+    end
+
+    it "allows to upload build only even if mapping provided when upload_build_only is true" do
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200)
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          mapping: './spec/fixtures/symbols/mapping.txt',
+          destinations: 'Testers',
+          destination_type: 'group',
+          upload_build_only: true
+        })
+      end").runner.execute(:test)
+    end
+
     it "handles invalid token error" do
       expect do
         stub_check_app(200)
@@ -1592,6 +1717,38 @@ describe Fastlane::Actions::AppcenterUploadAction do
           })
         end").runner.execute(:test)
       end.to raise_error("The combination of `destinations: '*'` and `destination_type: 'store'` is invalid, please use `destination_type: 'group'` or explicitly specify the destinations")
+    end
+    
+    it "Handles invalid app name error" do
+      expect do
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'appname with space',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error(/Please ensure no special characters or spaces in the app_name./)
+    end
+
+    it "Handles conflicting options of upload_build_only and upload_dysm_only" do
+      expect do
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'appname',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group',
+            upload_build_only: true,
+            upload_dsym_only: true
+          })
+        end").runner.execute(:test)
+      end.to raise_error(/can't use 'upload_build_only' and 'upload_dsym_only' options in one run/)
     end
   end
 end

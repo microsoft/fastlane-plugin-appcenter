@@ -28,7 +28,7 @@ module Fastlane
         api_token = params[:api_token]
         owner_name = params[:owner_name]
         app_name = params[:app_name]
-        file = params[:ipa]
+        file = params[:file] || params[:ipa]
         dsym = params[:dsym]
         build_number = params[:build_number]
         version = params[:version]
@@ -133,10 +133,10 @@ module Fastlane
         end
 
         file = [
+          params[:file],
           params[:ipa],
           params[:apk],
           params[:aab],
-          params[:file]
         ].detect { |e| !e.to_s.empty? }
 
         UI.user_error!("Couldn't find build file at path '#{file}'") unless file && File.exist?(file)
@@ -254,11 +254,17 @@ module Fastlane
         platforms = {
           Android: %w[Java React-Native Xamarin],
           iOS: %w[Objective-C-Swift React-Native Xamarin],
-          macOS: %w[Objective-C-Swift]
+          macOS: %w[Objective-C-Swift],
+          Windows: %w[UWP WPF WinForms Unity]
         }
 
-        if Helper::AppcenterHelper.get_app(api_token, owner_name, app_name)
-          return true
+        begin
+          if Helper::AppcenterHelper.get_app(api_token, owner_name, app_name)
+            return true
+          end
+        rescue URI::InvalidURIError
+          UI.user_error!("Provided app_name: '#{app_name}' is not in a valid format. Please ensure no special characters or spaces in the app_name.")
+          return false
         end
 
         should_create_app = !app_display_name.to_s.empty? || !app_os.to_s.empty? || !app_platform.to_s.empty?
@@ -266,9 +272,9 @@ module Fastlane
         if Helper.test? || should_create_app || UI.confirm("App with name #{app_name} not found, create one?")
           app_display_name = app_name if app_display_name.to_s.empty?
           os = app_os.to_s.empty? && (Helper.test? ? "Android" : UI.select("Select OS", platforms.keys)) || app_os.to_s
-          platform = app_platform.to_s.empty? && (Helper.test? ? "Java" : app_platform.to_s) || app_platform.to_s
+          platform = app_platform.to_s.empty? && (Helper.test? ? platforms[os.to_sym][0] : app_platform.to_s) || app_platform.to_s
           if platform.to_s.empty?
-            platform = platforms[os].length == 1 ? platforms[os][0] : UI.select("Select Platform", platforms[os])
+            platform = platforms[os.to_sym].length == 1 ? platforms[os.to_sym][0] : UI.select("Select Platform", platforms[os.to_sym])
           end
 
           Helper::AppcenterHelper.create_app(api_token, owner_type, owner_name, app_name, app_display_name, os, platform)
@@ -280,6 +286,7 @@ module Fastlane
 
       def self.run(params)
         values = params.values
+        upload_build_only = params[:upload_build_only]
         upload_dsym_only = params[:upload_dsym_only]
         upload_mapping_only = params[:upload_mapping_only]
 
@@ -291,8 +298,8 @@ module Fastlane
           params[:version] = release['short_version'] if release
           params[:build_number] = release['version'] if release
 
-          self.run_dsym_upload(params) unless upload_mapping_only
-          self.run_mapping_upload(params) unless upload_dsym_only
+          self.run_dsym_upload(params) unless upload_mapping_only || upload_build_only
+          self.run_mapping_upload(params) unless upload_dsym_only || upload_build_only
         end
 
         return values if Helper.test?
@@ -431,14 +438,27 @@ module Fastlane
                             end,
                               verify_block: proc do |value|
                                 platform = Actions.lane_context[SharedValues::PLATFORM_NAME]
-                                accepted_formats = Constants::SUPPORTED_EXTENSIONS[platform.to_sym] if platform
-                                unless accepted_formats
-                                  UI.important("Unknown platform '#{platform}', consider using one of: #{Constants::SUPPORTED_EXTENSIONS.keys}")
-                                  accepted_formats = Constants::ALL_SUPPORTED_EXTENSIONS
+                                if platform
+                                  accepted_formats = Constants::SUPPORTED_EXTENSIONS[platform.to_sym]
+                                  unless accepted_formats
+                                    UI.important("Unknown platform '#{platform}', Supported are #{Constants::SUPPORTED_EXTENSIONS.keys}")
+                                    accepted_formats = Constants::ALL_SUPPORTED_EXTENSIONS
+                                  end
+                                  file_ext = Helper::AppcenterHelper.file_extname_full(value)
+                                  self.optional_error("Extension not supported: '#{file_ext}'. Supported formats for platform '#{platform}': #{accepted_formats.join ' '}") unless accepted_formats.include? file_ext
                                 end
-                                file_ext = Helper::AppcenterHelper.file_extname_full(value)
-                                self.optional_error("Extension not supported: '#{file_ext}'. Supported formats for platform '#{platform}': #{accepted_formats.join ' '}") unless accepted_formats.include? file_ext
                               end),
+          
+          FastlaneCore::ConfigItem.new(key: :upload_build_only,
+                                  env_name: "APPCENTER_DISTRIBUTE_UPLOAD_BUILD_ONLY",
+                               description: "Flag to upload only the build to App Center. Skips uploading symbols or mapping",
+                                  optional: true,
+                                 is_string: false,
+                             default_value: false,
+                       conflicting_options: [:upload_dsym_only, :upload_mapping_only],
+                            conflict_block: proc do |value|
+                              UI.user_error!("You can't use 'upload_build_only' and '#{value.key}' options in one run")
+                            end),
 
           FastlaneCore::ConfigItem.new(key: :dsym,
                                   env_name: "APPCENTER_DISTRIBUTE_DSYM",
