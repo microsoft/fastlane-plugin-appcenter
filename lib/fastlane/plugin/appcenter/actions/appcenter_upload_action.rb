@@ -108,7 +108,6 @@ module Fastlane
         owner_type = params[:owner_type]
         app_name = params[:app_name]
         destinations = params[:destinations]
-        destination_excludes = params[:destination_excludes]
         destination_type = params[:destination_type]
         mandatory_update = params[:mandatory_update]
         notify_testers = params[:notify_testers]
@@ -202,16 +201,9 @@ module Fastlane
                 app_name: app_name
               )
 
-              destination_excludes_array = destination_excludes.split(',').map(&:strip).map(&:downcase)
               UI.abort_with_message!("Failed to list distribution groups for #{owner_name}/#{app_name}") unless distribution_groups
-              distribution_groups.each do |group|
-                destinations_array << group['name'] unless destination_excludes_array.include? group['name'].downcase 
-              end
-
-              distribution_group_names = distribution_groups.map {|h| h['name'].downcase }
-              destination_excludes_array.each do |group|
-                UI.important("Could not find the excluded distribution group: #{group}") unless distribution_group_names.include? group.downcase 
-              end
+              
+              destination_array = distribution_groups.map {|h| h['name'].downcase }
             else
               destinations_array = destinations.split(',').map(&:strip)
             end
@@ -518,13 +510,6 @@ module Fastlane
                                   optional: true,
                                       type: String),
 
-          FastlaneCore::ConfigItem.new(key: :destination_excludes,
-                                  env_name: "APPCENTER_DISTRIBUTE_DESTINATION_EXCLUDES",
-                               description: "Comma separated list of destination names to be excluded, if destinations is '*'",
-                             default_value: "",
-                                  optional: true,
-                                      type: String),
-
           FastlaneCore::ConfigItem.new(key: :destination_type,
                                   env_name: "APPCENTER_DISTRIBUTE_DESTINATION_TYPE",
                                description: "Destination type of distribution destination. 'group' and 'store' are supported",
@@ -644,7 +629,6 @@ module Fastlane
             app_name: "testing_ios_app",
             file: "./app-release.ipa",
             destinations: "*",
-            destination_excludes: "Collaborators",
             destination_type: "group",
             release_notes: "release notes",
             notify_testers: false
