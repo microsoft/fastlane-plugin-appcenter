@@ -440,7 +440,7 @@ module Fastlane
                                   self.optional_error("Extension not supported: '#{file_ext}'. Supported formats for platform '#{platform}': #{accepted_formats.join ' '}") unless accepted_formats.include? file_ext
                                 end
                               end),
-          
+
           FastlaneCore::ConfigItem.new(key: :upload_build_only,
                                   env_name: "APPCENTER_DISTRIBUTE_UPLOAD_BUILD_ONLY",
                                description: "Flag to upload only the build to App Center. Skips uploading symbols or mapping",
@@ -476,6 +476,7 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :mapping,
                                   env_name: "APPCENTER_DISTRIBUTE_ANDROID_MAPPING",
                                description: "Path to your Android mapping.txt",
+                               default_value: Actions.lane_context[SharedValues::GRADLE_MAPPING_TXT_OUTPUT_PATH],
                                   optional: true,
                                       type: String,
                               verify_block: proc do |value|
