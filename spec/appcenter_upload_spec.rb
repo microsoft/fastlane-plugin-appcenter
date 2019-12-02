@@ -864,7 +864,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       expect(values[:apk]).to eq('./spec/fixtures/appfiles/apk_file_empty.apk')
     end
 
-    if defined? Fastlane::Actions::Constants::SharedValues::GRADLE_MAPPING_TXT_OUTPUT_PATH
+    if defined? Fastlane::Actions::SharedValues::GRADLE_MAPPING_TXT_OUTPUT_PATH
       it "uses GRADLE_MAPPING_TXT_OUTPUT_PATH as default for mapping" do
         stub_check_app(200)
         stub_create_release_upload(200)
