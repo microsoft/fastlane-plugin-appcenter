@@ -203,7 +203,7 @@ module Fastlane
 
               UI.abort_with_message!("Failed to list distribution groups for #{owner_name}/#{app_name}") unless distribution_groups
               
-              destination_array = distribution_groups.map {|h| h['name'].downcase }
+              destination_array = distribution_groups.map {|h| h['name'] }
             else
               destinations_array = destinations.split(',').map(&:strip)
             end
