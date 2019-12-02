@@ -476,7 +476,7 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :mapping,
                                   env_name: "APPCENTER_DISTRIBUTE_ANDROID_MAPPING",
                                description: "Path to your Android mapping.txt",
-                               default_value: Actions.lane_context[SharedValues::GRADLE_MAPPING_TXT_OUTPUT_PATH],
+                               default_value: (defined? SharedValues::GRADLE_MAPPING_TXT_OUTPUT_PATH) && Actions.lane_context[SharedValues::GRADLE_MAPPING_TXT_OUTPUT_PATH] || nil,
                                   optional: true,
                                       type: String,
                               verify_block: proc do |value|
