@@ -505,7 +505,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :destinations,
                                   env_name: "APPCENTER_DISTRIBUTE_DESTINATIONS",
-                               description: "Comma separated list of destination names, use '*' for all distribution groups and exclude groups with destination_excludes. Both distribution groups and stores are supported. All names are required to be of the same destination type",
+                               description: "Comma separated list of destination names, use '*' for all distribution groups if destination type is 'group'. Both distribution groups and stores are supported. All names are required to be of the same destination type",
                              default_value: Actions.lane_context[SharedValues::APPCENTER_DISTRIBUTE_DESTINATIONS] || "Collaborators",
                                   optional: true,
                                       type: String),
