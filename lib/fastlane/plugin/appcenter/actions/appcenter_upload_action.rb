@@ -145,6 +145,7 @@ module Fastlane
           self.optional_error("Can't distribute #{file_ext} to groups, please use `destination_type: 'store'`") if Constants::STORE_ONLY_EXTENSIONS.include? file_ext
         else
           self.optional_error("Can't distribute #{file_ext} to stores, please use `destination_type: 'group'`") unless Constants::STORE_SUPPORTED_EXTENSIONS.include? file_ext
+          UI.user_error!("The combination of `destinations: '*'` and `destination_type: 'store'` is invalid, please use `destination_type: 'group'` or explicitly specify the destinations") if destinations == "*"
         end
 
         release_upload_body = nil
@@ -191,7 +192,22 @@ module Fastlane
             release = Helper::AppcenterHelper.update_release(api_token, owner_name, app_name, release_id, release_notes)
             Helper::AppcenterHelper.update_release_metadata(api_token, owner_name, app_name, release_id, dsa_signature)
 
-            destinations_array = destinations.split(',')
+            destinations_array = []
+            if destinations == '*'
+              UI.message("Looking up all distribution groups for #{owner_name}/#{app_name}")
+              distribution_groups = Helper::AppcenterHelper.fetch_distribution_groups(
+                api_token: api_token,
+                owner_name: owner_name,
+                app_name: app_name
+              )
+
+              UI.abort_with_message!("Failed to list distribution groups for #{owner_name}/#{app_name}") unless distribution_groups
+              
+              destination_array = distribution_groups.map {|h| h['name'] }
+            else
+              destinations_array = destinations.split(',').map(&:strip)
+            end
+            
             destinations_array.each do |destination_name|
               destination = Helper::AppcenterHelper.get_destination(api_token, owner_name, app_name, destination_type, destination_name)
               if destination
@@ -489,11 +505,10 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :destinations,
                                   env_name: "APPCENTER_DISTRIBUTE_DESTINATIONS",
-                               description: "Comma separated list of destination names. Both distribution groups and stores are supported. All names are required to be of the same destination type",
+                               description: "Comma separated list of destination names, use '*' for all distribution groups if destination type is 'group'. Both distribution groups and stores are supported. All names are required to be of the same destination type",
                              default_value: Actions.lane_context[SharedValues::APPCENTER_DISTRIBUTE_DESTINATIONS] || "Collaborators",
                                   optional: true,
                                       type: String),
-
 
           FastlaneCore::ConfigItem.new(key: :destination_type,
                                   env_name: "APPCENTER_DISTRIBUTE_DESTINATION_TYPE",
@@ -605,6 +620,16 @@ module Fastlane
             destinations: "Testers,Public",
             destination_type: "group",
             dsym: "./app.dSYM.zip",
+            release_notes: "release notes",
+            notify_testers: false
+          )',
+          'appcenter_upload(
+            api_token: "...",
+            owner_name: "appcenter_owner",
+            app_name: "testing_ios_app",
+            file: "./app-release.ipa",
+            destinations: "*",
+            destination_type: "group",
             release_notes: "release notes",
             notify_testers: false
           )',
