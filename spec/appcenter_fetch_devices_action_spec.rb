@@ -1,9 +1,10 @@
-def stub_fetch_distribution_groups(owner_name:, app_name:)
+def stub_fetch_distribution_groups(owner_name:, app_name:, groups: ["Collaborators", "test-group-1", "test group 2"])
+  body = groups.map{|g| {name: g}}
   stub_request(:get, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups")
     .to_return(
       status: 200,
       headers: { 'Content-Type' => 'application/json' },
-      body: "[{\"name\": \"Collaborators\"}, {\"name\": \"test-group-1\"}, {\"name\": \"test group 2\"}]"
+      body: body.to_json
     )
 end
 
