@@ -142,7 +142,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
         Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH] = nil
         Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH] = nil
         Actions.lane_context[SharedValues::DSYM_OUTPUT_PATH] = nil
-        Actions.lane_context[SharedValues::GRADLE_MAPPING_TXT_OUTPUT_PATH] = nil
+        Actions.lane_context[SharedValues::GRADLE_MAPPING_TXT_OUTPUT_PATH] = nil if defined? SharedValues::GRADLE_MAPPING_TXT_OUTPUT_PATH
       end").runner.execute(:test)
     end
 
@@ -864,33 +864,39 @@ describe Fastlane::Actions::AppcenterUploadAction do
       expect(values[:apk]).to eq('./spec/fixtures/appfiles/apk_file_empty.apk')
     end
 
-    it "uses GRADLE_MAPPING_TXT_OUTPUT_PATH as default for mapping" do
-      stub_check_app(200)
-      stub_create_release_upload(200)
-      stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
-      stub_update_release(200)
-      stub_get_destination(200)
-      stub_add_to_destination(200)
-      stub_get_release(200)
-      stub_create_mapping_upload(200, "1.0.0", "3")
-      stub_upload_mapping(200)
-      stub_update_mapping_upload(200, "committed")
+    if defined? Fastlane::Actions::SharedValues::GRADLE_MAPPING_TXT_OUTPUT_PATH
+      it "uses GRADLE_MAPPING_TXT_OUTPUT_PATH as default for mapping" do
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_upload_build(200)
+        stub_update_release_upload(200, 'committed')
+        stub_update_release(200)
+        stub_get_destination(200)
+        stub_add_to_destination(200)
+        stub_get_release(200)
+        stub_create_mapping_upload(200, "1.0.0", "3")
+        stub_upload_mapping(200)
+        stub_update_mapping_upload(200, "committed")
 
-      values = Fastlane::FastFile.new.parse("lane :test do
-        Actions.lane_context[SharedValues::GRADLE_MAPPING_TXT_OUTPUT_PATH] = './spec/fixtures/symbols/mapping.txt'
+        values = Fastlane::FastFile.new.parse("lane :test do
+          Actions.lane_context[SharedValues::GRADLE_MAPPING_TXT_OUTPUT_PATH] = './spec/fixtures/symbols/mapping.txt'
 
-        appcenter_upload({
-          api_token: 'xxx',
-          owner_name: 'owner',
-          app_name: 'app',
-          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
-          destinations: 'Testers',
-          destination_type: 'group'
-        })
-      end").runner.execute(:test)
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
 
-      expect(values[:mapping]).to eq('./spec/fixtures/symbols/mapping.txt')
+        expect(values[:mapping]).to eq('./spec/fixtures/symbols/mapping.txt')
+      end
+    else
+      it "skips test for undefined GRADLE_MAPPING_TXT_OUTPUT_PATH" do
+        # do nothing
+      end
     end
 
     it "uses GRADLE_AAB_OUTPUT_PATH as default for aab" do
