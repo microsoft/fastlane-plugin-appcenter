@@ -12,7 +12,7 @@ lane :test_autocreation do
     api_token: ENV["TEST_APPCENTER_API_TOKEN"],
     owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication-notfound-2",
-    apk: "./fastlane/app-release.apk"
+    file: "./fastlane/app-release.apk"
   )
 
   # app should be created for "fastlane-test-org" organization
@@ -23,7 +23,7 @@ lane :test_autocreation do
     app_os: 'Android',
     app_platform: 'Java',
     app_name: "MyApplication-notfound-3",
-    apk: "./fastlane/app-release.apk"
+    file: "./fastlane/app-release.apk"
   )
 end
 
@@ -33,7 +33,7 @@ lane :test_macos do
     owner_name: ENV["APPCENTER_OWNER_NAME"],
     app_name: ENV["APPCENTER_MACOS_APP_NAME"],
     app_os: 'MacOS',
-    ipa: "./fastlane/macos-app.app.zip"
+    file: "./fastlane/macos-app.app.zip"
   )
 end
 
@@ -59,7 +59,7 @@ lane :test_autocreation_without_prompts do
     app_display_name: "My New App Center App",
     app_os: "Android",
     app_platform: "Java",
-    apk: "./fastlane/app-release.apk"
+    file: "./fastlane/app-release.apk"
   )
 end
 
@@ -68,7 +68,7 @@ lane :test_release_notes do
     api_token: ENV["TEST_APPCENTER_API_TOKEN"],
     owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication-01",
-    ipa: "./fastlane/app-release.ipa",
+    file: "./fastlane/app-release.ipa",
     destinations: ENV["TEST_APPCENTER_DISTRIBUTE_GROUP"],
     destination_type: "group",
     release_notes: sh("cat ./test_CHANGELOG.md"),
@@ -82,7 +82,7 @@ lane :test_group_names do
     api_token: ENV["TEST_APPCENTER_API_TOKEN"],
     owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication",
-    apk: "./fastlane/app-release.apk",
+    file: "./fastlane/app-release.apk",
     destinations: "Group%20with%20space",
     destination_type: "group"
   )
@@ -91,7 +91,7 @@ lane :test_group_names do
     api_token: ENV["TEST_APPCENTER_API_TOKEN"],
     owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication",
-    apk: "./fastlane/app-release.apk",
+    file: "./fastlane/app-release.apk",
     destinations: "Group with space",
     destination_type: "group"
   )
@@ -107,7 +107,7 @@ lane :test do
     api_token: ENV["TEST_APPCENTER_API_TOKEN"],
     owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication",
-    apk: "./fastlane/app-release.apk"
+    file: "./fastlane/app-release.apk"
   )
 
   UI.message("\n\n\n=====================================\n uploading ios with dSYM files (not zipped) \n=====================================")
@@ -116,7 +116,7 @@ lane :test do
     api_token: ENV["TEST_APPCENTER_API_TOKEN"],
     owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication-01",
-    ipa: "./fastlane/app-release.ipa",
+    file: "./fastlane/app-release.ipa",
     destinations: ENV["TEST_APPCENTER_DISTRIBUTE_GROUP"],
     destination_type: "group",
     release_notes: ENV["TEST_APPCENTER_DISTRIBUTE_RELEASE_NOTES"]
@@ -139,7 +139,7 @@ lane :test do
     api_token: ENV["TEST_APPCENTER_API_TOKEN"],
     owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication",
-    apk: "./fastlane/app-release.apk",
+    file: "./fastlane/app-release.apk",
     destinations: ENV["TEST_APPCENTER_DISTRIBUTE_GROUPS"],
     destination_type: "group"
   )
@@ -150,7 +150,7 @@ lane :test do
     api_token: ENV["TEST_APPCENTER_API_TOKEN"],
     owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication",
-    apk: "./fastlane/app-release.apk",
+    file: "./fastlane/app-release.apk",
     destinations: ENV["TEST_APPCENTER_DISTRIBUTE_STORE"],
     destination_type: "store"
   )
@@ -161,7 +161,7 @@ lane :test do
     api_token: ENV["TEST_APPCENTER_API_TOKEN"],
     owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication",
-    apk: "./fastlane/app-release.apk",
+    file: "./fastlane/app-release.apk",
     destinations: ENV["TEST_APPCENTER_DISTRIBUTE_GROUP"],
     destination_type: "group",
     mandatory_update: true
@@ -173,7 +173,7 @@ lane :test do
     api_token: ENV["TEST_APPCENTER_API_TOKEN"],
     owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication",
-    apk: "./fastlane/app-release.apk",
+    file: "./fastlane/app-release.apk",
     destinations: ENV["TEST_APPCENTER_DISTRIBUTE_GROUP"],
     destination_type: "group",
     notify_testers: true
@@ -185,7 +185,7 @@ lane :test do
     api_token: ENV["TEST_APPCENTER_API_TOKEN"],
     owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication",
-    apk: "./fastlane/app-release.apk",
+    file: "./fastlane/app-release.apk",
     upload_mapping_only: true,
     build_number: "3",
     version: "1.0.0",
