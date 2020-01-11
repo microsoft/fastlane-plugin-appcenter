@@ -38,7 +38,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
       it 'raises an error when no api token is given' do
         expect do
           Fastlane::FastFile.new.parse("lane :test do
-            latest_appcenter_version_number(
+            appcenter_fetch_version_number(
               owner_name: 'owner-name',
               app_name: 'App-Name'
             )
@@ -50,7 +50,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
         stub_get_apps_success(200)
         expect do
           Fastlane::FastFile.new.parse("lane :test do
-            latest_appcenter_version_number(
+            appcenter_fetch_version_number(
               api_token: '1234',
               app_name: 'App-Name-Does-Not-Exist'
             )
@@ -61,7 +61,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
       it 'raises an error when the app name contains spaces' do
         expect do
           Fastlane::FastFile.new.parse("lane :test do
-            latest_appcenter_version_number(
+            appcenter_fetch_version_number(
               api_token: '1234',
               owner_name: 'owner-name',
               app_name: 'App Name'
@@ -73,7 +73,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
       it 'raises an error when the app name contains special characters' do
         expect do
           Fastlane::FastFile.new.parse("lane :test do
-            latest_appcenter_version_number(
+            appcenter_fetch_version_number(
               api_token: '1234',
               owner_name: 'owner-name',
               app_name: 'App-Name!@£$'
@@ -85,7 +85,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
       it 'raises an error when the owner name contains spaces' do
         expect do
           Fastlane::FastFile.new.parse("lane :test do
-            latest_appcenter_version_number(
+            appcenter_fetch_version_number(
               api_token: '1234',
               owner_name: 'owner name',
               app_name: 'App-Name'
@@ -97,7 +97,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
       it 'raises an error when the owner name contains special characters' do
         expect do
           Fastlane::FastFile.new.parse("lane :test do
-            latest_appcenter_version_number(
+            appcenter_fetch_version_number(
               api_token: '1234',
               owner_name: '**/Owner name!!',
               app_name: 'App-Name'
@@ -110,7 +110,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
         stub_get_releases_forbidden(403)
         expect do
           Fastlane::FastFile.new.parse("lane :test do
-            latest_appcenter_version_number(
+            appcenter_fetch_version_number(
               api_token: '1234',
               owner_name: 'owner-name',
               app_name: 'App-Name'
@@ -123,7 +123,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
         stub_get_releases_not_found(404)
         expect do
           Fastlane::FastFile.new.parse("lane :test do
-            latest_appcenter_version_number(
+            appcenter_fetch_version_number(
               api_token: '1234',
               owner_name: 'owner-name',
               app_name: 'App-Name'
@@ -136,7 +136,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
         stub_get_releases_empty_success(200)
         expect do
           Fastlane::FastFile.new.parse("lane :test do
-            latest_appcenter_version_number(
+            appcenter_fetch_version_number(
               api_token: '1234',
               owner_name: 'owner-name',
               app_name: 'App-Name-no-versions'
@@ -160,7 +160,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
       end
 
       before :each do
-        allow(Fastlane::Actions::LatestAppcenterBuildNumberAction).to receive(:prompt_for_apps).and_return([app])
+        allow(Fastlane::Actions::AppcenterFetchVersionNumberAction).to receive(:prompt_for_apps).and_return([app])
         stub_get_apps_success(200)
         stub_get_releases_success(200)
       end
@@ -168,14 +168,14 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
       context "with a valid token" do
         let(:build_number) do
           build_number = Fastlane::FastFile.new.parse("lane :test do
-            latest_appcenter_version_number(
+            appcenter_fetch_version_number(
               api_token: '1234'
             )
           end").runner.execute(:test)
         end
 
         it 'returns the correct version number' do
-          allow(Fastlane::Actions::LatestAppcenterBuildNumberAction).to receive(:gets).and_return("1\n")
+          allow(Fastlane::Actions::AppcenterFetchVersionNumberAction).to receive(:gets).and_return("1\n")
           expect(build_number).to eq('1.0.4.105')
         end
       end
@@ -183,7 +183,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
       context "with a valid token and owner name" do
         let(:build_number) do
           build_number = Fastlane::FastFile.new.parse("lane :test do
-            latest_appcenter_version_number(
+            appcenter_fetch_version_number(
               api_token: '1234',
               owner_name: 'owner-name'
             )
@@ -198,7 +198,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
       context "with a valid token and app name" do
         let(:build_number) do
           build_number = Fastlane::FastFile.new.parse("lane :test do
-            latest_appcenter_version_number(
+            appcenter_fetch_version_number(
               api_token: '1234',
               app_name: 'App-Name'
             )
@@ -213,7 +213,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
       context "with a valid token, owner name, and app name" do
         let(:build_number) do
           build_number = Fastlane::FastFile.new.parse("lane :test do
-            latest_appcenter_version_number(
+            appcenter_fetch_version_number(
               api_token: '1234',
               owner_name: 'owner-name',
               app_name: 'App-Name'
