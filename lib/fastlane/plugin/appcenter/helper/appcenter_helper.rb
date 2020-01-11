@@ -370,7 +370,7 @@ module Fastlane
           false
         end
       end
-      
+
       # add release to distribution group or store
       def self.add_to_destination(api_token, owner_name, app_name, release_id, destination_type, destination_id, mandatory_update = false, notify_testers = false)
         connection = self.connection
@@ -536,6 +536,12 @@ module Fastlane
       def self.get_install_url(owner_type, owner_name, app_name)
         owner_path = owner_type == "user" ? "users/#{owner_name}" : "orgs/#{owner_name}"
         return "https://install.appcenter.ms/#{owner_path}/apps/#{app_name}"
+      end
+
+      # Checks that the app name is valid
+      def self.check_valid_name(name)
+        regexp = /^[a-zA-Z0-9\-]+$/i
+        return regexp.match?(name)
       end
     end
   end

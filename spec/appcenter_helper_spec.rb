@@ -40,4 +40,18 @@ describe Fastlane::Helper::AppcenterHelper do
       expect(Fastlane::Helper::AppcenterHelper.file_extname_full(path)).to eq(".app")
     end
   end
+
+  describe '#check_valid_app_name' do
+    it 'returns true when the name is valid' do
+      expect(Fastlane::Helper::AppcenterHelper.check_valid_name('App-Name')).to be true
+    end
+
+    it 'returns false when the name is not valid because it contains special characters' do
+      expect(Fastlane::Helper::AppcenterHelper.check_valid_name('App-Name!@£$')).to be false
+    end
+
+    it 'returns false when the name is not valid because it contains spaces' do
+      expect(Fastlane::Helper::AppcenterHelper.check_valid_name('App Name')).to be false
+    end
+  end
 end
