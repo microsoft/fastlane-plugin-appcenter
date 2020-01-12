@@ -193,3 +193,19 @@ lane :test do
     notify_testers: false
   )
 end
+
+lane :test_fetch_version_number do
+  version = appcenter_fetch_version_number(
+    api_token: ENV["TEST_APPCENTER_API_TOKEN"],
+    owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
+    app_name: "MyApplication"
+  )
+
+  UI.message("\n\n\n=====================================\n Version: #{version} \n=====================================")
+
+  version = appcenter_fetch_version_number(
+    api_token: ENV["TEST_APPCENTER_API_TOKEN"]
+  )
+
+  UI.message("\n\n\n=====================================\n Version: #{version} \n=====================================")
+end
