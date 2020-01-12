@@ -15,11 +15,12 @@ module Fastlane
         ["jspargo", "ShopKeep"]
       end
 
-      def self.run(config)
-        app_name = config[:app_name]
-        owner_name = config[:owner_name]
+      def self.run(params)
+        api_token = params[:api_token]
+        app_name = params[:app_name]
+        owner_name = params[:owner_name]
         if app_name.nil? && owner_name.nil?
-          owner_and_app_name = get_owner_and_app_name(config[:api_token])
+          owner_and_app_name = get_owner_and_app_name(api_token)
           app_name = owner_and_app_name[0]
           owner_name = owner_and_app_name[1]
         end
@@ -32,7 +33,7 @@ module Fastlane
         end
 
         if owner_name.nil?
-          owner_name = get_owner_name(config[:api_token], app_name)
+          owner_name = get_owner_name(api_token, app_name)
         else
           unless Helper::AppcenterHelper.check_valid_name(owner_name)
             UI.user_error!("The `owner_name` ('#{owner_name}') cannot contains spaces and must only contain lowercased alpha numeric characters and dashes")
@@ -41,7 +42,7 @@ module Fastlane
         end
 
         if app_name.nil?
-          app_name = get_owner_and_app_name(config[:api_token])[0]
+          app_name = get_owner_and_app_name(api_token)[0]
         end
 
         if app_name.nil? || owner_name.nil?
@@ -53,7 +54,7 @@ module Fastlane
         http = Net::HTTP.new(host_uri.host, host_uri.port)
         http.use_ssl = true
         list_request = Net::HTTP::Get.new("/v0.1/apps/#{owner_name}/#{app_name}/releases")
-        list_request['X-API-Token'] = config[:api_token]
+        list_request['X-API-Token'] = api_token
         list_response = http.request(list_request)
 
         if list_response.kind_of?(Net::HTTPForbidden)
@@ -87,23 +88,23 @@ module Fastlane
         [
           FastlaneCore::ConfigItem.new(key: :api_token,
                                        env_name: "APPCENTER_API_TOKEN",
-                                       description: "API Token for AppCenter Access",
+                                       description: "API Token for App Center Access",
                                        verify_block: proc do |value|
-                                         UI.user_error!("No API token for AppCenter given, pass using `api_token: 'token'`") unless value && !value.empty?
+                                         UI.user_error!("No API token for App Center given, pass using `api_token: 'token'`") unless value && !value.empty?
                                        end),
           FastlaneCore::ConfigItem.new(key: :owner_name,
                                        env_name: "APPCENTER_OWNER_NAME",
                                        optional: true,
-                                       description: "Name of the owner of the application on AppCenter",
+                                       description: "Name of the owner of the application on App Center",
                                        verify_block: proc do |value|
-                                         UI.user_error!("No owner name for AppCenter given, pass using `owner_name: 'owner name'`") unless value && !value.empty?
+                                         UI.user_error!("No owner name for App Center given, pass using `owner_name: 'owner name'`") unless value && !value.empty?
                                        end),
           FastlaneCore::ConfigItem.new(key: :app_name,
                                        env_name: "APPCENTER_APP_NAME",
                                        optional: true,
-                                       description: "Name of the application on AppCenter",
+                                       description: "Name of the application on App Center",
                                        verify_block: proc do |value|
-                                         UI.user_error!("No app name for AppCenter given, pass using `app_name: 'app name'`") unless value && !value.empty?
+                                         UI.user_error!("No app name for App Center given, pass using `app_name: 'app name'`") unless value && !value.empty?
                                        end)
         ]
       end

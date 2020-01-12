@@ -43,7 +43,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
               app_name: 'App-Name'
             )
           end").runner.execute(:test)
-        end.to raise_error("No API token for AppCenter given, pass using `api_token: 'token'`")
+        end.to raise_error("No API token for App Center given, pass using `api_token: 'token'`")
       end
 
       it 'raises an error when the app does not exist for a given owner/API key' do
