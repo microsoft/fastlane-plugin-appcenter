@@ -46,18 +46,6 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
         end.to raise_error("No API token for App Center given, pass using `api_token: 'token'`")
       end
 
-      it 'raises an error when the app does not exist for a given owner/API key' do
-        stub_get_apps_success(200)
-        expect do
-          Fastlane::FastFile.new.parse("lane :test do
-            appcenter_fetch_version_number(
-              api_token: '1234',
-              app_name: 'App-Name-Does-Not-Exist'
-            )
-          end").runner.execute(:test)
-        end.to raise_error("No app 'App-Name-Does-Not-Exist' found for owner ")
-      end
-
       it 'raises an error when the app name does not exist for an owner/account' do
         stub_get_releases_forbidden(403)
         expect do
@@ -115,21 +103,6 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
         allow(Fastlane::Actions::AppcenterFetchVersionNumberAction).to receive(:prompt_for_apps).and_return([app])
         stub_get_apps_success(200)
         stub_get_releases_success(200)
-      end
-
-      context "with a valid token and app name" do
-        let(:build_number) do
-          build_number = Fastlane::FastFile.new.parse("lane :test do
-            appcenter_fetch_version_number(
-              api_token: '1234',
-              app_name: 'App-Name'
-            )
-          end").runner.execute(:test)
-        end
-
-        it 'returns the correct version number' do
-          expect(build_number).to eq('1.0.4.105')
-        end
       end
 
       context "with a valid token, owner name, and app name" do
