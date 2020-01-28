@@ -537,12 +537,6 @@ module Fastlane
         owner_path = owner_type == "user" ? "users/#{owner_name}" : "orgs/#{owner_name}"
         return "https://install.appcenter.ms/#{owner_path}/apps/#{app_name}"
       end
-
-      # Checks that the app name is valid
-      def self.check_valid_name(name)
-        regexp = /^[a-zA-Z0-9\-]+$/i
-        return regexp.match?(name)
-      end
     end
   end
 end

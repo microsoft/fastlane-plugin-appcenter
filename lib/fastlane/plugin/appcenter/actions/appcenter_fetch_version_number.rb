@@ -25,20 +25,8 @@ module Fastlane
           owner_name = owner_and_app_name[1]
         end
 
-        unless app_name.nil?
-          unless Helper::AppcenterHelper.check_valid_name(app_name)
-            UI.user_error!("The `app_name` ('#{app_name}') cannot contains spaces and must only contain alpha numeric characters and dashes")
-            return nil
-          end
-        end
-
         if owner_name.nil?
           owner_name = get_owner_name(api_token, app_name)
-        else
-          unless Helper::AppcenterHelper.check_valid_name(owner_name)
-            UI.user_error!("The `owner_name` ('#{owner_name}') cannot contains spaces and must only contain lowercased alpha numeric characters and dashes")
-            return nil
-          end
         end
 
         if app_name.nil?
