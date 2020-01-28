@@ -39,7 +39,11 @@ module Fastlane
           return nil
         end
 
-        return latest_build['version']
+        return {
+          "id" => latest_build['id'],
+          "version" => latest_build['short_version'],
+          "build_number" => latest_build['version']
+        }
       end
 
       def self.available_options
