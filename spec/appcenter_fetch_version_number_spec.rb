@@ -117,36 +117,6 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
         stub_get_releases_success(200)
       end
 
-      context "with a valid token" do
-        let(:build_number) do
-          build_number = Fastlane::FastFile.new.parse("lane :test do
-            appcenter_fetch_version_number(
-              api_token: '1234'
-            )
-          end").runner.execute(:test)
-        end
-
-        it 'returns the correct version number' do
-          allow(Fastlane::Actions::AppcenterFetchVersionNumberAction).to receive(:gets).and_return("1\n")
-          expect(build_number).to eq('1.0.4.105')
-        end
-      end
-
-      context "with a valid token and owner name" do
-        let(:build_number) do
-          build_number = Fastlane::FastFile.new.parse("lane :test do
-            appcenter_fetch_version_number(
-              api_token: '1234',
-              owner_name: 'owner-name'
-            )
-          end").runner.execute(:test)
-        end
-
-        it 'returns the correct version number' do
-          expect(build_number).to eq('1.0.4.105')
-        end
-      end
-
       context "with a valid token and app name" do
         let(:build_number) do
           build_number = Fastlane::FastFile.new.parse("lane :test do

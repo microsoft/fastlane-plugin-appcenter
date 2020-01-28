@@ -526,6 +526,32 @@ module Fastlane
         end
       end
 
+      def self.fetch_releases(api_token:, owner_name:, app_name:)
+        connection = self.connection(nil, false, true)
+
+        endpoint = "/v0.1/apps/#{owner_name}/#{app_name}/releases"
+
+        response = connection.get(endpoint) do |req|
+          req.headers['X-API-Token'] = api_token
+          req.headers['internal-request-source'] = "fastlane"
+        end
+
+        case response.status
+        when 200...300
+          UI.message("DEBUG: #{response.body.inspect}") if ENV['DEBUG']
+          JSON.parse(response.body)
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+          false
+        when 404
+          UI.error("Not found, invalid owner or application name")
+          false
+        else
+          UI.error("Error #{response.status}: #{response.body}")
+          false
+        end
+      end
+
       # Note: This does not support testing environment (INT)
       def self.get_release_url(owner_type, owner_name, app_name, release_id)
         owner_path = owner_type == "user" ? "users/#{owner_name}" : "orgs/#{owner_name}"

@@ -19,18 +19,9 @@ module Fastlane
         api_token = params[:api_token]
         app_name = params[:app_name]
         owner_name = params[:owner_name]
-        if app_name.nil? && owner_name.nil?
-          owner_and_app_name = get_owner_and_app_name(api_token)
-          app_name = owner_and_app_name[0]
-          owner_name = owner_and_app_name[1]
-        end
 
         if owner_name.nil?
           owner_name = get_owner_name(api_token, app_name)
-        end
-
-        if app_name.nil?
-          app_name = get_owner_and_app_name(api_token)[0]
         end
 
         if app_name.nil? || owner_name.nil?
@@ -38,24 +29,12 @@ module Fastlane
           return nil
         end
 
-        host_uri = URI.parse('https://api.appcenter.ms')
-        http = Net::HTTP.new(host_uri.host, host_uri.port)
-        http.use_ssl = true
-        list_request = Net::HTTP::Get.new("/v0.1/apps/#{owner_name}/#{app_name}/releases")
-        list_request['X-API-Token'] = api_token
-        list_response = http.request(list_request)
+        releases = Helper::AppcenterHelper.fetch_releases(
+          api_token: api_token,
+          owner_name: owner_name,
+          app_name: app_name
+        )
 
-        if list_response.kind_of?(Net::HTTPForbidden)
-          UI.user_error!("API Key not valid for '#{owner_name}'. This will be because either the API Key or the `owner_name` are incorrect")
-          return nil
-        end
-
-        if list_response.kind_of?(Net::HTTPNotFound)
-          UI.user_error!("No app or owner found with `app_name`: '#{app_name}' and `owner_name`: '#{owner_name}'")
-          return nil
-        end
-
-        releases = JSON.parse(list_response.body)
         if releases.nil?
           UI.user_error!("No versions found for '#{app_name}' owned by #{owner_name}")
           return nil
@@ -131,12 +110,6 @@ module Fastlane
         apps_response = http.request(apps_request)
         return [] unless apps_response.kind_of?(Net::HTTPOK)
         return JSON.parse(apps_response.body)
-      end
-
-      def self.prompt_for_apps(apps)
-        app_names = apps.map { |app| app['name'] }.sort
-        selected_app_name = UI.select("Select your project: ", app_names)
-        return apps.select { |app| app['name'] == selected_app_name }
       end
     end
   end
