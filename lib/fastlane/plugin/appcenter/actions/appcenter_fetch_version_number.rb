@@ -24,22 +24,13 @@ module Fastlane
           owner_name = get_owner_name(api_token, app_name)
         end
 
-        if app_name.nil? || owner_name.nil?
-          UI.user_error!("No app '#{app_name}' found for owner #{owner_name}")
-          return nil
-        end
-
         releases = Helper::AppcenterHelper.fetch_releases(
           api_token: api_token,
           owner_name: owner_name,
           app_name: app_name
         )
 
-        if releases.nil?
-          UI.user_error!("No versions found for '#{app_name}' owned by #{owner_name}")
-          return nil
-        end
-
+        UI.abort_with_message!("No versions found for '#{app_name}' owned by #{owner_name}") unless releases
         sorted_release = releases.sort_by { |release| release['id'] }.reverse!
         latest_build = sorted_release.first
 
@@ -61,14 +52,12 @@ module Fastlane
                                        end),
           FastlaneCore::ConfigItem.new(key: :owner_name,
                                        env_name: "APPCENTER_OWNER_NAME",
-                                       optional: true,
                                        description: "Name of the owner of the application on App Center",
                                        verify_block: proc do |value|
                                          UI.user_error!("No owner name for App Center given, pass using `owner_name: 'owner name'`") unless value && !value.empty?
                                        end),
           FastlaneCore::ConfigItem.new(key: :app_name,
                                        env_name: "APPCENTER_APP_NAME",
-                                       optional: true,
                                        description: "Name of the application on App Center",
                                        verify_block: proc do |value|
                                          UI.user_error!("No app name for App Center given, pass using `app_name: 'app name'`") unless value && !value.empty?

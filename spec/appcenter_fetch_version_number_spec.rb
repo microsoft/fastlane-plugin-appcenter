@@ -68,7 +68,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
               app_name: 'App-Name'
             )
           end").runner.execute(:test)
-        end.to raise_error("API Key not valid for 'owner-name'. This will be because either the API Key or the `owner_name` are incorrect")
+        end.to raise_error("No versions found for 'App-Name' owned by owner-name")
       end
 
       it 'raises an error when the owner/account name or API key are incorrect' do
@@ -81,7 +81,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
               app_name: 'App-Name'
             )
           end").runner.execute(:test)
-        end.to raise_error("No app or owner found with `app_name`: 'App-Name' and `owner_name`: 'owner-name'")
+        end.to raise_error("No versions found for 'App-Name' owned by owner-name")
       end
 
       it 'raises an error when the no app versions exist' do
