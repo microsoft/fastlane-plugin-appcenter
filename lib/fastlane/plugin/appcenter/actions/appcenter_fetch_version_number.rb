@@ -20,10 +20,6 @@ module Fastlane
         app_name = params[:app_name]
         owner_name = params[:owner_name]
 
-        if owner_name.nil?
-          owner_name = get_owner_name(api_token, app_name)
-        end
-
         releases = Helper::AppcenterHelper.fetch_releases(
           api_token: api_token,
           owner_name: owner_name,
@@ -71,17 +67,6 @@ module Fastlane
 
       def self.is_supported?(platform)
         [:ios, :android].include?(platform)
-      end
-
-      def self.get_owner_name(api_token, app_name)
-        apps = get_apps(api_token)
-        return unless apps.count > 0
-        app_matches = apps.select { |app| app['name'] == app_name }
-        return unless app_matches.count > 0
-        selected_app = app_matches.first
-
-        owner = selected_app['owner']['name'].to_s
-        return owner
       end
 
       def self.get_apps(api_token)
