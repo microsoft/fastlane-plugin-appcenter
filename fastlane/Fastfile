@@ -195,7 +195,6 @@ lane :test do
 end
 
 lane :test_fetch_version_number do
-
   UI.message("\n\n\n=====================================\n Fetch latest version: \n=====================================")
 
   version = appcenter_fetch_version_number(
@@ -204,5 +203,5 @@ lane :test_fetch_version_number do
     app_name: "MyApplication"
   )
 
-  UI.message("#{version}")
+  UI.message(version.to_s)
 end
