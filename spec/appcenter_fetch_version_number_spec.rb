@@ -72,7 +72,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
         end.to raise_error("No versions found for 'App-Name' owned by owner-name")
       end
 
-      it 'raises an error when the no app versions exist' do
+      it 'raises an error when there are no releases for an app' do
         stub_get_releases_empty_success(200)
         expect do
           Fastlane::FastFile.new.parse("lane :test do
@@ -82,7 +82,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
               app_name: 'App-Name-no-versions'
             )
           end").runner.execute(:test)
-        end.to raise_error("The app has no versions yet")
+        end.to raise_error("This app has no releases yet")
       end
     end
 

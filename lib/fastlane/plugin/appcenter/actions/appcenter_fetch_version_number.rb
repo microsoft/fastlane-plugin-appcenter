@@ -28,17 +28,17 @@ module Fastlane
 
         UI.abort_with_message!("No versions found for '#{app_name}' owned by #{owner_name}") unless releases
         sorted_release = releases.sort_by { |release| release['id'] }.reverse!
-        latest_build = sorted_release.first
+        latest_release = sorted_release.first
 
-        if latest_build.nil?
-          UI.user_error!("The app has no versions yet")
+        if latest_release.nil?
+          UI.user_error!("This app has no releases yet")
           return nil
         end
 
         return {
-          "id" => latest_build['id'],
-          "version" => latest_build['short_version'],
-          "build_number" => latest_build['version']
+          "id" => latest_release['id'],
+          "version" => latest_release['short_version'],
+          "build_number" => latest_release['version']
         }
       end
 
