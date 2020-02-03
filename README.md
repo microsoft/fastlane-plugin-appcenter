@@ -21,6 +21,8 @@ With [App Center](https://appcenter.ms) you can continuously build, test, releas
 
 `appcenter_upload` allows you to upload and [distribute](https://docs.microsoft.com/en-us/appcenter/distribution/uploading) apps to your testers on App Center as well as to upload .dSYM files to [collect detailed crash reports](https://docs.microsoft.com/en-us/appcenter/crashes/ios) in App Center.
 
+`appcenter_fetch_version_number` allows you to obtain the latest version number (short or full) for an app. This is useful for tasks such as getting the latest version of an app so that an increment action can take place on CI, or checking that an upload has been successful.
+
 ## Usage
 
 To get started, first, [obtain an API token](https://appcenter.ms/settings/apitokens) in App Center. The API Token is used to authenticate with the App Center API in each call.
@@ -45,6 +47,20 @@ appcenter_upload(
   file: "<path to android build binary>",
   notify_testers: true # Set to false if you don't want to notify testers of your new release (default: `false`)
 )
+```
+
+```ruby
+appcenter_fetch_version_number(
+  api_token: "<appcenter token>",
+  owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
+  app_name: "<appcenter app name (as seen in app URL)>"
+)
+```
+
+The `appcenter_fetch_version_number` returns a hash that contains the id, the version number, and the build number. The version corresponds to the `short_version` and the build number to the `version` known by App Center for a given release:
+```ruby
+{"id"=>1, "version"=>"1.0.0", "build_number"=>"1.0.0.1234"} # iOS apps contain the full version plus build number due to the way that Apple use CFBundleVersion for this value
+{"id"=>588, "version"=>"1.2.0", "build_number"=>"1615"}
 ```
 
 ### Help
@@ -108,6 +124,14 @@ Here is the list of all existing parameters:
 | `timeout` <br/> `APPCENTER_DISTRIBUTE_TIMEOUT` | Request timeout in seconds |
 | `dsa_signature` <br/> `APPCENTER_DISTRIBUTE_DSA_SIGNATURE` | DSA signature of the macOS or Windows release for Sparkle update feed |
 | `strict` <br/> `APPCENTER_STRICT_MODE` | Strict mode, set to 'true' to fail early in case a potential error was detected |
+
+#### `appcenter_fetch_version_number`
+
+| Key & Env Var | Description |
+|-----------------|--------------------|
+| `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
+| `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name, as found in the App's URL in App Center |
+| `app_name` <br/> `APPCENTER_APP_NAME` | App name as found in the App's URL in App Center. If there is no app with such name, you will be prompted to create one |
 
 ## Example
 

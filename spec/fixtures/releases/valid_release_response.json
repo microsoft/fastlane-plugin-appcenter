@@ -1,0 +1,68 @@
+[
+  {
+    "origin": "hockeyapp",
+    "id": 4,
+    "short_version": "1.0.0",
+    "version": "1.0.0.101",
+    "uploaded_at": "2019-09-03T12:14:59.000Z",
+    "enabled": true
+  },
+  {
+    "origin": "hockeyapp",
+    "id": 5,
+    "short_version": "1.0.1",
+    "version": "1.0.1.102",
+    "uploaded_at": "2019-09-05T17:42:55.000Z",
+    "enabled": true
+  },
+  {
+    "origin": "hockeyapp",
+    "id": 3,
+    "short_version": "1.0.2",
+    "version": "1.0.2.103",
+    "uploaded_at": "2019-08-28T13:15:51.000Z",
+    "enabled": true
+  },
+  {
+    "origin": "appcenter",
+    "id": 2,
+    "short_version": "1.0.3",
+    "version": "1.0.3.104",
+    "uploaded_at": "2019-09-06T19:55:03.000Z",
+    "enabled": true,
+    "destinations": [
+      {
+        "id": "aaaaaaaa-1111-1aa1-1aa1-1111aaaa1111",
+        "name": "TestGroup",
+        "destination_type": "group"
+      }
+    ],
+    "distribution_groups": [
+      {
+        "id": "aaaaaaaa-1111-1aa1-1aa1-1111aaaa1111",
+        "name": "TestGroup"
+      }
+    ]
+  },
+  {
+    "origin": "appcenter",
+    "id": 7,
+    "short_version": "1.0.4",
+    "version": "1.0.4.105",
+    "uploaded_at": "2019-09-06T19:33:21.000Z",
+    "enabled": true,
+    "destinations": [
+      {
+        "id": "aaaaaaaa-1111-1aa1-1aa1-1111aaaa1111",
+        "name": "TestGroup",
+        "destination_type": "group"
+      }
+    ],
+    "distribution_groups": [
+      {
+        "id": "7eeee74d-6d6b-49a9-b254-99c11d3d91f9",
+        "name": "TestGroup"
+      }
+    ]
+  }
+]
