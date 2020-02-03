@@ -22,6 +22,13 @@ module Fastlane
     end
 
     class AppcenterUploadAction < Action
+      def self.is_apple_build(file)
+        return false unless file
+
+        file_ext = Helper::AppcenterHelper.file_extname_full(file)
+        ((Constants::SUPPORTED_EXTENSIONS[:ios] + Constants::SUPPORTED_EXTENSIONS[:mac])).include? file_ext
+      end
+
       # run whole upload process for dSYM files
       def self.run_dsym_upload(params)
         values = params.values
@@ -35,8 +42,9 @@ module Fastlane
 
         dsym_path = nil
         if dsym
-          # we can use dsym parameter only if build file is ipa
-          dsym_path = dsym if !file || File.extname(file) == '.ipa'
+          # we can use dsym parameter for all apple builds
+          self.optional_error("dsym parameter can only be used with Apple builds (ios, mac)") unless !file || self.is_apple_build(file)
+          dsym_path = dsym
         else
           # if dsym is not set, but build is ipa - check default path
           if file && File.exist?(file) && File.extname(file) == '.ipa'

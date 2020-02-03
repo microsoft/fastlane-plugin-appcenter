@@ -1561,6 +1561,34 @@ describe Fastlane::Actions::AppcenterUploadAction do
       expect(values[:dsym_path]).to eq('./spec/fixtures/symbols/Themoji.dSYM.zip')
     end
 
+    it "rejects dsym for a non-Apple app file" do
+      expect do
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_upload_build(200)
+        stub_update_release_upload(200, 'committed')
+        stub_update_release(200)
+        stub_get_destination(200)
+        stub_add_to_destination(200)
+        stub_get_release(200)
+        stub_create_dsym_upload(200)
+        stub_upload_dsym(200)
+        stub_update_dsym_upload(200, "committed")
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            file: './spec/fixtures/appfiles/apk_file_empty.apk',
+            dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("dsym parameter can only be used with Apple builds (ios, mac)")
+    end
+
     it "allows to upload build only even if dsym provided when upload_build_only is true" do
       stub_check_app(200)
       stub_create_release_upload(200)
