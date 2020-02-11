@@ -58,8 +58,6 @@ module Fastlane
         when 404
           UI.error("Not found, invalid owner or application name")
           false
-        when 500...600
-          UI.crash!("Internal Service Error, please try again later")
         else
           UI.error("Error #{response.status}: #{response.body}")
           false
@@ -240,8 +238,6 @@ module Fastlane
         when 401
           UI.user_error!("Auth Error, provided invalid token")
           false
-        when 500...600
-          UI.crash!("Internal Service Error, please try again later")
         else
           UI.error("Error #{response.status}: #{response.body}")
           false
