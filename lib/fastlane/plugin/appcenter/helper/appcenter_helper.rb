@@ -18,9 +18,16 @@ module Fastlane
         require 'faraday'
         require 'faraday_middleware'
 
+        default_api_url = "https://api.appcenter.ms"
+        if ENV['APPCENTER_ENV']&.upcase == 'INT'
+          default_api_url = "https://api-gateway-core-integration.dev.avalanch.es"
+        end
+
         options = {
-          url: upload_url || ENV.fetch('APPCENTER_UPLOAD_URL', "https://api.appcenter.ms")
+          url: upload_url || default_api_url
         }
+
+        UI.message("DEBUG: BASE URL #{options[:url]}") if ENV['DEBUG']
 
         Faraday.new(options) do |builder|
           if upload_url
@@ -42,15 +49,22 @@ module Fastlane
       def self.create_release_upload(api_token, owner_name, app_name, body)
         connection = self.connection
 
-        response = connection.post("v0.1/apps/#{owner_name}/#{app_name}/release_uploads") do |req|
+        url = "v0.1/apps/#{owner_name}/#{app_name}/release_uploads"
+        body ||= {}
+
+        UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
+        UI.message("DEBUG: POST body: #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
+
+        response = connection.post(url) do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
-          req.body = body.nil? && {} || body
+          req.body = body
         end
+
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
 
         case response.status
         when 200...300
-          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
           response.body
         when 401
           UI.user_error!("Auth Error, provided invalid token")
@@ -74,20 +88,27 @@ module Fastlane
       def self.create_mapping_upload(api_token, owner_name, app_name, file_name, build_number, version)
         connection = self.connection
 
-        response = connection.post("v0.1/apps/#{owner_name}/#{app_name}/symbol_uploads") do |req|
+        url = "v0.1/apps/#{owner_name}/#{app_name}/symbol_uploads"
+        body = {
+          symbol_type: "AndroidProguard",
+          file_name: file_name,
+          build: build_number,
+          version: version,
+        }
+
+        UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
+        UI.message("DEBUG: POST body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
+
+        response = connection.post(url) do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
-          req.body = {
-            symbol_type: "AndroidProguard",
-            file_name: file_name,
-            build: build_number,
-            version: version,
-          }
+          req.body = body
         end
+
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
 
         case response.status
         when 200...300
-          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
           response.body
         when 401
           UI.user_error!("Auth Error, provided invalid token")
@@ -109,17 +130,24 @@ module Fastlane
       def self.create_dsym_upload(api_token, owner_name, app_name)
         connection = self.connection
 
-        response = connection.post("v0.1/apps/#{owner_name}/#{app_name}/symbol_uploads") do |req|
+        url = "v0.1/apps/#{owner_name}/#{app_name}/symbol_uploads"
+        body = {
+          symbol_type: 'Apple'
+        }
+
+        UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
+        UI.message("DEBUG: POST body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
+
+        response = connection.post(url) do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
-          req.body = {
-            symbol_type: 'Apple'
-          }
+          req.body = body
         end
+
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
 
         case response.status
         when 200...300
-          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
           response.body
         when 401
           UI.user_error!("Auth Error, provided invalid token")
@@ -137,17 +165,24 @@ module Fastlane
       def self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, status)
         connection = self.connection
 
-        response = connection.patch("v0.1/apps/#{owner_name}/#{app_name}/symbol_uploads/#{symbol_upload_id}") do |req|
+        url = "v0.1/apps/#{owner_name}/#{app_name}/symbol_uploads/#{symbol_upload_id}"
+        body = {
+          status: status
+        }
+
+        UI.message("DEBUG: PATCH #{url}") if ENV['DEBUG']
+        UI.message("DEBUG: PATCH body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
+
+        response = connection.patch(url) do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
-          req.body = {
-            "status" => status
-          }
+          req.body = body
         end
+
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
 
         case response.status
         when 200...300
-          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
           response.body
         when 401
           UI.user_error!("Auth Error, provided invalid token")
@@ -164,6 +199,9 @@ module Fastlane
       def self.upload_symbol(api_token, owner_name, app_name, symbol, symbol_type, symbol_upload_id, upload_url)
         connection = self.connection(upload_url, true)
 
+        UI.message("DEBUG: PUT #{upload_url}") if ENV['DEBUG']
+        UI.message("DEBUG: PUT body <data>\n") if ENV['DEBUG']
+
         response = connection.put do |req|
           req.headers['x-ms-blob-type'] = "BlockBlob"
           req.headers['Content-Length'] = File.size(symbol).to_s
@@ -171,20 +209,22 @@ module Fastlane
           req.body = Faraday::UploadIO.new(symbol, 'application/octet-stream') if symbol && File.exist?(symbol)
         end
 
-        logType = "dSYM" if (symbol_type == "Apple")
-        logType = "mapping" if (symbol_type == "Android")
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+
+        log_type = "dSYM" if symbol_type == "Apple"
+        log_type = "mapping" if symbol_type == "Android"
 
         case response.status
         when 200...300
           self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, 'committed')
-          UI.success("#{logType} uploaded")
+          UI.success("#{log_type} uploaded")
         when 401
           UI.user_error!("Auth Error, provided invalid token")
           false
         else
-          UI.error("Error uploading #{logType} #{response.status}: #{response.body}")
+          UI.error("Error uploading #{log_type} #{response.status}: #{response.body}")
           self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, 'aborted')
-          UI.error("#{logType} upload aborted")
+          UI.error("#{log_type} upload aborted")
           false
         end
       end
@@ -200,11 +240,16 @@ module Fastlane
         # ipa field is used for .apk, .aab and .ipa files
         options[:ipa] = Faraday::UploadIO.new(file, 'application/octet-stream') if file && File.exist?(file)
 
+        UI.message("DEBUG: POST #{upload_url}") if ENV['DEBUG']
+        UI.message("DEBUG: POST body <data>\n") if ENV['DEBUG']
+
         response = connection.post do |req|
           req.options.timeout = timeout
           req.headers['internal-request-source'] = "fastlane"
           req.body = options
         end
+
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
 
         case response.status
         when 200...300
@@ -225,17 +270,24 @@ module Fastlane
       def self.update_release_upload(api_token, owner_name, app_name, upload_id, status)
         connection = self.connection
 
-        response = connection.patch("v0.1/apps/#{owner_name}/#{app_name}/release_uploads/#{upload_id}") do |req|
+        url = "v0.1/apps/#{owner_name}/#{app_name}/release_uploads/#{upload_id}"
+        body = {
+          status: status
+        }
+
+        UI.message("DEBUG: PATCH #{url}") if ENV['DEBUG']
+        UI.message("DEBUG: PATCH body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
+
+        response = connection.patch(url) do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
-          req.body = {
-            "status" => status
-          }
+          req.body = body
         end
+
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
 
         case response.status
         when 200...300
-          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
           response.body
         when 401
           UI.user_error!("Auth Error, provided invalid token")
@@ -251,15 +303,21 @@ module Fastlane
       # get existing release
       def self.get_release(api_token, owner_name, app_name, release_id)
         connection = self.connection
-        response = connection.get("v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}") do |req|
+
+        url = "v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}"
+
+        UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
+
+        response = connection.get(url) do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
         end
 
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+
         case response.status
         when 200...300
           release = response.body
-          UI.message("DEBUG: #{JSON.pretty_generate(release)}") if ENV['DEBUG']
           release
         when 404
           UI.error("Not found, invalid release url")
@@ -277,15 +335,20 @@ module Fastlane
       def self.get_destination(api_token, owner_name, app_name, destination_type, destination_name)
         connection = self.connection
 
-        response = connection.get("v0.1/apps/#{owner_name}/#{app_name}/distribution_#{destination_type}s/#{ERB::Util.url_encode(destination_name)}") do |req|
+        url = "v0.1/apps/#{owner_name}/#{app_name}/distribution_#{destination_type}s/#{ERB::Util.url_encode(destination_name)}"
+
+        UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
+
+        response = connection.get(url) do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
         end
 
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+
         case response.status
         when 200...300
           destination = response.body
-          UI.message("DEBUG: received #{destination_type} #{JSON.pretty_generate(destination)}") if ENV['DEBUG']
           destination
         when 404
           UI.error("Not found, invalid distribution #{destination_type} name")
@@ -303,13 +366,21 @@ module Fastlane
       def self.update_release(api_token, owner_name, app_name, release_id, release_notes = '')
         connection = self.connection
 
-        response = connection.put("v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}") do |req|
+        url = "v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}"
+        body = {
+          release_notes: release_notes
+        }
+
+        UI.message("DEBUG: PUT #{url}") if ENV['DEBUG']
+        UI.message("DEBUG: PUT body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
+
+        response = connection.put(url) do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
-          req.body = {
-            release_notes: release_notes
-          }
+          req.body = body
         end
+
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
 
         case response.status
         when 200...300
@@ -318,8 +389,6 @@ module Fastlane
           return false unless release
 
           download_url = release['download_url']
-
-          UI.message("DEBUG: #{JSON.pretty_generate(release)}") if ENV['DEBUG']
 
           Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
           Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_BUILD_INFORMATION] = release
@@ -343,18 +412,24 @@ module Fastlane
       def self.update_release_metadata(api_token, owner_name, app_name, release_id, dsa_signature)
         return if dsa_signature.to_s == ''
 
-        release_metadata = {
-          dsa_signature: dsa_signature
+        url = "v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}"
+        body = {
+          metadata: {
+            dsa_signature: dsa_signature
+          }
         }
 
+        UI.message("DEBUG: PATCH #{url}") if ENV['DEBUG']
+        UI.message("DEBUG: PATCH body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
+
         connection = self.connection
-        response = connection.patch("v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}") do |req|
+        response = connection.patch(url) do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
-          req.body = {
-            metadata: release_metadata
-          }
+          req.body = body
         end
+
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
 
         case response.status
         when 200...300
@@ -375,19 +450,26 @@ module Fastlane
       def self.add_to_destination(api_token, owner_name, app_name, release_id, destination_type, destination_id, mandatory_update = false, notify_testers = false)
         connection = self.connection
 
-        UI.message("DEBUG: getting #{release_id}") if ENV['DEBUG']
+        url = "v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}/#{destination_type}s"
+        body = {
+          id: destination_id
+        }
 
-        body = { "id" => destination_id }
         if destination_type == "group"
           body["mandatory_update"] = mandatory_update
           body["notify_testers"] = notify_testers
         end
 
-        response = connection.post("v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}/#{destination_type}s") do |req|
+        UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
+        UI.message("DEBUG: POST body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
+
+        response = connection.post(url) do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
           req.body = body
         end
+
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
 
         case response.status
         when 200...300
@@ -396,8 +478,6 @@ module Fastlane
           return false unless release
 
           download_url = release['download_url']
-
-          UI.message("DEBUG: received release #{JSON.pretty_generate(release)}") if ENV['DEBUG']
 
           Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
           Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_BUILD_INFORMATION] = release
@@ -421,10 +501,16 @@ module Fastlane
       def self.get_app(api_token, owner_name, app_name)
         connection = self.connection
 
-        response = connection.get("v0.1/apps/#{owner_name}/#{app_name}") do |req|
+        url = "v0.1/apps/#{owner_name}/#{app_name}"
+
+        UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
+
+        response = connection.get(url) do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
         end
+
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
 
         case response.status
         when 200...300
@@ -446,23 +532,28 @@ module Fastlane
       def self.create_app(api_token, owner_type, owner_name, app_name, app_display_name, os, platform)
         connection = self.connection
 
-        endpoint = owner_type == "user" ? "v0.1/apps" : "v0.1/orgs/#{owner_name}/apps"
+        url = owner_type == "user" ? "v0.1/apps" : "v0.1/orgs/#{owner_name}/apps"
+        body = {
+          display_name: app_display_name,
+          name: app_name,
+          os: os,
+          platform: platform
+        }
 
-        response = connection.post(endpoint) do |req|
+        UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
+        UI.message("DEBUG: POST body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
+
+        response = connection.post(url) do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
-          req.body = {
-            "display_name" => app_display_name,
-            "name" => app_name,
-            "os" => os,
-            "platform" => platform
-          }
+          req.body = body
         end
+
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
 
         case response.status
         when 200...300
           created = response.body
-          UI.message("DEBUG: #{JSON.pretty_generate(created)}") if ENV['DEBUG']
           UI.success("Created #{os}/#{platform} app with name \"#{created['name']}\" and display name \"#{created['display_name']}\" for #{owner_type} \"#{owner_name}\"")
           true
         when 401
@@ -477,16 +568,19 @@ module Fastlane
       def self.fetch_distribution_groups(api_token:, owner_name:, app_name:)
         connection = self.connection
 
-        endpoint = "/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups"
+        url = "/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups"
 
-        response = connection.get(endpoint) do |req|
+        UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
+
+        response = connection.get(url) do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
         end
 
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+
         case response.status
         when 200...300
-          UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
           response.body
         when 401
           UI.user_error!("Auth Error, provided invalid token")
@@ -503,16 +597,19 @@ module Fastlane
       def self.fetch_devices(api_token:, owner_name:, app_name:, distribution_group:)
         connection = self.connection(nil, false, true)
 
-        endpoint = "/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups/#{ERB::Util.url_encode(distribution_group)}/devices/download_devices_list"
+        url = "/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups/#{ERB::Util.url_encode(distribution_group)}/devices/download_devices_list"
 
-        response = connection.get(endpoint) do |req|
+        UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
+
+        response = connection.get(url) do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
         end
 
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+
         case response.status
         when 200...300
-          UI.message("DEBUG: #{response.body.inspect}") if ENV['DEBUG']
           response.body
         when 401
           UI.user_error!("Auth Error, provided invalid token")
@@ -529,16 +626,19 @@ module Fastlane
       def self.fetch_releases(api_token:, owner_name:, app_name:)
         connection = self.connection(nil, false, true)
 
-        endpoint = "/v0.1/apps/#{owner_name}/#{app_name}/releases"
+        url = "/v0.1/apps/#{owner_name}/#{app_name}/releases"
 
-        response = connection.get(endpoint) do |req|
+        UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
+
+        response = connection.get(url) do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
         end
 
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+
         case response.status
         when 200...300
-          UI.message("DEBUG: #{response.body.inspect}") if ENV['DEBUG']
           JSON.parse(response.body)
         when 401
           UI.user_error!("Auth Error, provided invalid token")
