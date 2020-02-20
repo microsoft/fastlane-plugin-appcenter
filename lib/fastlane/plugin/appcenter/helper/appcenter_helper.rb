@@ -652,15 +652,21 @@ module Fastlane
         end
       end
 
-      # Note: This does not support testing environment (INT)
       def self.get_release_url(owner_type, owner_name, app_name, release_id)
         owner_path = owner_type == "user" ? "users/#{owner_name}" : "orgs/#{owner_name}"
+        if ENV['APPCENTER_ENV']&.upcase == 'INT'
+          return "https://portal-server-core-integration.dev.avalanch.es/#{owner_path}/apps/#{app_name}/distribute/releases/#{release_id}"
+        end
+
         return "https://appcenter.ms/#{owner_path}/apps/#{app_name}/distribute/releases/#{release_id}"
       end
 
-      # Note: This does not support testing environment (INT)
       def self.get_install_url(owner_type, owner_name, app_name)
         owner_path = owner_type == "user" ? "users/#{owner_name}" : "orgs/#{owner_name}"
+        if ENV['APPCENTER_ENV']&.upcase == 'INT'
+          return "https://install.portal-server-core-integration.dev.avalanch.es/#{owner_path}/apps/#{app_name}"
+        end
+
         return "https://install.appcenter.ms/#{owner_path}/apps/#{app_name}"
       end
     end
