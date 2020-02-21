@@ -393,7 +393,7 @@ module Fastlane
           Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
           Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_BUILD_INFORMATION] = release
 
-          UI.message("Release '#{release_id}' (#{release['short_version']}) was successfully updated")
+          UI.message("Release #{self.release_name(release)} was successfully updated")
 
           release
         when 404
@@ -433,7 +433,7 @@ module Fastlane
 
         case response.status
         when 200...300
-          UI.message("Release Metadata was successfully updated for release '#{release_id}'")
+          UI.message("Release metadata was successfully updated for release ##{release_id}")
         when 404
           UI.error("Not found, invalid release id")
           false
@@ -481,8 +481,6 @@ module Fastlane
 
           Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_DOWNLOAD_LINK] = download_url
           Actions.lane_context[Fastlane::Actions::SharedValues::APPCENTER_BUILD_INFORMATION] = release
-
-          UI.message("Release '#{release_id}' (#{release['short_version']}) was successfully distributed'")
 
           release
         when 404
@@ -650,6 +648,15 @@ module Fastlane
           UI.error("Error #{response.status}: #{response.body}")
           false
         end
+      end
+
+      def self.release_name(release)
+        UI.message("release: #{release.inspect}") if ENV['DEBUG']
+
+        release_id = release['id'] || release['uploaded_id'] || release['release_id']
+        release_version = [release['short_version'], release['version']].reject { |x| x.nil? || x.empty? }.join(', ')
+        release_version = release_version.empty? && "" || " (#{release_version})"
+        "##{release_id}#{release_version}"
       end
 
       def self.get_release_url(owner_type, owner_name, app_name, release_id)

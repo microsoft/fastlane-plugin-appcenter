@@ -194,13 +194,14 @@ module Fastlane
 
           if uploaded
             release_id = uploaded['release_id']
+            release_name = Helper::AppcenterHelper.release_name(uploaded)
+
             release_url = Helper::AppcenterHelper.get_release_url(owner_type, owner_name, app_name, release_id)
-            UI.message("Release '#{release_id}' committed: #{release_url}")
+            UI.message("Release #{release_name} committed: #{release_url}")
 
             release = Helper::AppcenterHelper.update_release(api_token, owner_name, app_name, release_id, release_notes)
             Helper::AppcenterHelper.update_release_metadata(api_token, owner_name, app_name, release_id, dsa_signature)
 
-            destinations_array = []
             if destinations == '*'
               UI.message("Looking up all distribution groups for #{owner_name}/#{app_name}")
               distribution_groups = Helper::AppcenterHelper.fetch_distribution_groups(
@@ -210,21 +211,22 @@ module Fastlane
               )
 
               UI.abort_with_message!("Failed to list distribution groups for #{owner_name}/#{app_name}") unless distribution_groups
-              
-              destinations_array = distribution_groups.map {|h| h['name'] }
+
+              destinations_array = distribution_groups.map { |h| h['name'] }
             else
               destinations_array = destinations.split(',').map(&:strip)
             end
-            
+
             destinations_array.each do |destination_name|
               destination = Helper::AppcenterHelper.get_destination(api_token, owner_name, app_name, destination_type, destination_name)
               if destination
                 destination_id = destination['id']
                 distributed_release = Helper::AppcenterHelper.add_to_destination(api_token, owner_name, app_name, release_id, destination_type, destination_id, mandatory_update, notify_testers)
                 if distributed_release
-                  UI.success("Release '#{release_id}' (#{distributed_release['short_version']}) was successfully distributed to #{destination_type} \"#{destination_name}\"")
+                  release_name = Helper::AppcenterHelper.release_name(distributed_release)
+                  UI.success("Release #{release_name} was successfully distributed to #{destination_type} '#{destination_name}'")
                 else
-                  UI.error("Release '#{release_id}' was not found for destination '#{destination_name}'")
+                  UI.error("Release #{release_name} was not found for destination '#{destination_name}'")
                 end
               else
                 UI.error("#{destination_type} '#{destination_name}' was not found")
@@ -232,7 +234,7 @@ module Fastlane
             end
 
             safe_download_url = Helper::AppcenterHelper.get_install_url(owner_type, owner_name, app_name)
-            UI.message("Release '#{release_id}' is available for download at: #{safe_download_url}")
+            UI.message("Release #{release_name} is available for download at: #{safe_download_url}")
           else
             UI.user_error!("Failed to upload release")
           end
