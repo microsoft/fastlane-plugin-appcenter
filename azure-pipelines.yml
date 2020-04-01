@@ -12,7 +12,7 @@ pool:
 steps:
   - task: UseRubyVersion@0
     inputs:
-      versionSpec: '>= 2.5'
+      versionSpec: '2.6.x'
 
   - task: Bash@3
     inputs:

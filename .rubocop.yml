@@ -59,10 +59,6 @@ Style/TernaryParentheses:
 Style/EmptyMethod:
   Enabled: false
 
-# It's better to be more explicit about the type
-Style/BracesAroundHashParameters:
-  Enabled: false
-
 # specs sometimes have useless assignments, which is fine
 Lint/UselessAssignment:
   Exclude:
@@ -251,3 +247,12 @@ Style/IfInsideElse:
 # Sometimes we just want to 'collect'
 Style/CollectionMethods:
   Enabled: false
+
+Style/HashEachMethods:
+  Enabled: true
+
+Style/HashTransformKeys:
+  Enabled: true
+
+Style/HashTransformValues:
+  Enabled: true
