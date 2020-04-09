@@ -185,4 +185,4 @@ Check out [SECURITY.md](SECURITY.md) for any security concern with this project.
 
 ## Contact
 
-We're on Twitter as [@vsappcenter](https://www.twitter.com/vsappcenter). Additionally you can reach out to us on the [App Center](https://appcenter.ms/apps) portal by using the blue Intercom button on the bottom right to start a conversation.
+We're on Twitter as [@vsappcenter](https://www.twitter.com/vsappcenter). Additionally you can reach out to us on the [App Center](https://appcenter.ms/apps) portal. Open the "?" menu on the top right corner of screen, then use "Contact support" to file a support ticket. Our support team is there to answer your questions and help you solve your problems. 
