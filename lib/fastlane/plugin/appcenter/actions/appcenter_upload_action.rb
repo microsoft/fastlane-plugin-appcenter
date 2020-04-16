@@ -255,7 +255,8 @@ module Fastlane
           Android: %w[Java React-Native Xamarin],
           iOS: %w[Objective-C-Swift React-Native Xamarin],
           macOS: %w[Objective-C-Swift],
-          Windows: %w[UWP WPF WinForms Unity]
+          Windows: %w[UWP WPF WinForms Unity],
+          Custom: %w[]
         }
 
         begin
@@ -274,7 +275,11 @@ module Fastlane
           os = app_os.to_s.empty? && (Helper.test? ? "Android" : UI.select("Select OS", platforms.keys)) || app_os.to_s
           platform = app_platform.to_s.empty? && (Helper.test? ? platforms[os.to_sym][0] : app_platform.to_s) || app_platform.to_s
           if platform.to_s.empty?
-            platform = platforms[os.to_sym].length == 1 ? platforms[os.to_sym][0] : UI.select("Select Platform", platforms[os.to_sym])
+            if platforms[os.to_sym].length > 0
+              platform = platforms[os.to_sym].length == 1 ? platforms[os.to_sym][0] : UI.select("Select Platform", platforms[os.to_sym])
+            else
+              platform = ""
+            end
           end
 
           Helper::AppcenterHelper.create_app(api_token, owner_type, owner_name, app_name, app_display_name, os, platform)
