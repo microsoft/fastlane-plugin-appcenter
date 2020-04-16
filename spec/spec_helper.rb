@@ -3,6 +3,9 @@ $LOAD_PATH.unshift File.expand_path('../lib', __dir__)
 require 'webmock'
 require 'webmock/rspec'
 
+# Enable strict mode for tests
+ENV['APPCENTER_STRICT_MODE'] = "true"
+
 def stub_request(*args)
   WebMock::API.stub_request(*args)
 end

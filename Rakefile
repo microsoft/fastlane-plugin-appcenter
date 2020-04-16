@@ -1,8 +1,5 @@
 require 'bundler/gem_tasks'
 
-# Enable strict mode for tests
-ENV['APPCENTER_STRICT_MODE'] = "true"
-
 require 'rspec/core/rake_task'
 RSpec::Core::RakeTask.new
 RSpec::Core::RakeTask.new(:spec_ci) do |task, args|
