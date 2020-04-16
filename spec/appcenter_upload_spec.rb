@@ -1,3 +1,5 @@
+require_relative 'appcenter_stub'
+
 def stub_check_app(status, app_name = "app", owner_name = "owner")
   stub_request(:get, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}")
     .to_return(
