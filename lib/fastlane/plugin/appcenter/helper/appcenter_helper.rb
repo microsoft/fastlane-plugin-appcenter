@@ -669,6 +669,64 @@ module Fastlane
 
         return "https://install.appcenter.ms/#{owner_path}/apps/#{app_name}"
       end
+
+      # add new created app to existing distribution group
+      def self.add_new_app_to_distribution_groups(api_token, owner_name, app_name, destination_name)
+        url = URI.escape("/v0.1/orgs/#{owner_name}/distribution_groups/#{destination_name}/apps")
+        body = {
+          apps: [
+            { name: app_name }
+          ]
+        }
+
+        UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
+        UI.message("DEBUG: POST body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
+
+        response = connection.post(url) do |req|
+          req.headers['X-API-Token'] = api_token
+          req.headers['internal-request-source'] = "fastlane"
+          req.body = body
+        end
+
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+
+        case response.status
+        when 200...300
+          created = response.body
+          UI.success("Added new app #{app_name} to distribution group #{destination_name}")
+          true
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+          false
+        else
+          puts("Error adding app to distribution group #{response.status}: #{response.body}")
+          false
+        end
+      end
+ 
+      def self.fetch_existing_distribution_groups(api_token, owner_name)
+        url = "/v0.1/orgs/#{owner_name}/distribution_groups_details"
+
+        UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
+
+        response = connection.get(url) do |req|
+          req.headers['X-API-Token'] = api_token
+          req.headers['internal-request-source'] = "fastlane"
+        end
+
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+
+        case response.status
+        when 200...300
+          response.body.map { |g| g['name'] }
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+          false
+        else
+          UI.error("Error #{response.status}: #{response.body}")
+          false
+        end
+      end
     end
   end
 end
