@@ -623,10 +623,10 @@ module Fastlane
         end
       end
 
-      def self.fetch_releases(api_token:, owner_name:, app_name:)
+      def self.fetch_latest_release(api_token:, owner_name:, app_name:)
         connection = self.connection(nil, false, true)
 
-        url = "/v0.1/apps/#{owner_name}/#{app_name}/releases"
+        url = "/v0.1/apps/#{owner_name}/#{app_name}/releases/latest"
 
         UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
 

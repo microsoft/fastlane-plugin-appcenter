@@ -1,24 +1,18 @@
 def stub_get_releases_success(status)
   success_json = JSON.parse(File.read("spec/fixtures/releases/valid_release_response.json"))
-  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/owner-name/App-Name/releases")
-    .to_return(status: status, body: success_json.to_json, headers: { 'Content-Type' => 'application/json' })
-end
-
-def stub_get_releases_empty_success(status)
-  success_json = JSON.parse(File.read("spec/fixtures/releases/valid_release_empty_response.json"))
-  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/owner-name/App-Name-no-versions/releases")
+  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/owner-name/App-Name/releases/latest")
     .to_return(status: status, body: success_json.to_json, headers: { 'Content-Type' => 'application/json' })
 end
 
 def stub_get_releases_not_found(status)
   not_found_json = JSON.parse(File.read("spec/fixtures/releases/not_found.json"))
-  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/owner-name/App-Name/releases")
+  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/owner-name/App-Name/releases/latest")
     .to_return(status: status, body: not_found_json.to_json, headers: { 'Content-Type' => 'application/json' })
 end
 
 def stub_get_releases_forbidden(status)
   forbidden_json = JSON.parse(File.read("spec/fixtures/releases/forbidden.json"))
-  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/owner-name/App-Name/releases")
+  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/owner-name/App-Name/releases/latest")
     .to_return(status: status, body: forbidden_json.to_json, headers: { 'Content-Type' => 'application/json' })
 end
 
@@ -70,19 +64,6 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
             )
           end").runner.execute(:test)
         end.to raise_error("No versions found for 'App-Name' owned by owner-name")
-      end
-
-      it 'raises an error when there are no releases for an app' do
-        stub_get_releases_empty_success(200)
-        expect do
-          Fastlane::FastFile.new.parse("lane :test do
-            appcenter_fetch_version_number(
-              api_token: '1234',
-              owner_name: 'owner-name',
-              app_name: 'App-Name-no-versions'
-            )
-          end").runner.execute(:test)
-        end.to raise_error("This app has no releases yet")
       end
     end
 

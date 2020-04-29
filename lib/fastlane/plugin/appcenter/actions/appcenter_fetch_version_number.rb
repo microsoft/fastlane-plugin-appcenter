@@ -20,20 +20,13 @@ module Fastlane
         app_name = params[:app_name]
         owner_name = params[:owner_name]
 
-        releases = Helper::AppcenterHelper.fetch_releases(
+        latest_release = Helper::AppcenterHelper.fetch_latest_release(
           api_token: api_token,
           owner_name: owner_name,
           app_name: app_name
         )
 
-        UI.abort_with_message!("No versions found for '#{app_name}' owned by #{owner_name}") unless releases
-        sorted_release = releases.sort_by { |release| release['id'] }.reverse!
-        latest_release = sorted_release.first
-
-        if latest_release.nil?
-          UI.user_error!("This app has no releases yet")
-          return nil
-        end
+        UI.abort_with_message!("No versions found for '#{app_name}' owned by #{owner_name}") unless latest_release
 
         return {
           "id" => latest_release['id'],
