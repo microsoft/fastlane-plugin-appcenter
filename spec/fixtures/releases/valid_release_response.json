@@ -51,6 +51,7 @@
     "version": "1.0.4.105",
     "uploaded_at": "2019-09-06T19:33:21.000Z",
     "enabled": true,
+    "release_notes": "note 7",
     "destinations": [
       {
         "id": "aaaaaaaa-1111-1aa1-1aa1-1111aaaa1111",

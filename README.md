@@ -57,10 +57,11 @@ appcenter_fetch_version_number(
 )
 ```
 
-The `appcenter_fetch_version_number` returns a hash that contains the id, the version number, and the build number. The version corresponds to the `short_version` and the build number to the `version` known by App Center for a given release:
+The `appcenter_fetch_version_number` returns a hash that contains the id, the version number, the build number, and the release notes of the most recent release. 
+The version corresponds to the `short_version` and the build number to the `version` known by App Center for a given release:
 ```ruby
-{"id"=>1, "version"=>"1.0.0", "build_number"=>"1.0.0.1234"} # iOS apps contain the full version plus build number due to the way that Apple use CFBundleVersion for this value
-{"id"=>588, "version"=>"1.2.0", "build_number"=>"1615"}
+{"id"=>1, "version"=>"1.0.0", "build_number"=>"1.0.0.1234", "release_notes"=>"Release version 1.0.0"} # iOS apps contain the full version plus build number due to the way that Apple use CFBundleVersion for this value
+{"id"=>588, "version"=>"1.2.0", "build_number"=>"1615", "release_notes"=>"No changelog given"}
 ```
 
 ### Help

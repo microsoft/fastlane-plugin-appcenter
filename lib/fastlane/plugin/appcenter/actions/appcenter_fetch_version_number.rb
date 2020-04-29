@@ -38,7 +38,8 @@ module Fastlane
         return {
           "id" => latest_release['id'],
           "version" => latest_release['short_version'],
-          "build_number" => latest_release['version']
+          "build_number" => latest_release['version'],
+          "release_notes" => latest_release['release_notes']
         }
       end
 
