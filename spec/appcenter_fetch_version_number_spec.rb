@@ -40,7 +40,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
         end.to raise_error("No API token for App Center given, pass using `api_token: 'token'`")
       end
 
-      it 'raises an error when the app name does not exist for an owner/account' do
+      it 'raises an error when the owner/account name or API key are incorrect' do
         stub_get_releases_forbidden(403)
         expect do
           Fastlane::FastFile.new.parse("lane :test do
@@ -53,7 +53,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
         end.to raise_error("No versions found for 'App-Name' owned by owner-name")
       end
 
-      it 'raises an error when the owner/account name or API key are incorrect' do
+      it 'raises an error when the app name does not exist for an owner/account' do
         stub_get_releases_not_found(404)
         expect do
           Fastlane::FastFile.new.parse("lane :test do

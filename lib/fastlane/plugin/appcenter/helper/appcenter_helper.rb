@@ -555,7 +555,7 @@ module Fastlane
         when 200...300
           created = response.body
           UI.success("Created #{os}/#{platform} app with name \"#{created['name']}\" and display name \"#{created['display_name']}\" for #{owner_type} \"#{owner_name}\"")
-          true
+          created
         when 401
           UI.user_error!("Auth Error, provided invalid token")
           false

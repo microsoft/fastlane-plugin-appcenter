@@ -28,14 +28,7 @@ module Fastlane
 
         UI.abort_with_message!("No app named '#{app_name}' owned by #{owner_name} was found") unless app
 
-        return {
-          "id" => app['id'],
-          "app_secret" => app['app_secret'],
-          "display_name" => app['display_name'],
-          "description" => app['description'],
-          "platform" => app['platform'],
-          "icon_url" => app['icon_url']
-        }
+        return app
       end
 
       def self.available_options

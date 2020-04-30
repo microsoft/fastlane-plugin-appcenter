@@ -11,14 +11,14 @@ def stub_check_app(status, app_name = "app", owner_name = "owner")
     )
 end
 
-def stub_create_app(status, app_name = "app", app_display_name = "app", app_os = "Android", app_platform = "Java", owner_type = "user", owner_name = "owner")
+def stub_create_app(status, app_name = "app", app_display_name = "app", app_os = "Android", app_platform = "Java", owner_type = "user", owner_name = "owner", app_secret = "app_secret")
   stub_request(:post, owner_type == "user" ? "https://api.appcenter.ms/v0.1/apps" : "https://api.appcenter.ms/v0.1/orgs/#{owner_name}/apps")
     .with(
       body: "{\"display_name\":\"#{app_display_name}\",\"name\":\"#{app_name}\",\"os\":\"#{app_os}\",\"platform\":\"#{app_platform}\"}"
     )
     .to_return(
       status: status,
-      body: "{\"name\":\"app\"}",
+      body: "{\"display_name\":\"#{app_display_name}\",\"name\":\"#{app_name}\",\"os\":\"#{app_os}\",\"platform\":\"#{app_platform}\",\"app_secret\":\"#{app_secret}\"}",
       headers: { 'Content-Type' => 'application/json' }
     )
 end
