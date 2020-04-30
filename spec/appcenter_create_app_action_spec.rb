@@ -1,3 +1,5 @@
+require_relative 'stubs'
+
 describe Fastlane::Actions::AppcenterCreateAppAction do
   describe '#run' do
     before :each do

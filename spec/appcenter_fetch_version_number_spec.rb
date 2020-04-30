@@ -4,6 +4,12 @@ def stub_get_releases_success(status)
     .to_return(status: status, body: success_json.to_json, headers: { 'Content-Type' => 'application/json' })
 end
 
+def stub_get_no_releases(status)
+  success_json = JSON.parse(File.read("spec/fixtures/releases/no_releases.json"))
+  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/owner-name/App-Name-no-versions/releases/latest")
+    .to_return(status: status, body: success_json.to_json, headers: { 'Content-Type' => 'application/json' })
+end
+
 def stub_get_releases_not_found(status)
   not_found_json = JSON.parse(File.read("spec/fixtures/releases/not_found.json"))
   stub_request(:get, "https://api.appcenter.ms/v0.1/apps/owner-name/App-Name/releases/latest")
@@ -64,6 +70,19 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
             )
           end").runner.execute(:test)
         end.to raise_error("No versions found for 'App-Name' owned by owner-name")
+      end
+
+      it 'raises an error when there are no releases for an app' do
+        stub_get_no_releases(404)
+        expect do
+          Fastlane::FastFile.new.parse("lane :test do
+            appcenter_fetch_version_number(
+              api_token: '1234',
+              owner_name: 'owner-name',
+              app_name: 'App-Name-no-versions'
+            )
+          end").runner.execute(:test)
+        end.to raise_error("This app has no releases yet")
       end
     end
 

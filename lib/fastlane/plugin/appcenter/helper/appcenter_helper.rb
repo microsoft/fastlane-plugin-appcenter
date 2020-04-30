@@ -1,7 +1,6 @@
 module Fastlane
   module Helper
     class AppcenterHelper
-
       # basic utility method to check file types that App Center will accept,
       # accounting for file types that can and should be zip-compressed
       # before they are uploaded
@@ -93,7 +92,7 @@ module Fastlane
           symbol_type: "AndroidProguard",
           file_name: file_name,
           build: build_number,
-          version: version,
+          version: version
         }
 
         UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
@@ -644,6 +643,8 @@ module Fastlane
           UI.user_error!("Auth Error, provided invalid token")
           false
         when 404
+          return nil if JSON.parse(response.body)['code'] == 'not_found'
+
           UI.error("Not found, invalid owner or application name")
           false
         else

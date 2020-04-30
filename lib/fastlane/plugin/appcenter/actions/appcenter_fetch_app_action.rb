@@ -26,7 +26,7 @@ module Fastlane
           app_name
         )
 
-        UI.abort_with_message!("No app named '#{app_name}' owned by #{owner_name} was found") unless app
+        UI.user_error!("No app named '#{app_name}' owned by #{owner_name} was found") unless app
 
         return app
       end

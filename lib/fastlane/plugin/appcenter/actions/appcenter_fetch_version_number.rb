@@ -26,7 +26,12 @@ module Fastlane
           app_name: app_name
         )
 
-        UI.abort_with_message!("No versions found for '#{app_name}' owned by #{owner_name}") unless latest_release
+        UI.abort_with_message!("No versions found for '#{app_name}' owned by #{owner_name}") if latest_release == false
+
+        if latest_release.nil?
+          UI.user_error!("This app has no releases yet")
+          return nil
+        end
 
         return {
           "id" => latest_release['id'],
