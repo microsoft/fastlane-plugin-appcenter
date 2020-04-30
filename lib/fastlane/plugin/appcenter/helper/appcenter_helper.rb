@@ -497,7 +497,7 @@ module Fastlane
         end
       end
 
-      # returns true if app exists, false in case of 404 and error otherwise
+      # returns the app if it exists, false in case of 404 and error otherwise
       def self.get_app(api_token, owner_name, app_name)
         connection = self.connection
 
@@ -515,7 +515,7 @@ module Fastlane
         case response.status
         when 200...300
           UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-          true
+          response.body
         when 404
           UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
           false

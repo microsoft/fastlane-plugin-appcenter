@@ -1,7 +1,12 @@
 def stub_check_app(status, app_name = "app", owner_name = "owner")
+  success_json = JSON.parse(format(
+                              File.read("spec/fixtures/apps/valid_app_response.json"),
+                              app_name: app_name, owner_name: owner_name
+                            ))
   stub_request(:get, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}")
     .to_return(
       status: status,
+      body: success_json.to_json,
       headers: { 'Content-Type' => 'application/json' }
     )
 end
