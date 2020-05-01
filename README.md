@@ -21,7 +21,11 @@ With [App Center](https://appcenter.ms) you can continuously build, test, releas
 
 `appcenter_upload` allows you to upload and [distribute](https://docs.microsoft.com/en-us/appcenter/distribution/uploading) apps to your testers on App Center as well as to upload .dSYM files to [collect detailed crash reports](https://docs.microsoft.com/en-us/appcenter/crashes/ios) in App Center.
 
-`appcenter_fetch_version_number` allows you to obtain the latest version number (short or full) for an app. This is useful for tasks such as getting the latest version of an app so that an increment action can take place on CI, or checking that an upload has been successful.
+`appcenter_fetch_version_number` allows you to obtain the latest version number (short or full) and release notes for an app. This is useful for tasks such as getting the latest version of an app so that an increment action can take place on CI, or checking that an upload has been successful.
+
+`appcenter_fetch_app` allows you to obtain the details of the given app. This is useful for retrieving the app_secret for a specific App Center app.
+
+`appcenter_create_app` allows you to create an app without uploading a release for it.  Supports "create if not exists" semantics. This is useful for retrieving an app_secret before building an app.
 
 ## Usage
 
@@ -84,7 +88,14 @@ appcenter_create_app(
   error_on_create_existing: false # Set to false if you don't want to error if the release already exists (default: `true`)
 )
 ```
+All fields except 'error_on_create_existing' are required. 
 
+THe `appcenter_create_app` action creates an App Center app with the given attributes and 
+returns a hash of the newly created app with generated values.  
+
+If the app already exists, action aborts with error.  
+
+If the 'error_on_create_existing' is set to false, an existing app will not error and instead return the app hash unchanged.
 
 ### Help
 

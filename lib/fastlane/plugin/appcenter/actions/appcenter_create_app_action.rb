@@ -8,7 +8,12 @@ module Fastlane
   module Actions
     class AppcenterCreateAppAction < Action
       def self.description
-        "Fetches an app from App Center by owner name and app name"
+        "Creates an App Center with the given attributes and "\
+        "returns a hash of the newly created app with generated values."\
+        "If the app already exists, action aborts with error."\
+        "If the 'error_on_create_existing' is set to false, "\
+        "an existing app will not error and instead return the "\
+        "app unchanged."
       end
 
       def self.authors
