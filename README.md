@@ -64,6 +64,28 @@ The version corresponds to the `short_version` and the build number to the `vers
 {"id"=>588, "version"=>"1.2.0", "build_number"=>"1615", "release_notes"=>"No changelog given"}
 ```
 
+```ruby
+appcenter_fetch_app(
+  api_token: "<appcenter token>",
+  owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
+  app_name: "<appcenter app name (as seen in app URL)>"
+)
+```
+
+```ruby
+appcenter_create_app(
+  api_token: "<appcenter token>",
+  owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
+  owner_type: "user", # Default is user - set to organization for appcenter organizations
+  app_name: "<appcenter app name (as seen in app URL)>",
+  app_display_name: "<appcenter app display name>",
+  app_os: "<appcenter app os>",
+  app_platform: "<appcenter app platform>",
+  error_on_create_existing: false # Set to false if you don't want to error if the release already exists (default: `true`)
+)
+```
+
+
 ### Help
 
 Once installed, information and help for an action can be printed out with this command:
@@ -133,6 +155,26 @@ Here is the list of all existing parameters:
 | `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
 | `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name, as found in the App's URL in App Center |
 | `app_name` <br/> `APPCENTER_APP_NAME` | App name as found in the App's URL in App Center. If there is no app with such name, you will be prompted to create one |
+
+#### `appcenter_fetch_app`
+
+| Key & Env Var | Description |
+|-----------------|--------------------|
+| `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
+| `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name, as found in the App's URL in App Center |
+| `app_name` <br/> `APPCENTER_APP_NAME` | App name as found in the App's URL in App Center. If there is no app with such name, you will be prompted to create one |
+
+#### `appcenter_create_app`
+
+| Key & Env Var | Description |
+|-----------------|--------------------|
+| `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
+| `owner_type` <br/> `APPCENTER_OWNER_TYPE` | Owner type, either 'user' or 'organization' (default: `user`) |
+| `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name as found in the App's URL in App Center |
+| `app_name` <br/> `APPCENTER_APP_NAME` | Unique immutable app name |
+| `app_display_name` <br/> `APPCENTER_APP_DISPLAY_NAME` | App display name |
+| `app_os` <br/> `APPCENTER_APP_OS` | App OS. |
+| `app_platform` <br/> `APPCENTER_APP_PLATFORM` | App Platform. |
 
 ## Example
 
