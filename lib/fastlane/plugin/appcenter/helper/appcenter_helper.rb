@@ -702,30 +702,6 @@ module Fastlane
           puts("Error adding app to distribution group #{response.status}: #{response.body}")
         end
       end
- 
-      def self.fetch_all_existing_distribution_groups(api_token, owner_name)
-        url = "/v0.1/orgs/#{owner_name}/distribution_groups_details"
-
-        UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
-
-        response = connection.get(url) do |req|
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-        end
-
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
-        case response.status
-        when 200...300
-          response.body.map { |g| g['name'] }
-        when 401
-          UI.user_error!("Auth Error, provided invalid token")
-          false
-        else
-          UI.error("Error #{response.status}: #{response.body}")
-          false
-        end
-      end
     end
   end
 end
