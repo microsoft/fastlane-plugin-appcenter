@@ -36,6 +36,8 @@ module Fastlane
           api_token, owner_type, owner_name, app_name, app_display_name, app_os, app_platform
         )
 
+        UI.abort_with_message!("Unable to create '#{app_name}' owned by #{owner_name}") unless app
+
         return app
       end
 
