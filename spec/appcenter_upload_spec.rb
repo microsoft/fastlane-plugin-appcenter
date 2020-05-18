@@ -1104,7 +1104,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
           expect(Fastlane::Actions::ZipAction).to receive(:run)
             .with({
               path: './spec/fixtures/appfiles/app_file_empty.app',
-              output_path: './spec/fixtures/appfiles/app_file_empty.app.zip'
+              output_path: './spec/fixtures/appfiles/app_file_empty.app.zip',
+              symlinks: true
             })
 
           Fastlane::FastFile.new.parse("lane :test do
