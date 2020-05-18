@@ -699,7 +699,7 @@ module Fastlane
         when 409
           UI.success("App already added to distribution group #{destination_name}")
         else
-          puts("Error adding app to distribution group #{response.status}: #{response.body}")
+          UI.error("Error adding app to distribution group #{response.status}: #{response.body}")
         end
       end
     end
