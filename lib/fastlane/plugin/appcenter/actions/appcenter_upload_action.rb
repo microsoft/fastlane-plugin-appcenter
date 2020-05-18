@@ -252,10 +252,11 @@ module Fastlane
         app_platform = params[:app_platform]
 
         platforms = {
-          Android: %w[Java React-Native Xamarin],
-          iOS: %w[Objective-C-Swift React-Native Xamarin],
+          Android: %w[Java React-Native Xamarin Unity],
+          iOS: %w[Objective-C-Swift React-Native Xamarin Unity],
           macOS: %w[Objective-C-Swift],
-          Windows: %w[UWP WPF WinForms Unity]
+          Windows: %w[UWP WPF WinForms Unity],
+          Custom: %w[Custom]
         }
 
         begin
