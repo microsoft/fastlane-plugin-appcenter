@@ -368,7 +368,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :app_os,
                                   env_name: "APPCENTER_APP_OS",
-                               description: "App OS. Used for new app creation, if app 'app_name' was not found",
+                               description: "App OS can be Android, iOS, macOS, Windows, Custom. Used for new app creation, if app 'app_name' was not found",
                                   optional: true,
                                       type: String),
 
