@@ -130,6 +130,13 @@ def stub_add_to_destination(status, app_name = "app", owner_name = "owner", dest
     .to_return(status: status, body: "{\"version\":\"3\",\"short_version\":\"1.0.0\",\"download_link\":\"https://download.link\"}", headers: { 'Content-Type' => 'application/json' })
 end
 
+def stub_add_new_app_to_distribution(status = 204, owner_name = 'owner', app_name = 'app', destination_name = 'Testers')
+  stub_request(:post, "https://api.appcenter.ms/v0.1/orgs/#{owner_name}/distribution_groups/#{destination_name}/apps")
+    .to_return(
+      status: status
+    )
+end
+
 describe Fastlane::Actions::AppcenterUploadAction do
   describe '#run' do
     before :each do
@@ -1378,6 +1385,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_get_destination(200)
       stub_add_to_destination(200)
       stub_get_release(200)
+      stub_fetch_distribution_groups(owner_name: 'owner', app_name: 'app')
+      stub_add_new_app_to_distribution
 
       Fastlane::FastFile.new.parse("lane :test do
         appcenter_upload({

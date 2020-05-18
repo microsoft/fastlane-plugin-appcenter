@@ -289,8 +289,8 @@ module Fastlane
         return unless params[:destination_type] == 'group' && params[:owner_type] == 'organization' && params[:destinations] != '*'
 
         app_distribution_groups = Helper::AppcenterHelper.fetch_distribution_groups(
-          api_token: param[:api_token],
-          owner_name: param[:owner_name],
+          api_token: params[:api_token],
+          owner_name: params[:owner_name],
           app_name: params[:app_name]
         )
 
@@ -300,8 +300,8 @@ module Fastlane
         destination_names.each do |destination_name|
           unless group_names.include? destination_name
             Helper::AppcenterHelper.add_new_app_to_distribution_group(
-              api_token: param[:api_token]
-              owner_name: param[:owner_name],
+              api_token: params[:api_token],
+              owner_name: params[:owner_name],
               app_name: params[:app_name],
               destination_name: destination_name
             )
