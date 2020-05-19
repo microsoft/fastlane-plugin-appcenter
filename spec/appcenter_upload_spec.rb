@@ -1842,7 +1842,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_create_release_upload(200)
       stub_upload_build(200)
       stub_update_release_upload(200, 'committed')
-      stub_update_release(200)
+      stub_update_release(200, "No changelog given")
       stub_get_destination(200, app_name = "app", owner_name = "owner", destination_type = "group", destination_name = "Testers")
       stub_get_destination(200, app_name = "app", owner_name = "owner", destination_type = "group", destination_name = "test-group-1")
       stub_add_to_destination(200)
