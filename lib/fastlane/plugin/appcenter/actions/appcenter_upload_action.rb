@@ -285,7 +285,7 @@ module Fastlane
         end
       end
 
-      def self.add_app_to_distribution_if_needed(params)
+      def self.add_app_to_distribution_group_if_needed(params)
         return unless params[:destination_type] == 'group' && params[:owner_type] == 'organization' && params[:destinations] != '*'
 
         app_distribution_groups = Helper::AppcenterHelper.fetch_distribution_groups(
@@ -319,7 +319,7 @@ module Fastlane
 
         # if app found or successfully created
         if self.get_or_create_app(params)
-          self.add_app_to_distribution_if_needed(params)
+          self.add_app_to_distribution_group_if_needed(params)
           release = self.run_release_upload(params) unless upload_dsym_only || upload_mapping_only
           params[:version] = release['short_version'] if release
           params[:build_number] = release['version'] if release

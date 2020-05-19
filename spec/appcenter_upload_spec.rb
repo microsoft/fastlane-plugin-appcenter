@@ -1849,7 +1849,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_get_release(200)
       stub_fetch_distribution_groups(owner_name: 'owner', app_name: 'app')
 
-      should_be_callled = stub_add_new_app_to_distribution(destination_name: 'Testers')
+      should_be_called = stub_add_new_app_to_distribution(destination_name: 'Testers')
       should_not_be_called = stub_add_new_app_to_distribution(destination_name: 'test-group-1')
 
       Fastlane::FastFile.new.parse("lane :test do
@@ -1867,7 +1867,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
         })
       end").runner.execute(:test)
 
-      assert_requested(should_be_callled)
+      assert_requested(should_be_called)
       assert_not_requested(should_not_be_called)
     end
   end
