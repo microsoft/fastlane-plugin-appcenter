@@ -1,7 +1,14 @@
+class File
+  def each_chunk(chunk_size = 1_000_000)
+    yield read(chunk_size) until eof?
+  end
+end
+
 module Fastlane
   module Helper
     class AppcenterHelper
-
+      FILE_MAX_SIZE = 250_000_000
+      FILE_CHUNK_SIZE = 100_000_000
       # basic utility method to check file types that App Center will accept,
       # accounting for file types that can and should be zip-compressed
       # before they are uploaded
@@ -199,14 +206,18 @@ module Fastlane
       def self.upload_symbol(api_token, owner_name, app_name, symbol, symbol_type, symbol_upload_id, upload_url)
         connection = self.connection(upload_url, true)
 
-        UI.message("DEBUG: PUT #{upload_url}") if ENV['DEBUG']
-        UI.message("DEBUG: PUT body <data>\n") if ENV['DEBUG']
+        if (File.size?(symbol) > FILE_MAX_SIZE)
+          response = upload_symbol_chunked(connection, symbol)
+        else
+          UI.message("DEBUG: PUT #{upload_url}") if ENV['DEBUG']
+          UI.message("DEBUG: PUT body <data>\n") if ENV['DEBUG']
 
-        response = connection.put do |req|
-          req.headers['x-ms-blob-type'] = "BlockBlob"
-          req.headers['Content-Length'] = File.size(symbol).to_s
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = Faraday::UploadIO.new(symbol, 'application/octet-stream') if symbol && File.exist?(symbol)
+          response = connection.put do |req|
+            req.headers['x-ms-blob-type'] = "BlockBlob"
+            req.headers['Content-Length'] = File.size(symbol).to_s
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = Faraday::UploadIO.new(symbol, 'application/octet-stream') if symbol && File.exist?(symbol)
+          end
         end
 
         UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
@@ -226,6 +237,42 @@ module Fastlane
           self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, 'aborted')
           UI.error("#{log_type} upload aborted")
           false
+        end
+      end
+
+      def self.upload_symbol_chunked(connection, symbol)
+        block_list = []
+        count = 0
+
+        File.open(symbol).each_chunk(FILE_CHUNK_SIZE) do |chunk|
+          id = count.to_s.rjust(6, "0")
+          upload_chunk(connection, id, chunk)
+          block_list << id
+          count += 1
+        end
+
+        commit_chunks(connection, block_list)
+      end
+
+      def self.upload_chunk(connection, block_id, content)
+        return connection.put do |req|
+          req.headers['x-ms-blob-type'] = "BlockBlob"
+          req.headers['internal-request-source'] = "fastlane"
+          req.params = { comp: "block", blockid: Base64.strict_encode64(block_id) }
+          req.body = content
+        end
+      end
+
+      def self.commit_chunks(connection, block_list)
+        body = '<?xml version="1.0" encoding="utf-8"?><BlockList>'
+        block_list.each do |block_id|
+          body << "<Latest>#{Base64.strict_encode64(block_id)}</Latest>"
+        end
+        body << '</BlockList>'
+        
+        return connection.put do |req|
+          req.params = { comp: "blocklist" }
+          req.body = body
         end
       end
 

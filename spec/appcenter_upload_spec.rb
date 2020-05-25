@@ -1395,6 +1395,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
         })
       end").runner.execute(:test)
     end
+
     it "handles app creation error" do
       stub_check_app(404)
       stub_create_app(500)
@@ -1544,6 +1545,41 @@ describe Fastlane::Actions::AppcenterUploadAction do
           dsym: './spec/fixtures/symbols/Themoji.dSYM.zip'
         })
       end").runner.execute(:test)
+    end
+    
+    it "uses chunking when sending dsym over file size limit" do
+      stub_check_app(200)
+      stub_create_dsym_upload(200)
+      stub_update_dsym_upload(200, "committed")
+
+      stub_request(:put, /upload_dsym\.com/)
+        .to_return(status: 200, body: "", headers: {})
+
+      stub_const("Fastlane::Helper::AppcenterHelper::FILE_MAX_SIZE", 100)
+      stub_const("Fastlane::Helper::AppcenterHelper::FILE_CHUNK_SIZE", 100)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          upload_dsym_only: true,
+          dsym: './spec/fixtures/symbols/Themoji.dSYM.zip'
+        })
+      end").runner.execute(:test)
+
+      # Expect uploaded chunks with correct blockids
+      expect(a_request(:put, "https://upload_dsym.com")
+        .with(query: hash_including({ comp: "block", blockid: "MDAwMDAw" }))).to have_been_made
+      expect(a_request(:put, "https://upload_dsym.com")
+        .with(query: hash_including({ comp: "block", blockid: "MDAwMDAx" }))).to have_been_made
+        
+      # Expect chunk commit
+        expect(a_request(:put, "https://upload_dsym.com")
+          .with(
+            query: hash_including({ comp: "blocklist" }), 
+            body: '<?xml version="1.0" encoding="utf-8"?><BlockList><Latest>MDAwMDAw</Latest><Latest>MDAwMDAx</Latest></BlockList>'
+          )).to have_been_made
     end
 
     it "uses DSYM_OUTPUT_PATH as default for dsym" do
