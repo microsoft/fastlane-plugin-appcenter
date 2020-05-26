@@ -7,8 +7,10 @@ end
 module Fastlane
   module Helper
     class AppcenterHelper
-      FILE_MAX_SIZE = 250_000_000
-      FILE_CHUNK_SIZE = 100_000_000
+      # Max size is about 256Mb. Upload in chunks of 4Mb if file is > 10Mb
+      FILE_MAX_SIZE = 10_000_000
+      FILE_CHUNK_SIZE = 4_194_304
+
       # basic utility method to check file types that App Center will accept,
       # accounting for file types that can and should be zip-compressed
       # before they are uploaded
@@ -206,10 +208,10 @@ module Fastlane
       def self.upload_symbol(api_token, owner_name, app_name, symbol, symbol_type, symbol_upload_id, upload_url)
         connection = self.connection(upload_url, true)
 
-        if (File.size?(symbol) > FILE_MAX_SIZE)
+        UI.message("DEBUG: PUT #{upload_url}") if ENV['DEBUG']
+        if File.size?(symbol) > FILE_MAX_SIZE
           response = upload_symbol_chunked(connection, symbol)
         else
-          UI.message("DEBUG: PUT #{upload_url}") if ENV['DEBUG']
           UI.message("DEBUG: PUT body <data>\n") if ENV['DEBUG']
 
           response = connection.put do |req|
@@ -220,7 +222,7 @@ module Fastlane
           end
         end
 
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+        UI.message("DEBUG: #{response.status} #{response.body}\n") if ENV['DEBUG']
 
         log_type = "dSYM" if symbol_type == "Apple"
         log_type = "mapping" if symbol_type == "Android"
@@ -245,7 +247,7 @@ module Fastlane
         count = 0
 
         File.open(symbol).each_chunk(FILE_CHUNK_SIZE) do |chunk|
-          id = count.to_s.rjust(6, "0")
+          id = "block" + count.to_s.rjust(6, "0")
           upload_chunk(connection, id, chunk)
           block_list << id
           count += 1
@@ -255,6 +257,7 @@ module Fastlane
       end
 
       def self.upload_chunk(connection, block_id, content)
+        UI.message("DEBUG: Uploading chunk #{block_id}") if ENV['DEBUG']
         return connection.put do |req|
           req.headers['x-ms-blob-type'] = "BlockBlob"
           req.headers['internal-request-source'] = "fastlane"
@@ -269,8 +272,10 @@ module Fastlane
           body << "<Latest>#{Base64.strict_encode64(block_id)}</Latest>"
         end
         body << '</BlockList>'
-        
+
+        UI.message("DEBUG: PUT body\n#{body}") if ENV['DEBUG']
         return connection.put do |req|
+          req.headers['Content-Type'] = 'text/plain;charset=UTF-8'
           req.params = { comp: "blocklist" }
           req.body = body
         end
