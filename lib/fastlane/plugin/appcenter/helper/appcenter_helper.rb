@@ -696,6 +696,8 @@ module Fastlane
           UI.success("Added new app #{app_name} to distribution group #{destination_name}")
         when 401
           UI.user_error!("Auth Error, provided invalid token")
+        when 404
+          UI.error("Not found, invalid distribution group name #{destination_name}")
         when 409
           UI.success("App already added to distribution group #{destination_name}")
         else
