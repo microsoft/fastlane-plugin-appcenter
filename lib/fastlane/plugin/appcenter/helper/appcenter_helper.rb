@@ -669,6 +669,41 @@ module Fastlane
 
         return "https://install.appcenter.ms/#{owner_path}/apps/#{app_name}"
       end
+
+      # add new created app to existing distribution group
+      def self.add_new_app_to_distribution_group(api_token:, owner_name:, app_name:, destination_name:)
+        url = URI.escape("/v0.1/orgs/#{owner_name}/distribution_groups/#{destination_name}/apps")
+        body = {
+          apps: [
+            { name: app_name }
+          ]
+        }
+
+        UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
+        UI.message("DEBUG: POST body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
+
+        response = connection.post(url) do |req|
+          req.headers['X-API-Token'] = api_token
+          req.headers['internal-request-source'] = "fastlane"
+          req.body = body
+        end
+
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+
+        case response.status
+        when 200...300
+          created = response.body
+          UI.success("Added new app #{app_name} to distribution group #{destination_name}")
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+        when 404
+          UI.error("Not found, invalid distribution group name #{destination_name}")
+        when 409
+          UI.success("App already added to distribution group #{destination_name}")
+        else
+          UI.error("Error adding app to distribution group #{response.status}: #{response.body}")
+        end
+      end
     end
   end
 end

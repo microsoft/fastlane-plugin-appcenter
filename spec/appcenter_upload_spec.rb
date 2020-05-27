@@ -130,6 +130,13 @@ def stub_add_to_destination(status, app_name = "app", owner_name = "owner", dest
     .to_return(status: status, body: "{\"version\":\"3\",\"short_version\":\"1.0.0\",\"download_link\":\"https://download.link\"}", headers: { 'Content-Type' => 'application/json' })
 end
 
+def stub_add_new_app_to_distribution(status: 204, owner_name: 'owner', app_name: 'app', destination_name: 'Testers')
+  stub_request(:post, "https://api.appcenter.ms/v0.1/orgs/#{owner_name}/distribution_groups/#{destination_name}/apps")
+    .to_return(
+      status: status
+    )
+end
+
 describe Fastlane::Actions::AppcenterUploadAction do
   describe '#run' do
     before :each do
@@ -1379,6 +1386,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_get_destination(200)
       stub_add_to_destination(200)
       stub_get_release(200)
+      stub_fetch_distribution_groups(owner_name: 'owner', app_name: 'app')
+      stub_add_new_app_to_distribution
 
       Fastlane::FastFile.new.parse("lane :test do
         appcenter_upload({
@@ -1826,6 +1835,41 @@ describe Fastlane::Actions::AppcenterUploadAction do
           })
         end").runner.execute(:test)
       end.to raise_error(/can't use 'upload_build_only' and 'upload_dsym_only' options in one run/)
+    end
+
+    it 'Skips adding app to distribution group if already added' do
+      stub_check_app(404)
+      stub_create_app(200, "app", "App Name", "Android", "Java", "organization", "owner")
+      stub_create_release_upload(200)
+      stub_upload_build(200)
+      stub_update_release_upload(200, 'committed')
+      stub_update_release(200, "No changelog given")
+      stub_get_destination(200, app_name = "app", owner_name = "owner", destination_type = "group", destination_name = "Testers")
+      stub_get_destination(200, app_name = "app", owner_name = "owner", destination_type = "group", destination_name = "test-group-1")
+      stub_add_to_destination(200)
+      stub_get_release(200)
+      stub_fetch_distribution_groups(owner_name: 'owner', app_name: 'app')
+
+      should_be_called = stub_add_new_app_to_distribution(destination_name: 'Testers')
+      should_not_be_called = stub_add_new_app_to_distribution(destination_name: 'test-group-1')
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_type: 'organization',
+          owner_name: 'owner',
+          app_name: 'app',
+          app_display_name: 'App Name',
+          app_os: 'Android',
+          app_platform: 'Java',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          destinations: 'test-group-1,Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+
+      assert_requested(should_be_called)
+      assert_not_requested(should_not_be_called)
     end
   end
 end
