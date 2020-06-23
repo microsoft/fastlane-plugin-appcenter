@@ -1,6 +1,7 @@
 module Fastlane
   module Helper
     class AppcenterHelper
+      require 'pry'
 
       # basic utility method to check file types that App Center will accept,
       # accounting for file types that can and should be zip-compressed
@@ -22,7 +23,6 @@ module Fastlane
         if ENV['APPCENTER_ENV']&.upcase == 'INT'
           default_api_url = "https://api-gateway-core-integration.dev.avalanch.es"
         end
-
         options = {
           url: upload_url || default_api_url
         }
@@ -48,13 +48,11 @@ module Fastlane
       # upload_url
       def self.create_release_upload(api_token, owner_name, app_name, body)
         connection = self.connection
-
-        url = "v0.1/apps/#{owner_name}/#{app_name}/release_uploads"
+        url = "v0.1/apps/#{owner_name}/#{app_name}/uploads/releases"
         body ||= {}
 
         UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body: #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
-
         response = connection.post(url) do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
@@ -62,7 +60,6 @@ module Fastlane
         end
 
         UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
         case response.status
         when 200...300
           response.body
@@ -229,26 +226,45 @@ module Fastlane
         end
       end
 
-      # upload binary for specified upload_url
-      # if succeed, then commits the release
-      # otherwise aborts
-      def self.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, timeout)
-        connection = self.connection(upload_url)
+      def self.set_metadata(set_metadata_url, timeout)
+        connection = self.connection(set_metadata_url)
 
-        options = {}
-        options[:upload_id] = upload_id
-        # ipa field is used for .apk, .aab and .ipa files
-        options[:ipa] = Faraday::UploadIO.new(file, 'application/octet-stream') if file && File.exist?(file)
-
-        UI.message("DEBUG: POST #{upload_url}") if ENV['DEBUG']
+        UI.message("DEBUG: POST #{set_metadata_url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body <data>\n") if ENV['DEBUG']
-
         response = connection.post do |req|
           req.options.timeout = timeout
           req.headers['internal-request-source'] = "fastlane"
-          req.body = options
         end
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+      end
 
+      def self.finish(finish_url, timeout)
+        connection = self.connection(finish_url)
+
+        UI.message("DEBUG: POST #{finish_url}") if ENV['DEBUG']
+        UI.message("DEBUG: POST body <data>\n") if ENV['DEBUG']
+        response = connection.post do |req|
+          req.options.timeout = timeout
+          req.headers['internal-request-source'] = "fastlane"
+        end
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+        binding.pry
+      end
+
+      # upload binary for specified upload_url
+      # if succeed, then commits the release
+      # otherwise aborts
+      def self.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, content_type, timeout)
+        connection = self.connection(upload_url, true)
+
+        UI.message("DEBUG: POST #{upload_url}") if ENV['DEBUG']
+        UI.message("DEBUG: POST body <data>\n") if ENV['DEBUG']
+        response = connection.post do |req|
+          req.options.timeout = timeout
+          req.headers['internal-request-source'] = "fastlane"
+          req.headers['Content-Length'] = File.size(file).to_s
+          req.body = Faraday::UploadIO.new(file, content_type) if file && File.exist?(file)
+        end
         UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
 
         case response.status
@@ -270,7 +286,7 @@ module Fastlane
       def self.update_release_upload(api_token, owner_name, app_name, upload_id, status)
         connection = self.connection
 
-        url = "v0.1/apps/#{owner_name}/#{app_name}/release_uploads/#{upload_id}"
+        url = "v0.1/apps/#{owner_name}/#{app_name}/uploads/releases/#{upload_id}"
         body = {
           status: status
         }
