@@ -226,7 +226,7 @@ module Fastlane
         end
       end
 
-      def self.set_metadata(set_metadata_url, timeout)
+      def self.set_metadata(set_metadata_url, api_token, owner_name, app_name, upload_id, timeout)
         connection = self.connection(set_metadata_url)
 
         UI.message("DEBUG: POST #{set_metadata_url}") if ENV['DEBUG']
@@ -247,12 +247,11 @@ module Fastlane
         else
           UI.error("Error setting metadata: #{response.status}: #{response.body}")
           self.update_release_upload(api_token, owner_name, app_name, upload_id, 'error')
-          UI.error("Release aborted")
           false
         end
       end
 
-      def self.finish(finish_url, timeout)
+      def self.finish(finish_url, api_token, owner_name, app_name, upload_id, timeout)
         connection = self.connection(finish_url)
 
         UI.message("DEBUG: POST #{finish_url}") if ENV['DEBUG']
@@ -266,14 +265,13 @@ module Fastlane
         case response.status
         when 200...300
           UI.message("Upload finished")
-          response.body
+          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'uploadFinished')
         when 401
           UI.user_error!("Auth Error, provided invalid token")
           false
         else
           UI.error("Error finishing upload: #{response.status}: #{response.body}")
           self.update_release_upload(api_token, owner_name, app_name, upload_id, 'error')
-          UI.error("Release aborted")
           false
         end
       end
@@ -297,14 +295,13 @@ module Fastlane
         case response.status
         when 200...300
           UI.message("Binary uploaded")
-          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'uploadFinished')
+          response.body
         when 401
           UI.user_error!("Auth Error, provided invalid token")
           false
         else
           UI.error("Error uploading binary #{response.status}: #{response.body}")
           self.update_release_upload(api_token, owner_name, app_name, upload_id, 'error')
-          UI.error("Release aborted")
           false
         end
       end
@@ -315,7 +312,8 @@ module Fastlane
 
         url = "v0.1/apps/#{owner_name}/#{app_name}/uploads/releases/#{upload_id}"
         body = {
-          upload_status: status
+          upload_status: status,
+          id: upload_id
         }
 
         UI.message("DEBUG: PATCH #{url}") if ENV['DEBUG']
@@ -371,6 +369,35 @@ module Fastlane
         else
           UI.error("Error fetching information about release #{response.status}: #{response.body}")
           false
+        end
+      end
+
+      def self.poll_for_release_id(api_token, url)
+        connection = self.connection
+        
+        sleep_in_seconds = 1
+        while true
+          UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
+          response = connection.get(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+          end
+
+          case response.status
+          when 200...300
+            case response.body['upload_status']
+            when "readyToBePublished"
+              return response.body['release_distinct_id']
+            when "error"
+              UI.error("Error fetching release: #{response.body['error_details']}")
+              return false
+            else
+              sleep(sleep_in_seconds)
+            end
+          else
+            UI.error("Error fetching information about release #{response.status}: #{response.body}")
+            return false
+          end
         end
       end
 

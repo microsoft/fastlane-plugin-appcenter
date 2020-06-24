@@ -209,18 +209,23 @@ module Fastlane
           UI.message("Setting Metadata...")
           content_type = mime_types[File.extname(file).delete('.')]
           set_metadata_url = "#{upload_details['upload_domain']}/upload/set_metadata/#{upload_details['package_asset_id']}?file_name=#{File.basename(file)}&file_size=#{File.size(file)}&token=#{upload_details['url_encoded_token']}&content_type=#{content_type}"
-          metadata_set = Helper::AppcenterHelper.set_metadata(set_metadata_url, timeout)
+          metadata_set = Helper::AppcenterHelper.set_metadata(set_metadata_url, api_token, owner_name, app_name, upload_id, timeout)
+          UI.abort_with_message!("Upload aborted") unless metadata_set
 
           UI.message("Uploading release binary...")
           upload_url = "#{upload_details['upload_domain']}/upload/upload_chunk/#{upload_details['package_asset_id']}?token=#{upload_details['url_encoded_token']}&run_upload_synchronously=true&block_number=1"
           uploaded = Helper::AppcenterHelper.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, content_type, timeout)
+          UI.abort_with_message!("Upload aborted") unless uploaded
 
           UI.message("Finishing release...")
           finish_url = "#{upload_details['upload_domain']}/upload/finished/#{upload_details['package_asset_id']}?token=#{upload_details['url_encoded_token']}"
-          finished = Helper::AppcenterHelper.finish(finish_url, timeout)
+          finished = Helper::AppcenterHelper.finish(finish_url, api_token, owner_name, app_name, upload_id, timeout)
+          UI.abort_with_message!("Upload aborted") unless finished
 
-          if uploaded
-            release_id = uploaded['id']
+          release_status_url = "v0.1/apps/#{owner_name}/#{app_name}/uploads/releases/#{upload_id}"
+          release_id = Helper::AppcenterHelper.poll_for_release_id(api_token, release_status_url)
+
+          if release_id.is_a? Integer
             release_url = Helper::AppcenterHelper.get_release_url(owner_type, owner_name, app_name, release_id)
             UI.message("Release '#{release_id}' committed: #{release_url}")
 
