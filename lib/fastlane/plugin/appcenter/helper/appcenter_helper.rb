@@ -236,6 +236,19 @@ module Fastlane
           req.headers['internal-request-source'] = "fastlane"
         end
         UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+
+        case response.status
+        when 200...300
+          UI.message("Metadata set")
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+          false
+        else
+          UI.error("Error setting metadata: #{response.status}: #{response.body}")
+          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'aborted')
+          UI.error("Release aborted")
+          false
+        end
       end
 
       def self.finish(finish_url, timeout)
@@ -248,7 +261,19 @@ module Fastlane
           req.headers['internal-request-source'] = "fastlane"
         end
         UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-        binding.pry
+
+        case response.status
+        when 200...300
+          UI.message("Upload finished")
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+          false
+        else
+          UI.error("Error finishing upload: #{response.status}: #{response.body}")
+          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'aborted')
+          UI.error("Release aborted")
+          false
+        end
       end
 
       # upload binary for specified upload_url

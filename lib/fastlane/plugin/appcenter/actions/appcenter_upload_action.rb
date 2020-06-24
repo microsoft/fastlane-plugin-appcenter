@@ -206,20 +206,16 @@ module Fastlane
             msixsym: "application/x-msixupload",
           }
           
-          #{{fileUploadEndpoint}}/upload/set_metadata/{{acfus-assetid}}?file_name={fileName}&file_size=33145&token={{acfus-asset-token}}&content_type={}
           UI.message("Setting Metadata...")
           content_type = mime_types[File.extname(file).delete('.')]
           set_metadata_url = "#{upload_details['upload_domain']}/upload/set_metadata/#{upload_details['package_asset_id']}?file_name=#{File.basename(file)}&file_size=#{File.size(file)}&token=#{upload_details['url_encoded_token']}&content_type=#{content_type}"
           uploaded = Helper::AppcenterHelper.set_metadata(set_metadata_url, timeout)
 
-          #{{fileUploadEndpoint}}/upload/upload_chunk/{{acfus-assetid}}?token={{acfus-asset-token}}&run_upload_synchronously=true&block_number=1
-          upload_url = "#{upload_details['upload_domain']}/upload/upload_chunk/#{upload_details['package_asset_id']}?token=#{upload_details['url_encoded_token']}&run_upload_synchronously=true&block_number=1"
-
           UI.message("Uploading release binary...")
+          upload_url = "#{upload_details['upload_domain']}/upload/upload_chunk/#{upload_details['package_asset_id']}?token=#{upload_details['url_encoded_token']}&run_upload_synchronously=true&block_number=1"
           uploaded = Helper::AppcenterHelper.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, content_type, timeout)
 
           UI.message("Finishing release...")
-          # {{fileUploadEndpoint}}/upload/finished/{{acfus-assetid}}?token={{acfus-asset-token}}
           finish_url = "#{upload_details['upload_domain']}/upload/finished/#{upload_details['package_asset_id']}?token=#{upload_details['url_encoded_token']}"
           uploaded = Helper::AppcenterHelper.finish(finish_url, timeout)
 
