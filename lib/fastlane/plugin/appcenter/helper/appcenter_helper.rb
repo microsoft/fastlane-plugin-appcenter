@@ -240,12 +240,13 @@ module Fastlane
         case response.status
         when 200...300
           UI.message("Metadata set")
+          response.body
         when 401
           UI.user_error!("Auth Error, provided invalid token")
           false
         else
           UI.error("Error setting metadata: #{response.status}: #{response.body}")
-          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'aborted')
+          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'error')
           UI.error("Release aborted")
           false
         end
@@ -265,12 +266,13 @@ module Fastlane
         case response.status
         when 200...300
           UI.message("Upload finished")
+          response.body
         when 401
           UI.user_error!("Auth Error, provided invalid token")
           false
         else
           UI.error("Error finishing upload: #{response.status}: #{response.body}")
-          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'aborted')
+          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'error')
           UI.error("Release aborted")
           false
         end
@@ -295,13 +297,13 @@ module Fastlane
         case response.status
         when 200...300
           UI.message("Binary uploaded")
-          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'committed')
+          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'uploadFinished')
         when 401
           UI.user_error!("Auth Error, provided invalid token")
           false
         else
           UI.error("Error uploading binary #{response.status}: #{response.body}")
-          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'aborted')
+          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'error')
           UI.error("Release aborted")
           false
         end
@@ -313,7 +315,7 @@ module Fastlane
 
         url = "v0.1/apps/#{owner_name}/#{app_name}/uploads/releases/#{upload_id}"
         body = {
-          status: status
+          upload_status: status
         }
 
         UI.message("DEBUG: PATCH #{url}") if ENV['DEBUG']

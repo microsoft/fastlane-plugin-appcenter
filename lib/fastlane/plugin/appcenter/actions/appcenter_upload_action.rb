@@ -209,7 +209,7 @@ module Fastlane
           UI.message("Setting Metadata...")
           content_type = mime_types[File.extname(file).delete('.')]
           set_metadata_url = "#{upload_details['upload_domain']}/upload/set_metadata/#{upload_details['package_asset_id']}?file_name=#{File.basename(file)}&file_size=#{File.size(file)}&token=#{upload_details['url_encoded_token']}&content_type=#{content_type}"
-          uploaded = Helper::AppcenterHelper.set_metadata(set_metadata_url, timeout)
+          metadata_set = Helper::AppcenterHelper.set_metadata(set_metadata_url, timeout)
 
           UI.message("Uploading release binary...")
           upload_url = "#{upload_details['upload_domain']}/upload/upload_chunk/#{upload_details['package_asset_id']}?token=#{upload_details['url_encoded_token']}&run_upload_synchronously=true&block_number=1"
@@ -217,10 +217,10 @@ module Fastlane
 
           UI.message("Finishing release...")
           finish_url = "#{upload_details['upload_domain']}/upload/finished/#{upload_details['package_asset_id']}?token=#{upload_details['url_encoded_token']}"
-          uploaded = Helper::AppcenterHelper.finish(finish_url, timeout)
+          finished = Helper::AppcenterHelper.finish(finish_url, timeout)
 
           if uploaded
-            release_id = uploaded['release_id']
+            release_id = uploaded['id']
             release_url = Helper::AppcenterHelper.get_release_url(owner_type, owner_name, app_name, release_id)
             UI.message("Release '#{release_id}' committed: #{release_url}")
 
