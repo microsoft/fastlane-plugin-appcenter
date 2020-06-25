@@ -180,7 +180,8 @@ module Fastlane
             File.delete zip_file
           end
           UI.message("Creating zip archive: #{zip_file}")
-          file = Actions::ZipAction.run(path: file, output_path: zip_file, symlinks: true)
+          Actions::ZipAction.run(path: file, output_path: zip_file, symlinks: true)
+          file = zip_file
         end
 
         UI.message("Starting release upload...")

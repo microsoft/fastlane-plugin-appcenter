@@ -51,7 +51,7 @@ def stub_create_mapping_upload(status, version, build, file_name = "mapping.txt"
 end
 
 def stub_set_metadata(status, file_name = "apk_file_empty.apk")
-  content_type = $mime_types[File.extname(file_name)&.delete('.').to_sym] || "application/octet-stream"
+  content_type = $mime_types[File.extname(file_name).delete('.').to_sym] || "application/octet-stream"
   stub_request(:post, "https://upload-domain.com/upload/set_metadata/1234?content_type=#{content_type}&file_name=#{file_name}&file_size=0&token=123abc")
     .to_return(status: status, body: "", headers: {})
 end
@@ -61,14 +61,14 @@ def stub_finished(status)
     .to_return(status: status, body: "", headers: {})
 end
 
-def stub_poll_sleeper()
+def stub_poll_sleeper
   allow_any_instance_of(Object).to receive(:sleep)
 end
 
 def stub_poll_for_release_id(status, app_name = "app", owner_name = "owner")
   stub_request(:get, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}/uploads/releases/upload_id")
-  .to_return(status: status, body: "{\"upload_status\":\"uploadFinished\"}", headers: { 'Content-Type' => 'application/json' } ).times(2).then
-  .to_return(status: status, body: "{\"release_distinct_id\":1,\"upload_status\":\"readyToBePublished\"}", headers: { 'Content-Type' => 'application/json' })
+    .to_return(status: status, body: "{\"upload_status\":\"uploadFinished\"}", headers: { 'Content-Type' => 'application/json' }).times(2).then
+    .to_return(status: status, body: "{\"release_distinct_id\":1,\"upload_status\":\"readyToBePublished\"}", headers: { 'Content-Type' => 'application/json' })
 end
 
 def stub_upload_build(status)
@@ -1165,7 +1165,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_set_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
-      stub_poll_for_release_id(200)      
+      stub_poll_for_release_id(200)
       stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
