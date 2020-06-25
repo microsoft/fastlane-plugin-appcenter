@@ -384,6 +384,8 @@ module Fastlane
             req.headers['internal-request-source'] = "fastlane"
           end
 
+          UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+
           case response.status
           when 200...300
             case response.body['upload_status']
