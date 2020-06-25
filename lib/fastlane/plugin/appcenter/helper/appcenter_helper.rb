@@ -2,6 +2,9 @@ module Fastlane
   module Helper
     class AppcenterHelper
 
+      # Time to wait between 2 status polls in seconds
+      RELEASE_UPLOAD_STATUS_POLL_INTERVAL = 1
+
       # basic utility method to check file types that App Center will accept,
       # accounting for file types that can and should be zip-compressed
       # before they are uploaded
@@ -373,8 +376,7 @@ module Fastlane
 
       def self.poll_for_release_id(api_token, url)
         connection = self.connection
-        
-        sleep_in_seconds = 1
+
         while true
           UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
           response = connection.get(url) do |req|
@@ -391,7 +393,7 @@ module Fastlane
               UI.error("Error fetching release: #{response.body['error_details']}")
               return false
             else
-              sleep(sleep_in_seconds)
+              sleep(RELEASE_UPLOAD_STATUS_POLL_INTERVAL)
             end
           else
             UI.error("Error fetching information about release #{response.status}: #{response.body}")

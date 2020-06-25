@@ -9,6 +9,23 @@ module Fastlane
           windows: %w(.appx .appxbundle .appxupload .msix .msixbundle .msixupload .zip .msi),
           custom: %w(.zip)
       }
+      CONTENT_TYPES = {
+          apk: "application/vnd.android.package-archive",
+          aab: "application/vnd.android.package-archive",
+          msi: "application/x-msi",
+          plist: "application/xml",
+          aetx: "application/c-x509-ca-cert",
+          cer: "application/pkix-cert",
+          xap: "application/x-silverlight-app",
+          appx: "application/x-appx",
+          appxbundle: "application/x-appxbundle",
+          appxupload: "application/x-appxupload",
+          appxsym: "application/x-appxupload",
+          msix: "application/x-msix",
+          msixbundle: "application/x-msixbundle",
+          msixupload: "application/x-msixupload",
+          msixsym: "application/x-msixupload",
+      }
       ALL_SUPPORTED_EXTENSIONS = SUPPORTED_EXTENSIONS.values.flatten.sort!.uniq!
       STORE_ONLY_EXTENSIONS = %w(.aab)
       STORE_SUPPORTED_EXTENSIONS = %w(.aab .apk .ipa)
@@ -188,27 +205,9 @@ module Fastlane
         upload_details = Helper::AppcenterHelper.create_release_upload(api_token, owner_name, app_name, release_upload_body)
         if upload_details
           upload_id = upload_details['id']
-
-          mime_types = {
-            apk: "application/vnd.android.package-archive",
-            aab: "application/vnd.android.package-archive",
-            msi: "application/x-msi",
-            plist: "application/xml",
-            aetx: "application/c-x509-ca-cert",
-            cer: "application/pkix-cert",
-            xap: "application/x-silverlight-app",
-            appx: "application/x-appx",
-            appxbundle: "application/x-appxbundle",
-            appxupload: "application/x-appxupload",
-            appxsym: "application/x-appxupload",
-            msix: "application/x-msix",
-            msixbundle: "application/x-msixbundle",
-            msixupload: "application/x-msixupload",
-            msixsym: "application/x-msixupload",
-          }
           
           UI.message("Setting Metadata...")
-          content_type = mime_types[File.extname(file)&.delete('.').to_sym] || "application/octet-stream"
+          content_type = Constants::CONTENT_TYPES[File.extname(file)&.delete('.').to_sym] || "application/octet-stream"
           set_metadata_url = "#{upload_details['upload_domain']}/upload/set_metadata/#{upload_details['package_asset_id']}?file_name=#{File.basename(file)}&file_size=#{File.size(file)}&token=#{upload_details['url_encoded_token']}&content_type=#{content_type}"
           metadata_set = Helper::AppcenterHelper.set_metadata(set_metadata_url, api_token, owner_name, app_name, upload_id, timeout)
           UI.abort_with_message!("Upload aborted") unless metadata_set
