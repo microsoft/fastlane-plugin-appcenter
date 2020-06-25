@@ -65,8 +65,8 @@ def stub_poll_sleeper()
   allow_any_instance_of(Object).to receive(:sleep)
 end
 
-def stub_poll_for_release_id(status, app_name = "app")
-  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/owner/#{app_name}/uploads/releases/upload_id")
+def stub_poll_for_release_id(status, app_name = "app", owner_name = "owner")
+  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}/uploads/releases/upload_id")
   .to_return(status: status, body: "{\"upload_status\":\"uploadFinished\"}", headers: { 'Content-Type' => 'application/json' } ).times(2).then
   .to_return(status: status, body: "{\"release_distinct_id\":1,\"upload_status\":\"readyToBePublished\"}", headers: { 'Content-Type' => 'application/json' })
 end
@@ -890,7 +890,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_set_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
-      stub_poll_for_release_id(200)
+      stub_poll_for_release_id(200, "app", "shared-value-owner")
       stub_update_release_upload(200, 'uploadFinished', 'app', 'shared-value-owner')
       stub_update_release(200, 'No changelog given', 'app', 'shared-value-owner')
       stub_get_destination(200, 'app', 'shared-value-owner')
