@@ -1,7 +1,6 @@
 module Fastlane
   module Helper
     class AppcenterHelper
-      require 'pry'
 
       # basic utility method to check file types that App Center will accept,
       # accounting for file types that can and should be zip-compressed
