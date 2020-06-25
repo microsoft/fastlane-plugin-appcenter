@@ -1071,7 +1071,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "raise_error_if_used.ipa")
+      stub_set_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
