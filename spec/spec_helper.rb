@@ -20,7 +20,7 @@ require 'fastlane/plugin/appcenter' # import the actual plugin
 Fastlane.load_actions # load other actions (in case your plugin calls other actions or shared values)
 
 RSpec.configure do |config|
-  config.before(:all) {
+  config.before(:all) do
     $mime_types = {
       apk: "application/vnd.android.package-archive",
       aab: "application/vnd.android.package-archive",
@@ -38,5 +38,5 @@ RSpec.configure do |config|
       msixupload: "application/x-msixupload",
       msixsym: "application/x-msixupload"
     }
-  }
+  end
 end
