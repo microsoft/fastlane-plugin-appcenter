@@ -51,7 +51,7 @@ def stub_create_mapping_upload(status, version, build, file_name = "mapping.txt"
 end
 
 def stub_set_metadata(status, file_name = "apk_file_empty.apk")
-  content_type = $mime_types[File.extname(file_name).delete('.').to_sym] || "application/octet-stream"
+  content_type = Fastlane::Actions::Constants::CONTENT_TYPES[File.extname(file_name).delete('.').to_sym] || "application/octet-stream"
   stub_request(:post, "https://upload-domain.com/upload/set_metadata/1234?content_type=#{content_type}&file_name=#{file_name}&file_size=0&token=123abc")
     .to_return(status: status, body: "", headers: {})
 end
