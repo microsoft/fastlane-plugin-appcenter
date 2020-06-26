@@ -248,7 +248,6 @@ module Fastlane
           false
         else
           UI.error("Error setting metadata: #{response.status}: #{response.body}")
-          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'error')
           false
         end
       end
@@ -273,7 +272,6 @@ module Fastlane
           false
         else
           UI.error("Error finishing upload: #{response.status}: #{response.body}")
-          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'error')
           false
         end
       end
