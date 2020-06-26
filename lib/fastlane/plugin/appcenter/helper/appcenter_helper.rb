@@ -299,8 +299,13 @@ module Fastlane
 
         case response.status
         when 200...300
-          UI.message("Binary uploaded")
-          response.body
+          if response.body['error'] == false
+            UI.message("Binary uploaded")
+            response.body
+          else
+            UI.error("Error uploading binary #{response.body['message']}")
+            false
+          end
         when 401
           UI.user_error!("Auth Error, provided invalid token")
           false

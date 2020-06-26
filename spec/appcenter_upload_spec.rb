@@ -73,7 +73,7 @@ end
 
 def stub_upload_build(status)
   stub_request(:post, "https://upload-domain.com/upload/upload_chunk/1234?token=123abc&run_upload_synchronously=true&block_number=1")
-    .to_return(status: status, body: "", headers: {})
+    .to_return(status: status, body: "{\"error\": false}", headers: { 'Content-Type' => 'application/json' })
 end
 
 def stub_upload_dsym(status)
