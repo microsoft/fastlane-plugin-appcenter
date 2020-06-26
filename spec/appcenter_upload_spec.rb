@@ -58,7 +58,7 @@ end
 
 def stub_finished(status)
   stub_request(:post, "https://upload-domain.com/upload/finished/1234?token=123abc")
-    .to_return(status: status, body: "", headers: {})
+    .to_return(status: status, body: "{\"error\": false}", headers: { 'Content-Type' => 'application/json' })
 end
 
 def stub_poll_sleeper

@@ -265,8 +265,13 @@ module Fastlane
 
         case response.status
         when 200...300
-          UI.message("Upload finished")
-          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'uploadFinished')
+          if response.body['error'] == false
+            UI.message("Upload finished")
+            self.update_release_upload(api_token, owner_name, app_name, upload_id, 'uploadFinished')
+          else
+            UI.error("Error finishing upload: #{response.body['message']}")
+            false
+          end
         when 401
           UI.user_error!("Auth Error, provided invalid token")
           false
