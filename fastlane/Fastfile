@@ -37,16 +37,6 @@ lane :test_macos do
   )
 end
 
-lane :test_big do
-  appcenter_upload(
-    api_token: ENV["TEST_APPCENTER_API_TOKEN"],
-    owner_name: ENV["APPCENTER_OWNER_NAME"],
-    app_name: 'custom',
-    app_os: 'Custom',
-    file: "/Users/guperrot/Downloads/10MB.zip"
-  )
-end
-
 lane :test_macos_sparkle do
   appcenter_upload(
     api_token: ENV["TEST_APPCENTER_API_TOKEN"],
