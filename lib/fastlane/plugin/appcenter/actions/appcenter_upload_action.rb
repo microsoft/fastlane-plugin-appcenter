@@ -208,12 +208,12 @@ module Fastlane
           UI.message("Setting Metadata...")
           content_type = Constants::CONTENT_TYPES[File.extname(file)&.delete('.').to_sym] || "application/octet-stream"
           set_metadata_url = "#{upload_details['upload_domain']}/upload/set_metadata/#{upload_details['package_asset_id']}?file_name=#{File.basename(file)}&file_size=#{File.size(file)}&token=#{upload_details['url_encoded_token']}&content_type=#{content_type}"
-          metadata_set = Helper::AppcenterHelper.set_metadata(set_metadata_url, api_token, owner_name, app_name, upload_id, timeout)
-          UI.abort_with_message!("Upload aborted") unless metadata_set
+          chunk_size = Helper::AppcenterHelper.set_metadata(set_metadata_url, api_token, owner_name, app_name, upload_id, timeout)
+          UI.abort_with_message!("Upload aborted") unless chunk_size
 
           UI.message("Uploading release binary...")
-          upload_url = "#{upload_details['upload_domain']}/upload/upload_chunk/#{upload_details['package_asset_id']}?token=#{upload_details['url_encoded_token']}&run_upload_synchronously=true&block_number=1"
-          uploaded = Helper::AppcenterHelper.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, content_type, timeout)
+          upload_url = "#{upload_details['upload_domain']}/upload/upload_chunk/#{upload_details['package_asset_id']}?token=#{upload_details['url_encoded_token']}"
+          uploaded = Helper::AppcenterHelper.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, content_type, chunk_size, timeout)
           UI.abort_with_message!("Upload aborted") unless uploaded
 
           UI.message("Finishing release...")

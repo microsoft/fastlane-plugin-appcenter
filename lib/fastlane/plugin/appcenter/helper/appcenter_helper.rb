@@ -1,3 +1,9 @@
+class File
+  def each_chunk(chunk_size)
+    yield read(chunk_size) until eof?
+  end
+end
+
 module Fastlane
   module Helper
     class AppcenterHelper
@@ -241,8 +247,14 @@ module Fastlane
 
         case response.status
         when 200...300
-          UI.message("Metadata set")
-          response.body
+          chunk_size = response.body['chunk_size']
+          unless chunk_size.is_a? Integer
+            UI.error("Set metadata didn't return chunk size: #{response.status}: #{response.body}")
+            false
+          else
+            UI.message("Metadata set")
+            chunk_size
+          end
         when 401
           UI.user_error!("Auth Error, provided invalid token")
           false
@@ -284,35 +296,41 @@ module Fastlane
       # upload binary for specified upload_url
       # if succeed, then commits the release
       # otherwise aborts
-      def self.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, content_type, timeout)
-        connection = self.connection(upload_url, true)
+      def self.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, content_type, chunk_size, timeout)
+        block_number = 1
 
-        UI.message("DEBUG: POST #{upload_url}") if ENV['DEBUG']
-        UI.message("DEBUG: POST body <data>\n") if ENV['DEBUG']
-        response = connection.post do |req|
-          req.options.timeout = timeout
-          req.headers['internal-request-source'] = "fastlane"
-          req.headers['Content-Length'] = File.size(file).to_s
-          req.body = Faraday::UploadIO.new(file, content_type) if file && File.exist?(file)
-        end
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+        File.open(file).each_chunk(chunk_size) do |chunk|
+          upload_chunk_url = "#{upload_url}&block_number=#{block_number}"
+          connection = self.connection(upload_chunk_url, true)
 
-        case response.status
-        when 200...300
-          if response.body['error'] == false
-            UI.message("Binary uploaded")
-            response.body
-          else
-            UI.error("Error uploading binary #{response.body['message']}")
-            false
+          UI.message("DEBUG: POST #{upload_chunk_url}") if ENV['DEBUG']
+          UI.message("DEBUG: POST body <data>\n") if ENV['DEBUG']
+          response = connection.post do |req|
+            req.options.timeout = timeout
+            req.headers['internal-request-source'] = "fastlane"
+            req.headers['Content-Length'] = chunk.length.to_s
+            req.body = chunk
           end
-        when 401
-          UI.user_error!("Auth Error, provided invalid token")
-          false
-        else
-          UI.error("Error uploading binary #{response.status}: #{response.body}")
-          false
+          UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+
+          case response.status
+          when 200...300
+            if response.body['error'] == false
+              UI.message("Chunk uploaded")
+              block_number += 1
+            else
+              UI.error("Error uploading binary #{response.body['message']}")
+              return false
+            end
+          when 401
+            UI.user_error!("Auth Error, provided invalid token")
+            return false
+          else
+            UI.error("Error uploading binary #{response.status}: #{response.body}")
+            return false
+          end
         end
+        UI.message("Binary uploaded")
       end
 
       # Commits or aborts the upload process for a release

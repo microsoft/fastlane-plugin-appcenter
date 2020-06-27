@@ -53,7 +53,7 @@ end
 def stub_set_metadata(status, file_name = "apk_file_empty.apk")
   content_type = Fastlane::Actions::Constants::CONTENT_TYPES[File.extname(file_name).delete('.').to_sym] || "application/octet-stream"
   stub_request(:post, "https://upload-domain.com/upload/set_metadata/1234?content_type=#{content_type}&file_name=#{file_name}&file_size=0&token=123abc")
-    .to_return(status: status, body: "", headers: {})
+    .to_return(status: status, body: "{\"error\": false, \"chunk_size\": 0}", headers: { 'Content-Type' => 'application/json' })
 end
 
 def stub_finished(status)
@@ -72,7 +72,8 @@ def stub_poll_for_release_id(status, app_name = "app", owner_name = "owner")
 end
 
 def stub_upload_build(status)
-  stub_request(:post, "https://upload-domain.com/upload/upload_chunk/1234?token=123abc&run_upload_synchronously=true&block_number=1")
+  allow_any_instance_of(File).to receive(:each_chunk).and_yield("test")
+  stub_request(:post, "https://upload-domain.com/upload/upload_chunk/1234?token=123abc&block_number=1")
     .to_return(status: status, body: "{\"error\": false}", headers: { 'Content-Type' => 'application/json' })
 end
 
@@ -449,10 +450,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
         stub_check_app(200)
         stub_create_release_upload(200)
         stub_set_metadata(200)
-        stub_upload_build(400)
-        stub_finished(200)
-        stub_poll_for_release_id(200)
-        stub_update_release_upload(200, 'error')
+        stub_upload_build(500)
 
         Fastlane::FastFile.new.parse("lane :test do
           appcenter_upload({
