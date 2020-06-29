@@ -50,15 +50,15 @@ def stub_create_mapping_upload(status, version, build, file_name = "mapping.txt"
     )
 end
 
-def stub_set_metadata(status, file_name = "apk_file_empty.apk")
+def stub_set_metadata(status, file_name = "apk_file_empty.apk", body = "{\"error\": false, \"chunk_size\": 0}")
   content_type = Fastlane::Actions::Constants::CONTENT_TYPES[File.extname(file_name).delete('.').to_sym] || "application/octet-stream"
   stub_request(:post, "https://upload-domain.com/upload/set_metadata/1234?content_type=#{content_type}&file_name=#{file_name}&file_size=0&token=123abc")
-    .to_return(status: status, body: "{\"error\": false, \"chunk_size\": 0}", headers: { 'Content-Type' => 'application/json' })
+    .to_return(status: status, body: body, headers: { 'Content-Type' => 'application/json' })
 end
 
-def stub_finished(status)
+def stub_finished(status, body = "{\"error\": false}")
   stub_request(:post, "https://upload-domain.com/upload/finished/1234?token=123abc")
-    .to_return(status: status, body: "{\"error\": false}", headers: { 'Content-Type' => 'application/json' })
+    .to_return(status: status, body: body, headers: { 'Content-Type' => 'application/json' })
 end
 
 def stub_poll_sleeper
@@ -497,6 +497,85 @@ describe Fastlane::Actions::AppcenterUploadAction do
           destination_type: 'group'
         })
       end").runner.execute(:test)
+    end
+
+    it "handles failed set metadata" do
+      expect do
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_metadata(501)
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Upload aborted")
+    end
+
+    it "handles set_metadata not returning chunk size" do
+      expect do
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_metadata(200, "apk_file_empty.apk", "{}")
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Upload aborted")
+    end
+
+    it "handles errors in 'finish'" do
+      expect do
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_metadata(200)
+        stub_upload_build(200)
+        stub_finished(501)
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Upload aborted")
+    end
+
+    it "handles errors in 'finish' body" do
+      expect do
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_metadata(200)
+        stub_upload_build(200)
+        stub_finished(200, "{\"error\": true}")
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Upload aborted")
     end
 
     it "handles not found distribution group" do
