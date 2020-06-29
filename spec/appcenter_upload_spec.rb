@@ -626,6 +626,30 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end.to raise_error("Failed to upload release")
     end
 
+    it "handles invalid 'release_distinct_id' in 'poll_for_release_id' body" do
+      expect do
+        stub_poll_sleeper
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_metadata(200)
+        stub_upload_build(200)
+        stub_finished(200)
+        stub_update_release_upload(200, 'uploadFinished')
+        stub_poll_for_release_id(status: 200, body: "{\"release_distinct_id\":\"notAnInteger\",\"upload_status\":\"readyToBePublished\"}")
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Failed to upload release")
+    end
+
     it "handles not found distribution group" do
       stub_poll_sleeper
       stub_check_app(200)
