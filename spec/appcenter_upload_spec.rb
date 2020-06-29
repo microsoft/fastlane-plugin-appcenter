@@ -65,10 +65,10 @@ def stub_poll_sleeper
   allow_any_instance_of(Object).to receive(:sleep)
 end
 
-def stub_poll_for_release_id(status, app_name = "app", owner_name = "owner")
+def stub_poll_for_release_id(status, app_name = "app", owner_name = "owner", body = "{\"release_distinct_id\":1,\"upload_status\":\"readyToBePublished\"}")
   stub_request(:get, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}/uploads/releases/upload_id")
     .to_return(status: status, body: "{\"upload_status\":\"uploadFinished\"}", headers: { 'Content-Type' => 'application/json' }).times(2).then
-    .to_return(status: status, body: "{\"release_distinct_id\":1,\"upload_status\":\"readyToBePublished\"}", headers: { 'Content-Type' => 'application/json' })
+    .to_return(status: status, body: body, headers: { 'Content-Type' => 'application/json' })
 end
 
 def stub_upload_build(status)
@@ -576,6 +576,54 @@ describe Fastlane::Actions::AppcenterUploadAction do
           })
         end").runner.execute(:test)
       end.to raise_error("Upload aborted")
+    end
+
+    it "handles errors in 'poll_for_release_id'" do
+      expect do
+        stub_poll_sleeper
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_metadata(200)
+        stub_upload_build(200)
+        stub_finished(200)
+        stub_update_release_upload(200, 'uploadFinished')
+        stub_poll_for_release_id(status: 200, body: "{\"upload_status\":\"error\"}")
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Failed to upload release")
+    end
+
+    it "handles errors in 'poll_for_release_id' body" do
+      expect do
+        stub_poll_sleeper
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_metadata(200)
+        stub_upload_build(200)
+        stub_finished(200)
+        stub_update_release_upload(200, 'uploadFinished')
+        stub_poll_for_release_id(501)
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Failed to upload release")
     end
 
     it "handles not found distribution group" do
