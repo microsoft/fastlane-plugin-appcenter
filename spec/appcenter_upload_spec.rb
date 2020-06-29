@@ -829,8 +829,8 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end").runner.execute(:test)
 
       # Check we uploaded only 1 chunk.
-      assert_requested :post, /https:\/\/upload-domain.com\/upload\/upload_chunk\/.*block_number=.*/
-      assert_requested :post, /https:\/\/upload-domain.com\/upload\/upload_chunk\/.*block_number=1&?.*/
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=.*}
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=1&?.*}
     end
 
     it "works with valid parameters for android larger file" do
@@ -838,12 +838,12 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_check_app(200)
       stub_create_release_upload(200)
       stub_set_metadata(200)
-      
+
       allow_any_instance_of(File).to receive(:each_chunk).and_yield("the first chunk").and_yield("remainder")
       stub_request(:post, "https://upload-domain.com/upload/upload_chunk/1234?token=123abc&block_number=1")
         .to_return(status: 200, body: "{\"error\": false}", headers: { 'Content-Type' => 'application/json' })
       stub_request(:post, "https://upload-domain.com/upload/upload_chunk/1234?token=123abc&block_number=2")
-        .to_return(status: 200, body: "{\"error\": false}", headers: { 'Content-Type' => 'application/json' })  
+        .to_return(status: 200, body: "{\"error\": false}", headers: { 'Content-Type' => 'application/json' })
 
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -865,11 +865,12 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end").runner.execute(:test)
 
       # Check we uploaded as 2 chunks.
-      assert_requested :post, /https:\/\/upload-domain.com\/upload\/upload_chunk\/.*block_number=.*/, times: 2
-      assert_requested :post, /https:\/\/upload-domain.com\/upload\/upload_chunk\/.*block_number=1&?.*/,
-        body: "the first chunk"
-      assert_requested :post, /https:\/\/upload-domain.com\/upload\/upload_chunk\/.*block_number=2&?.*/,
-        body: "remainder"
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=.*},
+                       times: 2
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=1&?.*},
+                       body: "the first chunk"
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=2&?.*},
+                       body: "remainder"
     end
 
     it "works with valid parameters for android app bundle" do
