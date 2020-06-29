@@ -234,6 +234,9 @@ module Fastlane
         end
       end
 
+      # sets metadata for new upload in App Center
+      # returns:
+      # chunk size
       def self.set_metadata(set_metadata_url, api_token, owner_name, app_name, upload_id, timeout)
         connection = self.connection(set_metadata_url)
 
@@ -264,6 +267,9 @@ module Fastlane
         end
       end
 
+      # Verifies a successful upload to App Center
+      # returns:
+      # successful upload response body.
       def self.finish(finish_url, api_token, owner_name, app_name, upload_id, timeout)
         connection = self.connection(finish_url)
 
@@ -399,6 +405,10 @@ module Fastlane
         end
       end
 
+      # Polls the upload for a release id. When a release is uploaded, we have to check
+      # for a successful extraction before we can continue.
+      # returns:
+      # release_distinct_id
       def self.poll_for_release_id(api_token, url)
         connection = self.connection
 
