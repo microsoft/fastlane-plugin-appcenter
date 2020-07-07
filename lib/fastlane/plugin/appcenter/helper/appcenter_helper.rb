@@ -270,7 +270,7 @@ module Fastlane
       # Verifies a successful upload to App Center
       # returns:
       # successful upload response body.
-      def self.finish(finish_url, api_token, owner_name, app_name, upload_id, timeout)
+      def self.finish_release_upload(finish_url, api_token, owner_name, app_name, upload_id, timeout)
         connection = self.connection(finish_url)
 
         UI.message("DEBUG: POST #{finish_url}") if ENV['DEBUG']

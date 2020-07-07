@@ -218,7 +218,7 @@ module Fastlane
 
           UI.message("Finishing release...")
           finish_url = "#{upload_details['upload_domain']}/upload/finished/#{upload_details['package_asset_id']}?token=#{upload_details['url_encoded_token']}"
-          finished = Helper::AppcenterHelper.finish(finish_url, api_token, owner_name, app_name, upload_id, timeout)
+          finished = Helper::AppcenterHelper.finish_release_upload(finish_url, api_token, owner_name, app_name, upload_id, timeout)
           UI.abort_with_message!("Upload aborted") unless finished
 
           UI.message("Waiting for release to be ready...")
