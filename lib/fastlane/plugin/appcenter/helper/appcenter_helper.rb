@@ -11,6 +11,12 @@ module Fastlane
       # Time to wait between 2 status polls in seconds
       RELEASE_UPLOAD_STATUS_POLL_INTERVAL = 1
 
+      # Maximum number of retries for a request
+      MAX_REQUEST_RETRIES = 2
+
+      # Delay between retries in seconds
+      REQUEST_RETRY_INTERVAL = 5
+
       # basic utility method to check file types that App Center will accept,
       # accounting for file types that can and should be zip-compressed
       # before they are uploaded
@@ -306,33 +312,46 @@ module Fastlane
 
         File.open(file).each_chunk(chunk_size) do |chunk|
           upload_chunk_url = "#{upload_url}&block_number=#{block_number}"
-          connection = self.connection(upload_chunk_url, true)
+          retries = 0
 
-          UI.message("DEBUG: POST #{upload_chunk_url}") if ENV['DEBUG']
-          UI.message("DEBUG: POST body <data>\n") if ENV['DEBUG']
-          response = connection.post do |req|
-            req.options.timeout = timeout
-            req.headers['internal-request-source'] = "fastlane"
-            req.headers['Content-Length'] = chunk.length.to_s
-            req.body = chunk
-          end
-          UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+          while true
+            connection = self.connection(upload_chunk_url, true)
 
-          case response.status
-          when 200...300
-            if response.body['error'] == false
-              UI.message("Chunk uploaded")
-              block_number += 1
-            else
-              UI.error("Error uploading binary #{response.body['message']}")
-              return false
+            UI.message("DEBUG: POST #{upload_chunk_url}") if ENV['DEBUG']
+            UI.message("DEBUG: POST body <data>\n") if ENV['DEBUG']
+            response = connection.post do |req|
+              req.options.timeout = timeout
+              req.headers['internal-request-source'] = "fastlane"
+              req.headers['Content-Length'] = chunk.length.to_s
+              req.body = chunk
             end
-          when 401
-            UI.user_error!("Auth Error, provided invalid token")
-            return false
-          else
-            UI.error("Error uploading binary #{response.status}: #{response.body}")
-            return false
+            UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+
+            case response.status
+            when 200...300
+              if response.body['error'] == false
+                UI.message("Chunk uploaded")
+                block_number += 1
+                break
+              else
+                UI.error("Error uploading binary #{response.body['message']}")
+                return false
+              end
+            when 401
+              UI.user_error!("Auth Error, provided invalid token")
+              return false
+            when 400...407, 409...428, 430...499
+              UI.user_error!("Client error: #{response.status}: #{response.body}")
+              return false
+            else
+              if retries < MAX_REQUEST_RETRIES
+                UI.message("DEBUG: Retryable error uploading binary #{response.status}: #{response.body}")
+                retries += 1
+              else
+                UI.error("Error uploading binary #{response.status}: #{response.body}")
+                return false
+              end
+            end
           end
         end
         UI.message("Binary uploaded")
