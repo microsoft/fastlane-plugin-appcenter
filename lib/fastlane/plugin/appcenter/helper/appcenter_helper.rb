@@ -274,7 +274,6 @@ module Fastlane
         connection = self.connection(finish_url)
 
         UI.message("DEBUG: POST #{finish_url}") if ENV['DEBUG']
-        UI.message("DEBUG: POST body <data>\n") if ENV['DEBUG']
         response = connection.post do |req|
           req.options.timeout = timeout
           req.headers['internal-request-source'] = "fastlane"
