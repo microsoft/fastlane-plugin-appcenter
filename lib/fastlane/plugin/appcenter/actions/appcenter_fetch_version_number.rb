@@ -8,7 +8,7 @@ module Fastlane
   module Actions
     class AppcenterFetchVersionNumberAction < Action
       def self.description
-        "Fetches the latest version number of an app from App Center"
+        "Fetches the latest version number of an app or the last build number of a version from App Center"
       end
 
       def self.authors
@@ -40,7 +40,11 @@ module Fastlane
         latest_release = sorted_releases.last
 
         if latest_release.nil?
-          UI.user_error!("This app has no releases yet")
+          if version.nil?
+            UI.user_error!("This app has no releases yet")
+            return nil
+          end
+          UI.user_error!("The provided version has no releases yet")
           return nil
         end
 
