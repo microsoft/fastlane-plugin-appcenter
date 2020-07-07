@@ -873,6 +873,80 @@ describe Fastlane::Actions::AppcenterUploadAction do
                        body: "remainder"
     end
 
+    it "works with retries in upload chunk" do
+      stub_poll_sleeper
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200)
+
+      allow_any_instance_of(File).to receive(:each_chunk).and_yield("the only chunk")
+      stub_request(:post, "https://upload-domain.com/upload/upload_chunk/1234?token=123abc&block_number=1")
+        .to_return(status: 500, body: "Internal server error").then
+        .to_return(status: 429, body: "Too many requests").then
+        .to_return(status: 200, body: "{\"error\": false}", headers: { 'Content-Type' => 'application/json' })
+
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
+      stub_update_release(200, 'No changelog given')
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+
+      # Check we uploaded only 1 chunk with 3 tries.
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=.*}, times: 3
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=1&?.*}, times: 3
+    end
+
+    it "fails after maximum number of retries for upload chunk" do
+      expect do
+        stub_poll_sleeper
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_release_upload_metadata(200)
+
+        allow_any_instance_of(File).to receive(:each_chunk).and_yield("the only chunk")
+        stub_request(:post, "https://upload-domain.com/upload/upload_chunk/1234?token=123abc&block_number=1")
+          .to_return(status: 408, body: "Timeout").then
+          .to_return(status: 429, body: "Too many requests").then
+          .to_return(status: 500, body: "Internal server error")
+
+        stub_finish_release_upload(200)
+        stub_poll_for_release_id(200)
+        stub_update_release_upload(200, 'uploadFinished')
+        stub_update_release(200, 'No changelog given')
+        stub_get_destination(200)
+        stub_add_to_destination(200)
+        stub_get_release(200)
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Upload aborted")
+
+      # Check we uploaded only 1 chunk with 3 tries.
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=.*}, times: 3
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=1&?.*}, times: 3
+    end
+
     it "works with valid parameters for android app bundle" do
       stub_poll_sleeper
       stub_check_app(200)
