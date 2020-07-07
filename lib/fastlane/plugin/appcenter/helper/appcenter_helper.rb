@@ -347,6 +347,7 @@ module Fastlane
               if retries < MAX_REQUEST_RETRIES
                 UI.message("DEBUG: Retryable error uploading binary #{response.status}: #{response.body}")
                 retries += 1
+                sleep(REQUEST_RETRY_INTERVAL)
               else
                 UI.error("Error uploading binary #{response.status}: #{response.body}")
                 return false
