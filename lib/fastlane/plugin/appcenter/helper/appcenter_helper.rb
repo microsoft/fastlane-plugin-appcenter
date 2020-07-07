@@ -237,7 +237,7 @@ module Fastlane
       # sets metadata for new upload in App Center
       # returns:
       # chunk size
-      def self.set_metadata(set_metadata_url, api_token, owner_name, app_name, upload_id, timeout)
+      def self.set_release_upload_metadata(set_metadata_url, api_token, owner_name, app_name, upload_id, timeout)
         connection = self.connection(set_metadata_url)
 
         UI.message("DEBUG: POST #{set_metadata_url}") if ENV['DEBUG']

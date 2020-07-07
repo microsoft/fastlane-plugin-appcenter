@@ -206,9 +206,9 @@ module Fastlane
           upload_id = upload_details['id']
           
           UI.message("Setting Metadata...")
-          content_type = Constants::CONTENT_TYPES[File.extname(file)&.delete('.').to_sym] || "application/octet-stream"
+          content_type = Constants::CONTENT_TYPES[File.extname(file)&.delete('.').downcase.to_sym] || "application/octet-stream"
           set_metadata_url = "#{upload_details['upload_domain']}/upload/set_metadata/#{upload_details['package_asset_id']}?file_name=#{File.basename(file)}&file_size=#{File.size(file)}&token=#{upload_details['url_encoded_token']}&content_type=#{content_type}"
-          chunk_size = Helper::AppcenterHelper.set_metadata(set_metadata_url, api_token, owner_name, app_name, upload_id, timeout)
+          chunk_size = Helper::AppcenterHelper.set_release_upload_metadata(set_metadata_url, api_token, owner_name, app_name, upload_id, timeout)
           UI.abort_with_message!("Upload aborted") unless chunk_size
 
           UI.message("Uploading release binary...")
@@ -221,6 +221,7 @@ module Fastlane
           finished = Helper::AppcenterHelper.finish(finish_url, api_token, owner_name, app_name, upload_id, timeout)
           UI.abort_with_message!("Upload aborted") unless finished
 
+          UI.message("Waiting for release to be ready...")
           release_status_url = "v0.1/apps/#{owner_name}/#{app_name}/uploads/releases/#{upload_id}"
           release_id = Helper::AppcenterHelper.poll_for_release_id(api_token, release_status_url)
 

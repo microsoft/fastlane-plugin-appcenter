@@ -50,7 +50,7 @@ def stub_create_mapping_upload(status, version, build, file_name = "mapping.txt"
     )
 end
 
-def stub_set_metadata(status, file_name = "apk_file_empty.apk", body = "{\"error\": false, \"chunk_size\": 0}")
+def stub_set_release_upload_metadata(status, file_name = "apk_file_empty.apk", body = "{\"error\": false, \"chunk_size\": 0}")
   content_type = Fastlane::Actions::Constants::CONTENT_TYPES[File.extname(file_name).delete('.').to_sym] || "application/octet-stream"
   stub_request(:post, "https://upload-domain.com/upload/set_metadata/1234?content_type=#{content_type}&file_name=#{file_name}&file_size=0&token=123abc")
     .to_return(status: status, body: body, headers: { 'Content-Type' => 'application/json' })
@@ -407,7 +407,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
         stub_poll_sleeper
         stub_check_app(200)
         stub_create_release_upload(200)
-        stub_set_metadata(200)
+        stub_set_release_upload_metadata(200)
         stub_upload_build(200)
         stub_finished(200)
         stub_poll_for_release_id(200)
@@ -449,7 +449,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
         stub_poll_sleeper
         stub_check_app(200)
         stub_create_release_upload(200)
-        stub_set_metadata(200)
+        stub_set_release_upload_metadata(200)
         stub_upload_build(500)
 
         Fastlane::FastFile.new.parse("lane :test do
@@ -503,7 +503,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       expect do
         stub_check_app(200)
         stub_create_release_upload(200)
-        stub_set_metadata(501)
+        stub_set_release_upload_metadata(501)
         Fastlane::FastFile.new.parse("lane :test do
           appcenter_upload({
             api_token: 'xxx',
@@ -517,11 +517,11 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end.to raise_error("Upload aborted")
     end
 
-    it "handles set_metadata not returning chunk size" do
+    it "handles set_release_upload_metadata not returning chunk size" do
       expect do
         stub_check_app(200)
         stub_create_release_upload(200)
-        stub_set_metadata(200, "apk_file_empty.apk", "{}")
+        stub_set_release_upload_metadata(200, "apk_file_empty.apk", "{}")
 
         Fastlane::FastFile.new.parse("lane :test do
           appcenter_upload({
@@ -540,7 +540,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       expect do
         stub_check_app(200)
         stub_create_release_upload(200)
-        stub_set_metadata(200)
+        stub_set_release_upload_metadata(200)
         stub_upload_build(200)
         stub_finished(501)
 
@@ -561,7 +561,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       expect do
         stub_check_app(200)
         stub_create_release_upload(200)
-        stub_set_metadata(200)
+        stub_set_release_upload_metadata(200)
         stub_upload_build(200)
         stub_finished(200, "{\"error\": true}")
 
@@ -583,7 +583,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
         stub_poll_sleeper
         stub_check_app(200)
         stub_create_release_upload(200)
-        stub_set_metadata(200)
+        stub_set_release_upload_metadata(200)
         stub_upload_build(200)
         stub_finished(200)
         stub_update_release_upload(200, 'uploadFinished')
@@ -607,7 +607,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
         stub_poll_sleeper
         stub_check_app(200)
         stub_create_release_upload(200)
-        stub_set_metadata(200)
+        stub_set_release_upload_metadata(200)
         stub_upload_build(200)
         stub_finished(200)
         stub_update_release_upload(200, 'uploadFinished')
@@ -631,7 +631,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
         stub_poll_sleeper
         stub_check_app(200)
         stub_create_release_upload(200)
-        stub_set_metadata(200)
+        stub_set_release_upload_metadata(200)
         stub_upload_build(200)
         stub_finished(200)
         stub_update_release_upload(200, 'uploadFinished')
@@ -654,7 +654,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200)
+      stub_set_release_upload_metadata(200)
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -679,7 +679,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200)
+      stub_set_release_upload_metadata(200)
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -705,7 +705,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200)
+      stub_set_release_upload_metadata(200)
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -739,7 +739,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200)
+      stub_set_release_upload_metadata(200)
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -773,7 +773,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200)
+      stub_set_release_upload_metadata(200)
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -807,7 +807,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200)
+      stub_set_release_upload_metadata(200)
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -837,7 +837,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200)
+      stub_set_release_upload_metadata(200)
 
       allow_any_instance_of(File).to receive(:each_chunk).and_yield("the first chunk").and_yield("remainder")
       stub_request(:post, "https://upload-domain.com/upload/upload_chunk/1234?token=123abc&block_number=1")
@@ -877,7 +877,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "aab_file_empty.aab")
+      stub_set_release_upload_metadata(200, "aab_file_empty.aab")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -904,7 +904,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
         stub_poll_sleeper
         stub_check_app(200)
         stub_create_release_upload(200)
-        stub_set_metadata(200, "aab_file_empty.aab")
+        stub_set_release_upload_metadata(200, "aab_file_empty.aab")
         stub_upload_build(200)
         stub_finished(200)
         stub_poll_for_release_id(200)
@@ -931,7 +931,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "app_file_empty.app.zip")
+      stub_set_release_upload_metadata(200, "app_file_empty.app.zip")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -958,7 +958,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
         stub_poll_sleeper
         stub_check_app(200)
         stub_create_release_upload(200, { build_version: "1.0-alpha", build_number: "1234" })
-        stub_set_metadata(200, "#{ext}_file_empty.#{ext}")
+        stub_set_release_upload_metadata(200, "#{ext}_file_empty.#{ext}")
         stub_upload_build(200)
         stub_finished(200)
         stub_poll_for_release_id(200)
@@ -991,7 +991,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
             stub_poll_sleeper
             stub_check_app(200)
             stub_create_release_upload(200)
-            stub_set_metadata(200, "#{ext}_file_empty.#{ext}")
+            stub_set_release_upload_metadata(200, "#{ext}_file_empty.#{ext}")
             stub_upload_build(200)
             stub_finished(200)
             stub_poll_for_release_id(200)
@@ -1023,7 +1023,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
           stub_poll_sleeper
           stub_check_app(200)
           stub_create_release_upload(200)
-          stub_set_metadata(200, "#{ext}_file_empty.#{ext}")
+          stub_set_release_upload_metadata(200, "#{ext}_file_empty.#{ext}")
           stub_upload_build(200)
           stub_finished(200)
           stub_poll_for_release_id(200)
@@ -1051,7 +1051,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "ipa_file_empty.ipa")
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1080,7 +1080,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200, 'app', 'shared-value-owner')
       stub_create_release_upload(200, nil, 'app', 'shared-value-owner')
-      stub_set_metadata(200, "ipa_file_empty.ipa")
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200, "app", "shared-value-owner")
@@ -1109,7 +1109,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200, 'shared-value-app')
       stub_create_release_upload(200, nil, 'shared-value-app')
-      stub_set_metadata(200, "ipa_file_empty.ipa")
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200, 'shared-value-app')
@@ -1138,7 +1138,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "apk_file_empty.apk")
+      stub_set_release_upload_metadata(200, "apk_file_empty.apk")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1168,7 +1168,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
         stub_poll_sleeper
         stub_check_app(200)
         stub_create_release_upload(200)
-        stub_set_metadata(200, "apk_file_empty.apk")
+        stub_set_release_upload_metadata(200, "apk_file_empty.apk")
         stub_upload_build(200)
         stub_finished(200)
         stub_poll_for_release_id(200)
@@ -1206,7 +1206,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "aab_file_empty.aab")
+      stub_set_release_upload_metadata(200, "aab_file_empty.aab")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1235,7 +1235,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "ipa_file_empty.ipa")
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1264,7 +1264,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "ipa_file_empty.ipa")
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1294,7 +1294,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "ipa_file_empty.ipa")
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1324,7 +1324,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "ipa_file_empty.ipa")
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1355,7 +1355,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "ipa_file_empty.ipa")
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1386,7 +1386,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "ipa_file_empty.ipa")
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1420,7 +1420,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
           stub_poll_sleeper
           stub_check_app(200)
           stub_create_release_upload(200)
-          stub_set_metadata(200, "app_file_empty.app.zip")
+          stub_set_release_upload_metadata(200, "app_file_empty.app.zip")
           stub_upload_build(200)
           stub_finished(200)
           stub_poll_for_release_id(200)
@@ -1461,7 +1461,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
           stub_poll_sleeper
           stub_check_app(200)
           stub_create_release_upload(200)
-          stub_set_metadata(200, "app_file_empty.app.zip")
+          stub_set_release_upload_metadata(200, "app_file_empty.app.zip")
           stub_upload_build(200)
           stub_finished(200)
           stub_poll_for_release_id(200)
@@ -1494,7 +1494,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
           stub_poll_sleeper
           stub_check_app(200)
           stub_create_release_upload(200)
-          stub_set_metadata(200, "app_file_empty.app.zip")
+          stub_set_release_upload_metadata(200, "app_file_empty.app.zip")
           stub_upload_build(200)
           stub_finished(200)
           stub_poll_for_release_id(200)
@@ -1525,7 +1525,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "ipa_file_empty.ipa")
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1559,7 +1559,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "ipa_file_empty.ipa")
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1593,7 +1593,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "ipa_file_empty.ipa")
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1624,7 +1624,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_check_app(404)
       stub_create_app(200, "app", "app", "Android", "Java")
       stub_create_release_upload(200)
-      stub_set_metadata(200, "apk_file_empty.apk")
+      stub_set_release_upload_metadata(200, "apk_file_empty.apk")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1651,7 +1651,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_check_app(404)
       stub_create_app(200, "app", "App Name", "Android", "Java")
       stub_create_release_upload(200)
-      stub_set_metadata(200, "apk_file_empty.apk")
+      stub_set_release_upload_metadata(200, "apk_file_empty.apk")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1681,7 +1681,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_check_app(404)
       stub_create_app(200, "app", "App Name", "macOS", "Objective-C-Swift")
       stub_create_release_upload(200)
-      stub_set_metadata(200, "app.zip_file_empty.app.zip")
+      stub_set_release_upload_metadata(200, "app.zip_file_empty.app.zip")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1710,7 +1710,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_check_app(404)
       stub_create_app(200, "app", "App Name", "Windows", "UWP")
       stub_create_release_upload(200, { build_version: "1.0" })
-      stub_set_metadata(200, "zip_file_empty.zip")
+      stub_set_release_upload_metadata(200, "zip_file_empty.zip")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1740,7 +1740,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_check_app(404)
       stub_create_app(200, "app", "App Name", "Android", "Java", "organization", "owner")
       stub_create_release_upload(200)
-      stub_set_metadata(200, "apk_file_empty.apk")
+      stub_set_release_upload_metadata(200, "apk_file_empty.apk")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1806,7 +1806,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "apk_file_empty.apk")
+      stub_set_release_upload_metadata(200, "apk_file_empty.apk")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1836,7 +1836,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "apk_file_empty.apk")
+      stub_set_release_upload_metadata(200, "apk_file_empty.apk")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1885,7 +1885,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "ipa_file_empty.ipa")
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -1955,7 +1955,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
         stub_poll_sleeper
         stub_check_app(200)
         stub_create_release_upload(200)
-        stub_set_metadata(200, "apk_file_empty.apk")
+        stub_set_release_upload_metadata(200, "apk_file_empty.apk")
         stub_upload_build(200)
         stub_finished(200)
         stub_poll_for_release_id(200)
@@ -1986,7 +1986,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "ipa_file_empty.ipa")
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -2014,7 +2014,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "apk_file_empty.apk")
+      stub_set_release_upload_metadata(200, "apk_file_empty.apk")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -2094,7 +2094,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "ipa_file_empty.ipa")
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -2132,7 +2132,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
-      stub_set_metadata(200, "ipa_file_empty.ipa")
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
@@ -2172,7 +2172,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
         stub_poll_sleeper
         stub_check_app(200)
         stub_create_release_upload(200)
-        stub_set_metadata(200, "ipa_file_empty.ipa")
+        stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
         stub_upload_build(200)
         stub_finished(200)
         stub_poll_for_release_id(200)
@@ -2241,7 +2241,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_check_app(404)
       stub_create_app(200, "app", "App Name", "Android", "Java", "organization", "owner")
       stub_create_release_upload(200)
-      stub_set_metadata(200, "apk_file_empty.apk")
+      stub_set_release_upload_metadata(200, "apk_file_empty.apk")
       stub_upload_build(200)
       stub_finished(200)
       stub_poll_for_release_id(200)
