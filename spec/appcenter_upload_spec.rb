@@ -947,6 +947,43 @@ describe Fastlane::Actions::AppcenterUploadAction do
       assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=1&?.*}, times: 3
     end
 
+    it "fails immediately on non retryable error" do
+      expect do
+        stub_poll_sleeper
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_release_upload_metadata(200)
+
+        allow_any_instance_of(File).to receive(:each_chunk).and_yield("the only chunk")
+        stub_request(:post, "https://upload-domain.com/upload/upload_chunk/1234?token=123abc&block_number=1")
+          .to_return(status: 503, body: "Service unavailable").then
+          .to_return(status: 403, body: "Forbidden")
+
+        stub_finish_release_upload(200)
+        stub_poll_for_release_id(200)
+        stub_update_release_upload(200, 'uploadFinished')
+        stub_update_release(200, 'No changelog given')
+        stub_get_destination(200)
+        stub_add_to_destination(200)
+        stub_get_release(200)
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Client error: 403: Forbidden")
+
+      # Check we uploaded only 1 chunk with 2 tries.
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=.*}, times: 2
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=1&?.*}, times: 2
+    end
+
     it "works with valid parameters for android app bundle" do
       stub_poll_sleeper
       stub_check_app(200)
