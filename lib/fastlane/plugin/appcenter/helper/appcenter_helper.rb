@@ -314,20 +314,29 @@ module Fastlane
           upload_chunk_url = "#{upload_url}&block_number=#{block_number}"
           retries = 0
 
-          while true
-            connection = self.connection(upload_chunk_url, true)
+          while retries <= MAX_REQUEST_RETRIES
+            begin
+              connection = self.connection(upload_chunk_url, true)
 
-            UI.message("DEBUG: POST #{upload_chunk_url}") if ENV['DEBUG']
-            UI.message("DEBUG: POST body <data>\n") if ENV['DEBUG']
-            response = connection.post do |req|
-              req.options.timeout = timeout
-              req.headers['internal-request-source'] = "fastlane"
-              req.headers['Content-Length'] = chunk.length.to_s
-              req.body = chunk
+              UI.message("DEBUG: POST #{upload_chunk_url}") if ENV['DEBUG']
+              UI.message("DEBUG: POST body <data>\n") if ENV['DEBUG']
+              response = connection.post do |req|
+                req.options.timeout = timeout
+                req.headers['internal-request-source'] = "fastlane"
+                req.headers['Content-Length'] = chunk.length.to_s
+                req.body = chunk
+              end
+              UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+              status = response.status
+              message = response.body
+            rescue Faraday::Error => e
+
+              # Low level HTTP errors, we will retry them
+              status = 0
+              message = e.message
             end
-            UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
 
-            case response.status
+            case status
             when 200...300
               if response.body['error'] == false
                 UI.message("Chunk uploaded")
@@ -345,11 +354,11 @@ module Fastlane
               return false
             else
               if retries < MAX_REQUEST_RETRIES
-                UI.message("DEBUG: Retryable error uploading binary #{response.status}: #{response.body}")
+                UI.message("DEBUG: Retryable error uploading binary #{status}: #{message}")
                 retries += 1
                 sleep(REQUEST_RETRY_INTERVAL)
               else
-                UI.error("Error uploading binary #{response.status}: #{response.body}")
+                UI.error("Error uploading binary #{status}: #{message}")
                 return false
               end
             end

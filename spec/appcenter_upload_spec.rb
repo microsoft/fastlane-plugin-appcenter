@@ -919,7 +919,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
         allow_any_instance_of(File).to receive(:each_chunk).and_yield("the only chunk")
         stub_request(:post, "https://upload-domain.com/upload/upload_chunk/1234?token=123abc&block_number=1")
           .to_return(status: 408, body: "Timeout").then
-          .to_return(status: 429, body: "Too many requests").then
+          .to_raise(Faraday::ConnectionFailed.new("Could not connect")).then
           .to_return(status: 500, body: "Internal server error")
 
         stub_finish_release_upload(200)
