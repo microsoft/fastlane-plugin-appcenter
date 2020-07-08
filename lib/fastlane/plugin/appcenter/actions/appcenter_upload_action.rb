@@ -9,6 +9,23 @@ module Fastlane
           windows: %w(.appx .appxbundle .appxupload .msix .msixbundle .msixupload .zip .msi),
           custom: %w(.zip)
       }
+      CONTENT_TYPES = {
+          apk: "application/vnd.android.package-archive",
+          aab: "application/vnd.android.package-archive",
+          msi: "application/x-msi",
+          plist: "application/xml",
+          aetx: "application/c-x509-ca-cert",
+          cer: "application/pkix-cert",
+          xap: "application/x-silverlight-app",
+          appx: "application/x-appx",
+          appxbundle: "application/x-appxbundle",
+          appxupload: "application/x-appxupload",
+          appxsym: "application/x-appxupload",
+          msix: "application/x-msix",
+          msixbundle: "application/x-msixbundle",
+          msixupload: "application/x-msixupload",
+          msixsym: "application/x-msixupload",
+      }
       ALL_SUPPORTED_EXTENSIONS = SUPPORTED_EXTENSIONS.values.flatten.sort!.uniq!
       STORE_ONLY_EXTENSIONS = %w(.aab)
       STORE_SUPPORTED_EXTENSIONS = %w(.aab .apk .ipa)
@@ -186,14 +203,29 @@ module Fastlane
         UI.message("Starting release upload...")
         upload_details = Helper::AppcenterHelper.create_release_upload(api_token, owner_name, app_name, release_upload_body)
         if upload_details
-          upload_id = upload_details['upload_id']
-          upload_url = upload_details['upload_url']
+          upload_id = upload_details['id']
+          
+          UI.message("Setting Metadata...")
+          content_type = Constants::CONTENT_TYPES[File.extname(file)&.delete('.').downcase.to_sym] || "application/octet-stream"
+          set_metadata_url = "#{upload_details['upload_domain']}/upload/set_metadata/#{upload_details['package_asset_id']}?file_name=#{File.basename(file)}&file_size=#{File.size(file)}&token=#{upload_details['url_encoded_token']}&content_type=#{content_type}"
+          chunk_size = Helper::AppcenterHelper.set_release_upload_metadata(set_metadata_url, api_token, owner_name, app_name, upload_id, timeout)
+          UI.abort_with_message!("Upload aborted") unless chunk_size
 
           UI.message("Uploading release binary...")
-          uploaded = Helper::AppcenterHelper.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, timeout)
+          upload_url = "#{upload_details['upload_domain']}/upload/upload_chunk/#{upload_details['package_asset_id']}?token=#{upload_details['url_encoded_token']}"
+          uploaded = Helper::AppcenterHelper.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, content_type, chunk_size, timeout)
+          UI.abort_with_message!("Upload aborted") unless uploaded
 
-          if uploaded
-            release_id = uploaded['release_id']
+          UI.message("Finishing release...")
+          finish_url = "#{upload_details['upload_domain']}/upload/finished/#{upload_details['package_asset_id']}?token=#{upload_details['url_encoded_token']}"
+          finished = Helper::AppcenterHelper.finish_release_upload(finish_url, api_token, owner_name, app_name, upload_id, timeout)
+          UI.abort_with_message!("Upload aborted") unless finished
+
+          UI.message("Waiting for release to be ready...")
+          release_status_url = "v0.1/apps/#{owner_name}/#{app_name}/uploads/releases/#{upload_id}"
+          release_id = Helper::AppcenterHelper.poll_for_release_id(api_token, release_status_url)
+
+          if release_id.is_a? Integer
             release_url = Helper::AppcenterHelper.get_release_url(owner_type, owner_name, app_name, release_id)
             UI.message("Release '#{release_id}' committed: #{release_url}")
 
@@ -323,7 +355,6 @@ module Fastlane
           release = self.run_release_upload(params) unless upload_dsym_only || upload_mapping_only
           params[:version] = release['short_version'] if release
           params[:build_number] = release['version'] if release
-
           self.run_dsym_upload(params) unless upload_mapping_only || upload_build_only
           self.run_mapping_upload(params) unless upload_dsym_only || upload_build_only
         end

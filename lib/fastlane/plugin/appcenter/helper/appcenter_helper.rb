@@ -1,6 +1,21 @@
+class File
+  def each_chunk(chunk_size)
+    yield read(chunk_size) until eof?
+  end
+end
+
 module Fastlane
   module Helper
     class AppcenterHelper
+
+      # Time to wait between 2 status polls in seconds
+      RELEASE_UPLOAD_STATUS_POLL_INTERVAL = 1
+
+      # Maximum number of retries for a request
+      MAX_REQUEST_RETRIES = 2
+
+      # Delay between retries in seconds
+      REQUEST_RETRY_INTERVAL = 5
 
       # basic utility method to check file types that App Center will accept,
       # accounting for file types that can and should be zip-compressed
@@ -22,7 +37,6 @@ module Fastlane
         if ENV['APPCENTER_ENV']&.upcase == 'INT'
           default_api_url = "https://api-gateway-core-integration.dev.avalanch.es"
         end
-
         options = {
           url: upload_url || default_api_url
         }
@@ -48,13 +62,11 @@ module Fastlane
       # upload_url
       def self.create_release_upload(api_token, owner_name, app_name, body)
         connection = self.connection
-
-        url = "v0.1/apps/#{owner_name}/#{app_name}/release_uploads"
+        url = "v0.1/apps/#{owner_name}/#{app_name}/uploads/releases"
         body ||= {}
 
         UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body: #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
-
         response = connection.post(url) do |req|
           req.headers['X-API-Token'] = api_token
           req.headers['internal-request-source'] = "fastlane"
@@ -62,7 +74,6 @@ module Fastlane
         end
 
         UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
         case response.status
         when 200...300
           response.body
@@ -229,50 +240,141 @@ module Fastlane
         end
       end
 
-      # upload binary for specified upload_url
-      # if succeed, then commits the release
-      # otherwise aborts
-      def self.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, timeout)
-        connection = self.connection(upload_url)
+      # sets metadata for new upload in App Center
+      # returns:
+      # chunk size
+      def self.set_release_upload_metadata(set_metadata_url, api_token, owner_name, app_name, upload_id, timeout)
+        connection = self.connection(set_metadata_url)
 
-        options = {}
-        options[:upload_id] = upload_id
-        # ipa field is used for .apk, .aab and .ipa files
-        options[:ipa] = Faraday::UploadIO.new(file, 'application/octet-stream') if file && File.exist?(file)
-
-        UI.message("DEBUG: POST #{upload_url}") if ENV['DEBUG']
+        UI.message("DEBUG: POST #{set_metadata_url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body <data>\n") if ENV['DEBUG']
-
         response = connection.post do |req|
           req.options.timeout = timeout
           req.headers['internal-request-source'] = "fastlane"
-          req.body = options
         end
-
         UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
 
         case response.status
         when 200...300
-          UI.message("Binary uploaded")
-          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'committed')
+          chunk_size = response.body['chunk_size']
+          unless chunk_size.is_a? Integer
+            UI.error("Set metadata didn't return chunk size: #{response.status}: #{response.body}")
+            false
+          else
+            UI.message("Metadata set")
+            chunk_size
+          end
         when 401
           UI.user_error!("Auth Error, provided invalid token")
           false
         else
-          UI.error("Error uploading binary #{response.status}: #{response.body}")
-          self.update_release_upload(api_token, owner_name, app_name, upload_id, 'aborted')
-          UI.error("Release aborted")
+          UI.error("Error setting metadata: #{response.status}: #{response.body}")
           false
         end
+      end
+
+      # Verifies a successful upload to App Center
+      # returns:
+      # successful upload response body.
+      def self.finish_release_upload(finish_url, api_token, owner_name, app_name, upload_id, timeout)
+        connection = self.connection(finish_url)
+
+        UI.message("DEBUG: POST #{finish_url}") if ENV['DEBUG']
+        response = connection.post do |req|
+          req.options.timeout = timeout
+          req.headers['internal-request-source'] = "fastlane"
+        end
+        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+
+        case response.status
+        when 200...300
+          if response.body['error'] == false
+            UI.message("Upload finished")
+            self.update_release_upload(api_token, owner_name, app_name, upload_id, 'uploadFinished')
+          else
+            UI.error("Error finishing upload: #{response.body['message']}")
+            false
+          end
+        when 401
+          UI.user_error!("Auth Error, provided invalid token")
+          false
+        else
+          UI.error("Error finishing upload: #{response.status}: #{response.body}")
+          false
+        end
+      end
+
+      # upload binary for specified upload_url
+      # if succeed, then commits the release
+      # otherwise aborts
+      def self.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, content_type, chunk_size, timeout)
+        block_number = 1
+
+        File.open(file).each_chunk(chunk_size) do |chunk|
+          upload_chunk_url = "#{upload_url}&block_number=#{block_number}"
+          retries = 0
+
+          while retries <= MAX_REQUEST_RETRIES
+            begin
+              connection = self.connection(upload_chunk_url, true)
+
+              UI.message("DEBUG: POST #{upload_chunk_url}") if ENV['DEBUG']
+              UI.message("DEBUG: POST body <data>\n") if ENV['DEBUG']
+              response = connection.post do |req|
+                req.options.timeout = timeout
+                req.headers['internal-request-source'] = "fastlane"
+                req.headers['Content-Length'] = chunk.length.to_s
+                req.body = chunk
+              end
+              UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+              status = response.status
+              message = response.body
+            rescue Faraday::Error => e
+
+              # Low level HTTP errors, we will retry them
+              status = 0
+              message = e.message
+            end
+
+            case status
+            when 200...300
+              if response.body['error'] == false
+                UI.message("Chunk uploaded")
+                block_number += 1
+                break
+              else
+                UI.error("Error uploading binary #{response.body['message']}")
+                return false
+              end
+            when 401
+              UI.user_error!("Auth Error, provided invalid token")
+              return false
+            when 400...407, 409...428, 430...499
+              UI.user_error!("Client error: #{response.status}: #{response.body}")
+              return false
+            else
+              if retries < MAX_REQUEST_RETRIES
+                UI.message("DEBUG: Retryable error uploading binary #{status}: #{message}")
+                retries += 1
+                sleep(REQUEST_RETRY_INTERVAL)
+              else
+                UI.error("Error uploading binary #{status}: #{message}")
+                return false
+              end
+            end
+          end
+        end
+        UI.message("Binary uploaded")
       end
 
       # Commits or aborts the upload process for a release
       def self.update_release_upload(api_token, owner_name, app_name, upload_id, status)
         connection = self.connection
 
-        url = "v0.1/apps/#{owner_name}/#{app_name}/release_uploads/#{upload_id}"
+        url = "v0.1/apps/#{owner_name}/#{app_name}/uploads/releases/#{upload_id}"
         body = {
-          status: status
+          upload_status: status,
+          id: upload_id
         }
 
         UI.message("DEBUG: PATCH #{url}") if ENV['DEBUG']
@@ -328,6 +430,40 @@ module Fastlane
         else
           UI.error("Error fetching information about release #{response.status}: #{response.body}")
           false
+        end
+      end
+
+      # Polls the upload for a release id. When a release is uploaded, we have to check
+      # for a successful extraction before we can continue.
+      # returns:
+      # release_distinct_id
+      def self.poll_for_release_id(api_token, url)
+        connection = self.connection
+
+        while true
+          UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
+          response = connection.get(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+          end
+
+          UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
+
+          case response.status
+          when 200...300
+            case response.body['upload_status']
+            when "readyToBePublished"
+              return response.body['release_distinct_id']
+            when "error"
+              UI.error("Error fetching release: #{response.body['error_details']}")
+              return false
+            else
+              sleep(RELEASE_UPLOAD_STATUS_POLL_INTERVAL)
+            end
+          else
+            UI.error("Error fetching information about release #{response.status}: #{response.body}")
+            return false
+          end
         end
       end
 

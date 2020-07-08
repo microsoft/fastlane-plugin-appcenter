@@ -21,11 +21,11 @@ def stub_create_app(status, app_name = "app", app_display_name = "app", app_os =
 end
 
 def stub_create_release_upload(status, body = nil, app_name = "app", owner_name = "owner")
-  stub_request(:post, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}/release_uploads")
+  stub_request(:post, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}/uploads/releases")
     .with(body: body && JSON.generate(body) || "{}")
     .to_return(
       status: status,
-      body: "{\"upload_id\":\"upload_id\",\"upload_url\":\"https://upload.com\"}",
+      body: "{\"id\":\"upload_id\",\"upload_domain\":\"https://upload-domain.com\",\"package_asset_id\":\"1234\",\"url_encoded_token\":\"123abc\"}",
       headers: { 'Content-Type' => 'application/json' }
     )
 end
@@ -50,9 +50,31 @@ def stub_create_mapping_upload(status, version, build, file_name = "mapping.txt"
     )
 end
 
+def stub_set_release_upload_metadata(status, file_name = "apk_file_empty.apk", body = "{\"error\": false, \"chunk_size\": 0}")
+  content_type = Fastlane::Actions::Constants::CONTENT_TYPES[File.extname(file_name).delete('.').to_sym] || "application/octet-stream"
+  stub_request(:post, "https://upload-domain.com/upload/set_metadata/1234?content_type=#{content_type}&file_name=#{file_name}&file_size=0&token=123abc")
+    .to_return(status: status, body: body, headers: { 'Content-Type' => 'application/json' })
+end
+
+def stub_finish_release_upload(status, body = "{\"error\": false}")
+  stub_request(:post, "https://upload-domain.com/upload/finished/1234?token=123abc")
+    .to_return(status: status, body: body, headers: { 'Content-Type' => 'application/json' })
+end
+
+def stub_poll_sleeper
+  allow_any_instance_of(Object).to receive(:sleep)
+end
+
+def stub_poll_for_release_id(status, app_name = "app", owner_name = "owner", body = "{\"release_distinct_id\":1,\"upload_status\":\"readyToBePublished\"}")
+  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}/uploads/releases/upload_id")
+    .to_return(status: status, body: "{\"upload_status\":\"uploadFinished\"}", headers: { 'Content-Type' => 'application/json' }).times(2).then
+    .to_return(status: status, body: body, headers: { 'Content-Type' => 'application/json' })
+end
+
 def stub_upload_build(status)
-  stub_request(:post, "https://upload.com/")
-    .to_return(status: status, body: "", headers: {})
+  allow_any_instance_of(File).to receive(:each_chunk).and_yield("test")
+  stub_request(:post, "https://upload-domain.com/upload/upload_chunk/1234?token=123abc&block_number=1")
+    .to_return(status: status, body: "{\"error\": false}", headers: { 'Content-Type' => 'application/json' })
 end
 
 def stub_upload_dsym(status)
@@ -66,9 +88,9 @@ def stub_upload_mapping(status)
 end
 
 def stub_update_release_upload(status, release_status, app_name = "app", owner_name = "owner")
-  stub_request(:patch, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}/release_uploads/upload_id")
+  stub_request(:patch, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}/uploads/releases/upload_id")
     .with(
-      body: "{\"status\":\"#{release_status}\"}"
+      body: "{\"upload_status\":\"#{release_status}\",\"id\":\"upload_id\"}"
     )
     .to_return(status: status, body: "{\"release_id\":\"1\"}", headers: { 'Content-Type' => 'application/json' })
 end
@@ -382,10 +404,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
 
     it "raises an error on update release upload error" do
       expect do
+        stub_poll_sleeper
         stub_check_app(200)
         stub_create_release_upload(200)
+        stub_set_release_upload_metadata(200)
         stub_upload_build(200)
-        stub_update_release_upload(500, 'committed')
+        stub_finish_release_upload(200)
+        stub_poll_for_release_id(200)
+        stub_update_release_upload(500, 'uploadFinished')
 
         Fastlane::FastFile.new.parse("lane :test do
           appcenter_upload({
@@ -420,10 +446,11 @@ describe Fastlane::Actions::AppcenterUploadAction do
 
     it "raises an error on upload build failure" do
       expect do
+        stub_poll_sleeper
         stub_check_app(200)
         stub_create_release_upload(200)
-        stub_upload_build(400)
-        stub_update_release_upload(200, 'aborted')
+        stub_set_release_upload_metadata(200)
+        stub_upload_build(500)
 
         Fastlane::FastFile.new.parse("lane :test do
           appcenter_upload({
@@ -435,7 +462,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
             destination_type: 'group'
           })
         end").runner.execute(:test)
-      end.to raise_error("Failed to upload release")
+      end.to raise_error("Upload aborted")
     end
 
     it "raises an error on release upload creation auth failure" do
@@ -472,11 +499,166 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end").runner.execute(:test)
     end
 
+    it "handles failed set metadata" do
+      expect do
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_release_upload_metadata(501)
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Upload aborted")
+    end
+
+    it "handles set_release_upload_metadata not returning chunk size" do
+      expect do
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_release_upload_metadata(200, "apk_file_empty.apk", "{}")
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Upload aborted")
+    end
+
+    it "handles errors in 'finish'" do
+      expect do
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_release_upload_metadata(200)
+        stub_upload_build(200)
+        stub_finish_release_upload(501)
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Upload aborted")
+    end
+
+    it "handles errors in 'finish' body" do
+      expect do
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_release_upload_metadata(200)
+        stub_upload_build(200)
+        stub_finish_release_upload(200, "{\"error\": true}")
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Upload aborted")
+    end
+
+    it "handles errors in 'poll_for_release_id'" do
+      expect do
+        stub_poll_sleeper
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_release_upload_metadata(200)
+        stub_upload_build(200)
+        stub_finish_release_upload(200)
+        stub_update_release_upload(200, 'uploadFinished')
+        stub_poll_for_release_id(status: 200, body: "{\"upload_status\":\"error\"}")
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Failed to upload release")
+    end
+
+    it "handles errors in 'poll_for_release_id' body" do
+      expect do
+        stub_poll_sleeper
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_release_upload_metadata(200)
+        stub_upload_build(200)
+        stub_finish_release_upload(200)
+        stub_update_release_upload(200, 'uploadFinished')
+        stub_poll_for_release_id(501)
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Failed to upload release")
+    end
+
+    it "handles invalid 'release_distinct_id' in 'poll_for_release_id' body" do
+      expect do
+        stub_poll_sleeper
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_release_upload_metadata(200)
+        stub_upload_build(200)
+        stub_finish_release_upload(200)
+        stub_update_release_upload(200, 'uploadFinished')
+        stub_poll_for_release_id(status: 200, body: "{\"release_distinct_id\":\"notAnInteger\",\"upload_status\":\"readyToBePublished\"}")
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Failed to upload release")
+    end
+
     it "handles not found distribution group" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200)
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, 'No changelog given')
       stub_get_destination(404)
       stub_get_release(200)
@@ -494,10 +676,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "handles not found release" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200)
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, 'No changelog given')
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -516,10 +702,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "can use a generated changelog as release notes" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200)
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, 'autogenerated changelog')
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -546,10 +736,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
       read_more = '...'
       release_notes_clipped = release_notes[0, 5000 - read_more.length] + read_more
 
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200)
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, release_notes_clipped)
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -576,10 +770,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
       read_more = "...\n\n[read more](#{release_notes_link})"
       release_notes_clipped = release_notes[0, 5000 - read_more.length] + read_more
 
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200)
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       # rubocop:disable Layout/LineLength
       stub_update_release(200, "______________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________...\\n\\n[read more](https://text.com)")
       # rubocop:enable Layout/LineLength
@@ -606,10 +804,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "works with valid parameters for android" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200)
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, 'No changelog given')
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -625,13 +827,172 @@ describe Fastlane::Actions::AppcenterUploadAction do
           destination_type: 'group'
         })
       end").runner.execute(:test)
+
+      # Check we uploaded only 1 chunk.
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=.*}
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=1&?.*}
+    end
+
+    it "works with valid parameters for android larger file" do
+      stub_poll_sleeper
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200)
+
+      allow_any_instance_of(File).to receive(:each_chunk).and_yield("the first chunk").and_yield("remainder")
+      stub_request(:post, "https://upload-domain.com/upload/upload_chunk/1234?token=123abc&block_number=1")
+        .to_return(status: 200, body: "{\"error\": false}", headers: { 'Content-Type' => 'application/json' })
+      stub_request(:post, "https://upload-domain.com/upload/upload_chunk/1234?token=123abc&block_number=2")
+        .to_return(status: 200, body: "{\"error\": false}", headers: { 'Content-Type' => 'application/json' })
+
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
+      stub_update_release(200, 'No changelog given')
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+
+      # Check we uploaded as 2 chunks.
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=.*},
+                       times: 2
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=1&?.*},
+                       body: "the first chunk"
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=2&?.*},
+                       body: "remainder"
+    end
+
+    it "works with retries in upload chunk" do
+      stub_poll_sleeper
+      stub_check_app(200)
+      stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200)
+
+      allow_any_instance_of(File).to receive(:each_chunk).and_yield("the only chunk")
+      stub_request(:post, "https://upload-domain.com/upload/upload_chunk/1234?token=123abc&block_number=1")
+        .to_return(status: 500, body: "Internal server error").then
+        .to_return(status: 429, body: "Too many requests").then
+        .to_return(status: 200, body: "{\"error\": false}", headers: { 'Content-Type' => 'application/json' })
+
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
+      stub_update_release(200, 'No changelog given')
+      stub_get_destination(200)
+      stub_add_to_destination(200)
+      stub_get_release(200)
+
+      Fastlane::FastFile.new.parse("lane :test do
+        appcenter_upload({
+          api_token: 'xxx',
+          owner_name: 'owner',
+          app_name: 'app',
+          apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+          destinations: 'Testers',
+          destination_type: 'group'
+        })
+      end").runner.execute(:test)
+
+      # Check we uploaded only 1 chunk with 3 tries.
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=.*}, times: 3
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=1&?.*}, times: 3
+    end
+
+    it "fails after maximum number of retries for upload chunk" do
+      expect do
+        stub_poll_sleeper
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_release_upload_metadata(200)
+
+        allow_any_instance_of(File).to receive(:each_chunk).and_yield("the only chunk")
+        stub_request(:post, "https://upload-domain.com/upload/upload_chunk/1234?token=123abc&block_number=1")
+          .to_return(status: 408, body: "Timeout").then
+          .to_raise(Faraday::ConnectionFailed.new("Could not connect")).then
+          .to_return(status: 500, body: "Internal server error")
+
+        stub_finish_release_upload(200)
+        stub_poll_for_release_id(200)
+        stub_update_release_upload(200, 'uploadFinished')
+        stub_update_release(200, 'No changelog given')
+        stub_get_destination(200)
+        stub_add_to_destination(200)
+        stub_get_release(200)
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Upload aborted")
+
+      # Check we uploaded only 1 chunk with 3 tries.
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=.*}, times: 3
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=1&?.*}, times: 3
+    end
+
+    it "fails immediately on non retryable error" do
+      expect do
+        stub_poll_sleeper
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_release_upload_metadata(200)
+
+        allow_any_instance_of(File).to receive(:each_chunk).and_yield("the only chunk")
+        stub_request(:post, "https://upload-domain.com/upload/upload_chunk/1234?token=123abc&block_number=1")
+          .to_return(status: 503, body: "Service unavailable").then
+          .to_return(status: 403, body: "Forbidden")
+
+        stub_finish_release_upload(200)
+        stub_poll_for_release_id(200)
+        stub_update_release_upload(200, 'uploadFinished')
+        stub_update_release(200, 'No changelog given')
+        stub_get_destination(200)
+        stub_add_to_destination(200)
+        stub_get_release(200)
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            apk: './spec/fixtures/appfiles/apk_file_empty.apk',
+            destinations: 'Testers',
+            destination_type: 'group'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("Client error: 403: Forbidden")
+
+      # Check we uploaded only 1 chunk with 2 tries.
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=.*}, times: 2
+      assert_requested :post, %r{https://upload-domain.com/upload/upload_chunk/.*block_number=1&?.*}, times: 2
     end
 
     it "works with valid parameters for android app bundle" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "aab_file_empty.aab")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200, 'app', 'owner', 'store', 'Alpha')
       stub_add_to_destination(200, 'app', 'owner', 'store')
@@ -651,10 +1012,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
 
     it "raises an error when trying to upload an .aab to a group" do
       expect do
+        stub_poll_sleeper
         stub_check_app(200)
         stub_create_release_upload(200)
+        stub_set_release_upload_metadata(200, "aab_file_empty.aab")
         stub_upload_build(200)
-        stub_update_release_upload(200, 'committed')
+        stub_finish_release_upload(200)
+        stub_poll_for_release_id(200)
+        stub_update_release_upload(200, 'uploadFinished')
         stub_update_release(200, "No changelog given")
         stub_get_destination(200)
         stub_add_to_destination(200)
@@ -674,10 +1039,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "works with valid parameters for a macOS .app.zip file" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "app_file_empty.app.zip")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, 'No changelog given')
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -697,10 +1066,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
 
     %w(dmg pkg).each do |ext|
       it "works with valid parameters for a macOS .#{ext} file" do
+        stub_poll_sleeper
         stub_check_app(200)
         stub_create_release_upload(200, { build_version: "1.0-alpha", build_number: "1234" })
+        stub_set_release_upload_metadata(200, "#{ext}_file_empty.#{ext}")
         stub_upload_build(200)
-        stub_update_release_upload(200, 'committed')
+        stub_finish_release_upload(200)
+        stub_poll_for_release_id(200)
+        stub_update_release_upload(200, 'uploadFinished')
         stub_update_release(200, "No changelog given")
         stub_get_destination(200)
         stub_add_to_destination(200)
@@ -726,10 +1099,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
         # Note: mandatory_update is used here to test case without either field
         it "raises an error when trying to upload a .#{ext} when specifying only #{only_field}" do
           expect do
+            stub_poll_sleeper
             stub_check_app(200)
             stub_create_release_upload(200)
+            stub_set_release_upload_metadata(200, "#{ext}_file_empty.#{ext}")
             stub_upload_build(200)
-            stub_update_release_upload(200, 'committed')
+            stub_finish_release_upload(200)
+            stub_poll_for_release_id(200)
+            stub_update_release_upload(200, 'uploadFinished')
             stub_update_release(200, "No changelog given")
             stub_get_destination(200)
             stub_add_to_destination(200)
@@ -754,10 +1131,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     %w(app app.zip dmg pkg).each do |ext|
       it "raises an error when trying to upload a .#{ext} to a store" do
         expect do
+          stub_poll_sleeper
           stub_check_app(200)
           stub_create_release_upload(200)
+          stub_set_release_upload_metadata(200, "#{ext}_file_empty.#{ext}")
           stub_upload_build(200)
-          stub_update_release_upload(200, 'committed')
+          stub_finish_release_upload(200)
+          stub_poll_for_release_id(200)
+          stub_update_release_upload(200, 'uploadFinished')
           stub_update_release(200, "No changelog given")
           stub_get_destination(200, 'app', 'owner', 'store', 'Alpha')
           stub_add_to_destination(200, 'app', 'owner', 'store')
@@ -778,10 +1159,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "uses APPCENTER_API_TOKEN as default for api_token" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, 'No changelog given')
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -803,10 +1188,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "uses APPCENTER_OWNER_NAME as default for owner_name" do
+      stub_poll_sleeper
       stub_check_app(200, 'app', 'shared-value-owner')
       stub_create_release_upload(200, nil, 'app', 'shared-value-owner')
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed', 'app', 'shared-value-owner')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200, "app", "shared-value-owner")
+      stub_update_release_upload(200, 'uploadFinished', 'app', 'shared-value-owner')
       stub_update_release(200, 'No changelog given', 'app', 'shared-value-owner')
       stub_get_destination(200, 'app', 'shared-value-owner')
       stub_add_to_destination(200, 'app', 'shared-value-owner')
@@ -828,10 +1217,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "uses APPCENTER_APP_NAME as default for app_name" do
+      stub_poll_sleeper
       stub_check_app(200, 'shared-value-app')
       stub_create_release_upload(200, nil, 'shared-value-app')
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed', 'shared-value-app')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200, 'shared-value-app')
+      stub_update_release_upload(200, 'uploadFinished', 'shared-value-app')
       stub_update_release(200, 'No changelog given', 'shared-value-app')
       stub_get_destination(200, 'shared-value-app')
       stub_add_to_destination(200, 'shared-value-app')
@@ -853,10 +1246,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "uses GRADLE_APK_OUTPUT_PATH as default for apk" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "apk_file_empty.apk")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -879,10 +1276,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
 
     if defined? Fastlane::Actions::SharedValues::GRADLE_MAPPING_TXT_OUTPUT_PATH
       it "uses GRADLE_MAPPING_TXT_OUTPUT_PATH as default for mapping" do
+        stub_poll_sleeper
         stub_check_app(200)
         stub_create_release_upload(200)
+        stub_set_release_upload_metadata(200, "apk_file_empty.apk")
         stub_upload_build(200)
-        stub_update_release_upload(200, 'committed')
+        stub_finish_release_upload(200)
+        stub_poll_for_release_id(200)
+        stub_update_release_upload(200, 'uploadFinished')
         stub_update_release(200, "No changelog given")
         stub_get_destination(200)
         stub_add_to_destination(200)
@@ -913,10 +1314,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "uses GRADLE_AAB_OUTPUT_PATH as default for aab" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "aab_file_empty.aab")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200, 'app', 'owner', 'store', 'Alpha')
       stub_add_to_destination(200, 'app', 'owner', 'store')
@@ -938,10 +1343,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "uses IPA_OUTPUT_PATH as default for ipa" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -963,10 +1372,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "uses file parameter over default IPA_OUTPUT_PATH and doesn't raise error" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -989,10 +1402,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "works with valid parameters for ios" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -1015,10 +1432,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "uses proper api for mandatory release" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
       stub_add_to_destination(200, 'app', 'owner', 'group', true, false)
@@ -1042,10 +1463,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "uses proper api for release with email notification parameter" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
       stub_add_to_destination(200, 'app', 'owner', 'group', false, true)
@@ -1069,10 +1494,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "uses proper api for mandatory release with email notification parameter" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
       stub_add_to_destination(200, 'app', 'owner', 'group', true, true)
@@ -1099,10 +1528,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     describe "uploading a macOS app" do
       describe "not zipped" do
         it "works with valid parameters" do
+          stub_poll_sleeper
           stub_check_app(200)
           stub_create_release_upload(200)
+          stub_set_release_upload_metadata(200, "app_file_empty.app.zip")
           stub_upload_build(200)
-          stub_update_release_upload(200, 'committed')
+          stub_finish_release_upload(200)
+          stub_poll_for_release_id(200)
+          stub_update_release_upload(200, 'uploadFinished')
           stub_update_release(200, "No changelog given")
           stub_get_destination(200)
           stub_add_to_destination(200)
@@ -1112,6 +1545,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
           stub_update_dsym_upload(200, "committed")
 
           allow(Fastlane::UI).to receive(:interactive?).and_return(false)
+          allow(Fastlane::Actions::ZipAction).to receive(:run).and_return(File.expand_path('./spec/fixtures/appfiles/app_file_empty.app.zip'))
           expect(File).to receive(:delete).with('./spec/fixtures/appfiles/app_file_empty.app.zip')
           expect(Fastlane::Actions::ZipAction).to receive(:run)
             .with({
@@ -1135,10 +1569,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
 
       describe "zipped" do
         it "works with valid parameters" do
+          stub_poll_sleeper
           stub_check_app(200)
           stub_create_release_upload(200)
+          stub_set_release_upload_metadata(200, "app_file_empty.app.zip")
           stub_upload_build(200)
-          stub_update_release_upload(200, 'committed')
+          stub_finish_release_upload(200)
+          stub_poll_for_release_id(200)
+          stub_update_release_upload(200, 'uploadFinished')
           stub_update_release(200, 'No changelog given')
           stub_get_destination(200)
           stub_add_to_destination(200)
@@ -1164,10 +1602,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
 
       describe "Sparkle Feed" do
         it "handles dsa_signature" do
+          stub_poll_sleeper
           stub_check_app(200)
           stub_create_release_upload(200)
+          stub_set_release_upload_metadata(200, "app_file_empty.app.zip")
           stub_upload_build(200)
-          stub_update_release_upload(200, 'committed')
+          stub_finish_release_upload(200)
+          stub_poll_for_release_id(200)
+          stub_update_release_upload(200, 'uploadFinished')
           stub_update_release(200, 'No changelog given')
           stub_update_release_metadata(200)
           stub_get_destination(200)
@@ -1191,10 +1633,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "adds to all provided groups" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200, 'app', 'owner', 'group', 'Testers1')
       stub_get_destination(200, 'app', 'owner', 'group', 'Testers2')
@@ -1221,10 +1667,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "encodes group names" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200, 'app', 'owner', 'group', 'Testers%201')
       stub_get_destination(200, 'app', 'owner', 'group', 'Testers%202')
@@ -1251,10 +1701,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "can release to store" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200, 'app', 'owner', 'store')
       stub_add_to_destination(200, 'app', 'owner', 'store')
@@ -1277,11 +1731,15 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "creates app if it was not found" do
+      stub_poll_sleeper
       stub_check_app(404)
       stub_create_app(200, "app", "app", "Android", "Java")
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "apk_file_empty.apk")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -1300,11 +1758,15 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "creates app if it was not found with specified os, platform and display_name" do
+      stub_poll_sleeper
       stub_check_app(404)
       stub_create_app(200, "app", "App Name", "Android", "Java")
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "apk_file_empty.apk")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, 'No changelog given')
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -1326,11 +1788,15 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "creates app if it was not found with specified macOS that supports only one platform" do
+      stub_poll_sleeper
       stub_check_app(404)
       stub_create_app(200, "app", "App Name", "macOS", "Objective-C-Swift")
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "app.zip_file_empty.app.zip")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, 'No changelog given')
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -1351,11 +1817,15 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "creates app when app_os is Windows and selects the app_platform" do
+      stub_poll_sleeper
       stub_check_app(404)
       stub_create_app(200, "app", "App Name", "Windows", "UWP")
       stub_create_release_upload(200, { build_version: "1.0" })
+      stub_set_release_upload_metadata(200, "zip_file_empty.zip")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, 'No changelog given')
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -1377,11 +1847,15 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "creates app in organization if it was not found with specified os, platform and display_name" do
+      stub_poll_sleeper
       stub_check_app(404)
       stub_create_app(200, "app", "App Name", "Android", "Java", "organization", "owner")
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "apk_file_empty.apk")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -1440,10 +1914,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "allows to send android mappings" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "apk_file_empty.apk")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -1466,10 +1944,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "allows to send android mappings with custom name" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "apk_file_empty.apk")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -1511,10 +1993,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "zips dSYM files if dsym parameter is folder" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -1577,10 +2063,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
 
     it "rejects dsym for a non-Apple app file" do
       expect do
+        stub_poll_sleeper
         stub_check_app(200)
         stub_create_release_upload(200)
+        stub_set_release_upload_metadata(200, "apk_file_empty.apk")
         stub_upload_build(200)
-        stub_update_release_upload(200, 'committed')
+        stub_finish_release_upload(200)
+        stub_poll_for_release_id(200)
+        stub_update_release_upload(200, 'uploadFinished')
         stub_update_release(200, "No changelog given")
         stub_get_destination(200)
         stub_add_to_destination(200)
@@ -1604,10 +2094,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "allows to upload build only even if dsym provided when upload_build_only is true" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -1628,10 +2122,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "allows to upload build only even if mapping provided when upload_build_only is true" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "apk_file_empty.apk")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
       stub_add_to_destination(200)
@@ -1704,10 +2202,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it "asterik as destination" do
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_fetch_distribution_groups(owner_name: 'owner', app_name: 'app')
       stub_get_destination(200, 'app', 'owner', 'group', 'Collaborators')
@@ -1738,10 +2240,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
       collaborators = 'Collaborators'
       test_group_1 = 'Test-Group-1'
       test_group_2 = 'Test-Group-2'
+      stub_poll_sleeper
       stub_check_app(200)
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_fetch_distribution_groups(owner_name: 'owner', app_name: 'app', groups: [collaborators, test_group_1, test_group_2])
       collaborator_req = stub_get_destination(200, 'app', 'owner', 'group', collaborators)
@@ -1774,10 +2280,14 @@ describe Fastlane::Actions::AppcenterUploadAction do
 
     it "asterik as destination for store type" do
       expect do
+        stub_poll_sleeper
         stub_check_app(200)
         stub_create_release_upload(200)
+        stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
         stub_upload_build(200)
-        stub_update_release_upload(200, 'committed')
+        stub_finish_release_upload(200)
+        stub_poll_for_release_id(200)
+        stub_update_release_upload(200, 'uploadFinished')
         stub_update_release(200, "No changelog given")
         stub_fetch_distribution_groups(owner_name: 'owner', app_name: 'app')
         stub_get_destination(200, 'app', 'owner', 'group', 'Collaborators')
@@ -1838,11 +2348,15 @@ describe Fastlane::Actions::AppcenterUploadAction do
     end
 
     it 'Skips adding app to distribution group if already added' do
+      stub_poll_sleeper
       stub_check_app(404)
       stub_create_app(200, "app", "App Name", "Android", "Java", "organization", "owner")
       stub_create_release_upload(200)
+      stub_set_release_upload_metadata(200, "apk_file_empty.apk")
       stub_upload_build(200)
-      stub_update_release_upload(200, 'committed')
+      stub_finish_release_upload(200)
+      stub_poll_for_release_id(200)
+      stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200, app_name = "app", owner_name = "owner", destination_type = "group", destination_name = "Testers")
       stub_get_destination(200, app_name = "app", owner_name = "owner", destination_type = "group", destination_name = "test-group-1")
