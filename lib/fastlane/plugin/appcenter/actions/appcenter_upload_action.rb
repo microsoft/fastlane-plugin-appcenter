@@ -634,7 +634,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :timeout,
                                        env_name: "APPCENTER_DISTRIBUTE_TIMEOUT",
-                                       description: "Request timeout in seconds",
+                                       description: "Request timeout in seconds applied to individual HTTP requests. Some commands use multiple HTTP requests, large file uploads are also split in multiple HTTP requests",
                                        optional: true,
                                        type: Integer),
 
