@@ -52,7 +52,8 @@ appcenter_upload(
 appcenter_fetch_version_number(
   api_token: "<appcenter token>",
   owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
-  app_name: "<appcenter app name (as seen in app URL)>"
+  app_name: "<appcenter app name (as seen in app URL)>",
+  version: "a specific version to get the last release for" # optional, don't set this value to get the last upload of all versions
 )
 ```
 
@@ -130,6 +131,7 @@ Here is the list of all existing parameters:
 | `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
 | `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name, as found in the App's URL in App Center |
 | `app_name` <br/> `APPCENTER_APP_NAME` | App name as found in the App's URL in App Center. If there is no app with such name, you will be prompted to create one |
+| `version` <br/> `APPCENTER_APP_VERSION` | App version to get the last release for instead of the last release of all versions |
 
 ## Example
 
