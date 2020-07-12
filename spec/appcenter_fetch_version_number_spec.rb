@@ -92,7 +92,7 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
             appcenter_fetch_version_number(
               api_token: '1234',
               owner_name: 'owner-name',
-              app_name: 'App-Name-no-versions',
+              app_name: 'App-Name',
               version: '2.0.0'
             )
           end").runner.execute(:test)
