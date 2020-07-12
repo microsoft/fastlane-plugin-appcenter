@@ -44,7 +44,7 @@ module Fastlane
             UI.user_error!("This app has no releases yet")
             return nil
           end
-          UI.user_error!("The provided version has no releases yet")
+          UI.user_error!("The provided version (#{version}) has no releases yet")
           return nil
         end
 
@@ -76,7 +76,7 @@ module Fastlane
                                          UI.user_error!("No app name for App Center given, pass using `app_name: 'app name'`") unless value && !value.empty?
                                        end),
           FastlaneCore::ConfigItem.new(key: :version,
-                                       env_name: "APPCENTER_WORKING_VERSION",
+                                       env_name: "APPCENTER_APP_VERSION",
                                        description: "The version to get the latest release for",
                                        optional: true,
                                        type: String),
