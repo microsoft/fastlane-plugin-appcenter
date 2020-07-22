@@ -23,7 +23,7 @@ With [App Center](https://appcenter.ms) you can continuously build, test, releas
 
 `appcenter_fetch_version_number` allows you to obtain the latest version number (short or full) for an app. This is useful for tasks such as getting the latest version of an app so that an increment action can take place on CI, or checking that an upload has been successful.
 
-`appcenter_codepush_release_react` allows you to deploy app updates via CodePuh.
+`appcenter_codepush_release_react` allows you to deploy app updates via CodePush.
 
 ## Usage
 
@@ -149,12 +149,12 @@ Here is the list of all existing parameters:
 | `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name, as found in the App's URL in App Center |
 | `app_name` <br/> `APPCENTER_APP_NAME` | App name as found in the App's URL in App Center. If there is no app with such name, you will be prompted to create one |
 | `deployment` <br/> `APPCENTER_CODEPUSH_DEPLOYMENT` | Name of deployment track (default: `Staging`) |
-| `target_version` <br/> `APPCENTER_CODEPUSH_TARGET_VERSION` | Target bunary app version |
+| `target_version` <br/> `APPCENTER_CODEPUSH_TARGET_VERSION` | Target binary app version |
 | `mandatory` <br/> `APPCENTER_CODEPUSH_MANDATORY` | Specifies whether the update should be mandatory (default: `true`) |
 | `description` <br/> `APPCENTER_CODEPUSH_DESCRIPTION` | Description of CodePush release |
 | `dry_run` <br/> `APPCENTER_CODEPUSH_DRY_RUN` | Print command that would be run, don't run it (default: `false`) |
 | `disabled` <br/> `APPCENTER_CODEPUSH_DISABLED` | Specifies whether this release should not be immediately available for download (default: `false`) |
-| `no_duplicate_release_error` <br/> `APPCENTER_CODEPUSH_NO_DUPLICATE_ERROR` | Specifies whether to ignore errors if bundle iss identical to the latest codepush release (default: `false`) |
+| `no_duplicate_release_error` <br/> `APPCENTER_CODEPUSH_NO_DUPLICATE_ERROR` | Specifies whether to ignore errors if bundle is identical to the latest codepush release (default: `false`) |
 | `bundle_name` <br/> `APPCENTER_CODEPUSH_BUNDLE_NAME` | Specifies the name of the bundle file |
 | `output_dir` <br/> `APPCENTER_CODEPUSH_OUTPUT` | Specifies path to where the bundle and sourcemap should be written |
 | `sourcemap_output` <br/> `APPCENTER_CODEPUSH_SOURCEMAP_OUTPUT` | Specifies path to write sourcemaps to |
