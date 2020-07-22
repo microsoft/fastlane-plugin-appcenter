@@ -84,6 +84,20 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
           end").runner.execute(:test)
         end.to raise_error("This app has no releases yet")
       end
+
+      it "raises an error when there are no releases for a provided version of an app" do
+        stub_get_releases_success(200)
+        expect do
+          Fastlane::FastFile.new.parse("lane :test do
+            appcenter_fetch_version_number(
+              api_token: '1234',
+              owner_name: 'owner-name',
+              app_name: 'App-Name',
+              version: '2.0.0'
+            )
+          end").runner.execute(:test)
+        end.to raise_error("The provided version (2.0.0) has no releases yet")
+      end
     end
 
     context "when no errors are expected" do
@@ -119,8 +133,28 @@ describe Fastlane::Actions::AppcenterFetchVersionNumberAction do
         it 'returns the correct version number' do
           puts version
           expect(version["id"]).to eq(7)
-          expect(version["version"]).to eq('1.0.4')
-          expect(version["build_number"]).to eq('1.0.4.105')
+          expect(version["version"]).to eq("1.0.4")
+          expect(version["build_number"]).to eq("1.0.4.105")
+        end
+      end
+
+      context "with provided version number and a valid token, owner name, and app name" do
+        let(:version) do
+          version = Fastlane::FastFile.new.parse("lane :test do
+            appcenter_fetch_version_number(
+              api_token: '1234',
+              owner_name: 'owner-name',
+              app_name: 'App-Name',
+              version: '1.0.1'
+            )
+          end").runner.execute(:test)
+        end
+
+        it "returns the correct version and build numbers" do
+          puts version
+          expect(version["id"]).to eq(5)
+          expect(version["version"]).to eq("1.0.1")
+          expect(version["build_number"]).to eq("1.0.1.102")
         end
       end
     end
