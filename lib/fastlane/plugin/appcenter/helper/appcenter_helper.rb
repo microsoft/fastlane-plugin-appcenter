@@ -324,6 +324,7 @@ module Fastlane
                 req.options.timeout = timeout
                 req.headers['internal-request-source'] = "fastlane"
                 req.headers['Content-Length'] = chunk.length.to_s
+                req.headers['Content-Type'] = 'application/octet-stream'
                 req.body = chunk
               end
               UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
