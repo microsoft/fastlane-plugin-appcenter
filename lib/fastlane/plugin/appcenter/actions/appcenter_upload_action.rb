@@ -143,6 +143,7 @@ module Fastlane
         build_number = params[:build_number]
         version = params[:version]
         dsa_signature = params[:dsa_signature]
+        ed_signature = params[:ed_signature]
 
         if release_notes.length >= Constants::MAX_RELEASE_NOTES_LENGTH
           unless should_clip
@@ -230,7 +231,7 @@ module Fastlane
             UI.message("Release '#{release_id}' committed: #{release_url}")
 
             release = Helper::AppcenterHelper.update_release(api_token, owner_name, app_name, release_id, release_notes)
-            Helper::AppcenterHelper.update_release_metadata(api_token, owner_name, app_name, release_id, dsa_signature)
+            Helper::AppcenterHelper.update_release_metadata(api_token, owner_name, app_name, release_id, dsa_signature, ed_signature)
 
             destinations_array = []
             if destinations == '*'
@@ -643,7 +644,13 @@ module Fastlane
                                        description: "DSA signature of the macOS or Windows release for Sparkle update feed",
                                        optional: true,
                                        type: String),
-
+          
+          FastlaneCore::ConfigItem.new(key: :ed_signature,
+                                       env_name: "APPCENTER_DISTRIBUTE_ED_SIGNATURE",
+                                       description: "EdDSA signature of the macOS or Windows release for Sparkle update feed",
+                                       optional: true,
+                                       type: String),
+          
           FastlaneCore::ConfigItem.new(key: :strict,
                                        env_name: "APPCENTER_STRICT_MODE",
                                        description: "Strict mode, set to 'true' to fail early in case a potential error was detected",
