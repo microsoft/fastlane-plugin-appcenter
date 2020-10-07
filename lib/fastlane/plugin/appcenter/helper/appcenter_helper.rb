@@ -546,15 +546,23 @@ module Fastlane
       end
 
       # updates release metadata
-      def self.update_release_metadata(api_token, owner_name, app_name, release_id, dsa_signature)
-        return if dsa_signature.to_s == ''
+      def self.update_release_metadata(api_token, owner_name, app_name, release_id, dsa_signature = '', ed_signature = '')
+        return if dsa_signature.to_s == '' && ed_signature.to_s == ''
 
         url = "v0.1/apps/#{owner_name}/#{app_name}/releases/#{release_id}"
-        body = {
-          metadata: {
-            dsa_signature: dsa_signature
-          }
-        }
+        if dsa_signature.to_s != ''
+            body = {
+              metadata: {
+                dsa_signature: dsa_signature
+              }
+            }
+        elsif ed_signature.to_s != ''
+            body = {
+              metadata: {
+                ed_signature: ed_signature
+              }
+            }
+        end
 
         UI.message("DEBUG: PATCH #{url}") if ENV['DEBUG']
         UI.message("DEBUG: PATCH body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
