@@ -555,10 +555,10 @@ module Fastlane
         }
         
         if dsa_signature.to_s != ''
-          body["metadata"]["dsa_signature"] = dsa_signature
+          body[:metadata]["dsa_signature"] = dsa_signature
         end
         if ed_signature.to_s != ''
-          body["metadata"]["ed_signature"] = ed_signature
+          body[:metadata]["ed_signature"] = ed_signature
         end
 
         UI.message("DEBUG: PATCH #{url}") if ENV['DEBUG']
