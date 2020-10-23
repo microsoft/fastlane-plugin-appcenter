@@ -1625,34 +1625,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
               app_name: 'app',
               file: './spec/fixtures/appfiles/app_file_empty.app.zip',
               destinations: 'Testers',
-              dsa_signature: 'test_signature'
-            })
-          end").runner.execute(:test)
-        end
-        it "handles ed_signature" do
-          stub_poll_sleeper
-          stub_check_app(200)
-          stub_create_release_upload(200)
-          stub_set_release_upload_metadata(200, "app_file_empty.app.zip")
-          stub_upload_build(200)
-          stub_finish_release_upload(200)
-          stub_poll_for_release_id(200)
-          stub_update_release_upload(200, 'uploadFinished')
-          stub_update_release(200, 'No changelog given')
-          stub_update_release_metadata(200)
-          stub_get_destination(200)
-          stub_add_to_destination(200)
-          stub_get_release(200)
-
-          expect(Fastlane::Actions::ZipAction).not_to receive(:run)
-
-          Fastlane::FastFile.new.parse("lane :test do
-            appcenter_upload({
-              api_token: 'xxx',
-              owner_name: 'owner',
-              app_name: 'app',
-              file: './spec/fixtures/appfiles/app_file_empty.app.zip',
-              destinations: 'Testers',
+              dsa_signature: 'test_signature',
               ed_signature: 'test_eddsa_signature'
             })
           end").runner.execute(:test)
