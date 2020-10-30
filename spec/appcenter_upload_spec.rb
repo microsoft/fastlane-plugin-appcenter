@@ -138,7 +138,7 @@ def stub_get_release(status, app_name = "app", owner_name = "owner")
     .to_return(status: status, body: "{\"version\":\"3\",\"short_version\":\"1.0.0\",\"download_link\":\"https://download.link\"}", headers: { 'Content-Type' => 'application/json' })
 end
 
-def stub_add_to_destination(status, app_name = "app", owner_name = "owner", destination_type = "group", mandatory_update = false, notify_testers = false)
+def stub_add_to_destination(status, app_name = "app", owner_name = "owner", destination_type = "group", mandatory_update: false, notify_testers: false)
   if destination_type == "group"
     body = "{\"id\":\"1\",\"mandatory_update\":#{mandatory_update},\"notify_testers\":#{notify_testers}}"
   else
@@ -1092,9 +1092,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
           })
         end").runner.execute(:test)
       end
-    end
 
-    %w(dmg pkg).each do |ext|
       %w(version build_number mandatory_update).each do |only_field|
         # Note: mandatory_update is used here to test case without either field
         it "raises an error when trying to upload a .#{ext} when specifying only #{only_field}" do
@@ -1442,7 +1440,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
-      stub_add_to_destination(200, 'app', 'owner', 'group', true, false)
+      stub_add_to_destination(200, 'app', 'owner', 'group', mandatory_update: true, notify_testers: false)
       stub_get_release(200)
       stub_create_dsym_upload(200)
       stub_upload_dsym(200)
@@ -1473,7 +1471,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
-      stub_add_to_destination(200, 'app', 'owner', 'group', false, true)
+      stub_add_to_destination(200, 'app', 'owner', 'group', mandatory_update: false, notify_testers: true)
       stub_get_release(200)
       stub_create_dsym_upload(200)
       stub_upload_dsym(200)
@@ -1504,7 +1502,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       stub_update_release_upload(200, 'uploadFinished')
       stub_update_release(200, "No changelog given")
       stub_get_destination(200)
-      stub_add_to_destination(200, 'app', 'owner', 'group', true, true)
+      stub_add_to_destination(200, 'app', 'owner', 'group', mandatory_update: true, notify_testers: true)
       stub_get_release(200)
       stub_create_dsym_upload(200)
       stub_upload_dsym(200)
