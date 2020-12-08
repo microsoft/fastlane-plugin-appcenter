@@ -1,4 +1,4 @@
-require_relative 'stubs'
+require_relative 'appcenter_stub'
 
 def stub_get_app_not_found(status)
   not_found_json = JSON.parse(File.read("spec/fixtures/releases/not_found.json"))

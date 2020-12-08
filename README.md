@@ -35,7 +35,6 @@ To get started, first, [obtain an API token](https://appcenter.ms/settings/apito
 appcenter_fetch_devices(
   api_token: "<appcenter token>",
   owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
-  owner_type: "user", # Default is user - set to organization for appcenter organizations
   app_name: "<appcenter app name>",
   destinations: "*", # Default is 'Collaborators', use '*' for all distribution groups
   devices_file: "devices.txt" # Default. If you customize, the extension must be .txt
@@ -57,7 +56,8 @@ appcenter_upload(
 appcenter_fetch_version_number(
   api_token: "<appcenter token>",
   owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
-  app_name: "<appcenter app name (as seen in app URL)>"
+  app_name: "<appcenter app name (as seen in app URL)>",
+  version: "a specific version to get the last release for" # optional, don't set this value to get the last upload of all versions
 )
 ```
 
@@ -124,7 +124,6 @@ Here is the list of all existing parameters:
 | Key & Env Var | Description |
 |-----------------|--------------------|
 | `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
-| `owner_type` <br/> `APPCENTER_OWNER_TYPE` | Owner type, either 'user' or 'organization' (default: `user`) |
 | `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name, as found in the App's URL in App Center |
 | `destinations` <br/> `APPCENTER_DISTRIBUTE_DESTINATIONS` | Comma separated list of distribution group names. Default is 'Collaborators', use '*' for all distribution groups |
 | `devices_file` <br/> `FL_REGISTER_DEVICES_FILE` | File to save the devices list to. Same environment variable as _fastlane_'s `register_devices` action |
@@ -138,7 +137,7 @@ Here is the list of all existing parameters:
 | `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name as found in the App's URL in App Center |
 | `app_name` <br/> `APPCENTER_APP_NAME` | App name as found in the App's URL in App Center. If there is no app with such name, you will be prompted to create one |
 | `app_display_name` <br/> `APPCENTER_APP_DISPLAY_NAME` | App display name to use when creating a new app |
-| `app_os` <br/> `APPCENTER_APP_OS` | App OS. Used for new app creation, if app 'app_name' was not found |
+| `app_os` <br/> `APPCENTER_APP_OS` | App OS can be Android, iOS, macOS, Windows, Custom. Used for new app creation, if app 'app_name' was not found |
 | `app_platform` <br/> `APPCENTER_APP_PLATFORM` | App Platform. Used for new app creation, if app 'app_name' was not found |
 | `file` <br/> `APPCENTER_DISTRIBUTE_FILE` | File path to the release build to publish |
 | `upload_build_only` <br/> `APPCENTER_DISTRIBUTE_UPLOAD_BUILD_ONLY` | Flag to upload only the build to App Center. Skips uploading symbols or mapping (default: `false`) |
@@ -150,13 +149,14 @@ Here is the list of all existing parameters:
 | `destination_type` <br/> `APPCENTER_DISTRIBUTE_DESTINATION_TYPE` | Destination type of distribution destination. 'group' and 'store' are supported (default: `group`) |
 | `mandatory_update` <br/> `APPCENTER_DISTRIBUTE_MANDATORY_UPDATE` | Require users to update to this release. Ignored if destination type is 'store' (default: `false`) |
 | `notify_testers` <br/> `APPCENTER_DISTRIBUTE_NOTIFY_TESTERS` | Send email notification about release. Ignored if destination type is 'store' (default: `false`) |
-| `release_notes` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES` | Release notes  (default: `No changelog given`) |
+| `release_notes` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES` | Release notes (default: `No changelog given`) |
 | `should_clip` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES_CLIPPING` | Clip release notes if its length is more then 5000, true by default (default: `true`) |
 | `release_notes_link` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK` | Additional release notes link |
 | `build_number` <br/> `APPCENTER_DISTRIBUTE_BUILD_NUMBER` | The build number, required for macOS .pkg and .dmg builds, as well as Android ProGuard `mapping.txt` when using `upload_mapping_only` |
 | `version` <br/> `APPCENTER_DISTRIBUTE_VERSION` | The build version, required for .pkg, .dmg, .zip and .msi builds, as well as Android ProGuard `mapping.txt` when using `upload_mapping_only` |
-| `timeout` <br/> `APPCENTER_DISTRIBUTE_TIMEOUT` | Request timeout in seconds |
+| `timeout` <br/> `APPCENTER_DISTRIBUTE_TIMEOUT` | Request timeout in seconds applied to individual HTTP requests. Some commands use multiple HTTP requests, large file uploads are also split in multiple HTTP requests |
 | `dsa_signature` <br/> `APPCENTER_DISTRIBUTE_DSA_SIGNATURE` | DSA signature of the macOS or Windows release for Sparkle update feed |
+| `ed_signature` <br/> `APPCENTER_DISTRIBUTE_ED_SIGNATURE` | EdDSA signature of the macOS or Windows release for Sparkle update feed |
 | `strict` <br/> `APPCENTER_STRICT_MODE` | Strict mode, set to 'true' to fail early in case a potential error was detected |
 
 #### `appcenter_fetch_version_number`
@@ -166,6 +166,7 @@ Here is the list of all existing parameters:
 | `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
 | `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name, as found in the App's URL in App Center |
 | `app_name` <br/> `APPCENTER_APP_NAME` | App name as found in the App's URL in App Center. If there is no app with such name, you will be prompted to create one |
+| `version` <br/> `APPCENTER_APP_VERSION` | App version to get the last release for instead of the last release of all versions |
 
 #### `appcenter_fetch_app`
 

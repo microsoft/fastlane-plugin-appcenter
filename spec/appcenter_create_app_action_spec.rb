@@ -1,4 +1,4 @@
-require_relative 'stubs'
+require_relative 'appcenter_stub'
 
 describe Fastlane::Actions::AppcenterCreateAppAction do
   describe '#run' do

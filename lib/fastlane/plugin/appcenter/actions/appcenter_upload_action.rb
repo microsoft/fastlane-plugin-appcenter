@@ -9,6 +9,23 @@ module Fastlane
           windows: %w(.appx .appxbundle .appxupload .msix .msixbundle .msixupload .zip .msi),
           custom: %w(.zip)
       }
+      CONTENT_TYPES = {
+          apk: "application/vnd.android.package-archive",
+          aab: "application/vnd.android.package-archive",
+          msi: "application/x-msi",
+          plist: "application/xml",
+          aetx: "application/c-x509-ca-cert",
+          cer: "application/pkix-cert",
+          xap: "application/x-silverlight-app",
+          appx: "application/x-appx",
+          appxbundle: "application/x-appxbundle",
+          appxupload: "application/x-appxupload",
+          appxsym: "application/x-appxupload",
+          msix: "application/x-msix",
+          msixbundle: "application/x-msixbundle",
+          msixupload: "application/x-msixupload",
+          msixsym: "application/x-msixupload",
+      }
       ALL_SUPPORTED_EXTENSIONS = SUPPORTED_EXTENSIONS.values.flatten.sort!.uniq!
       STORE_ONLY_EXTENSIONS = %w(.aab)
       STORE_SUPPORTED_EXTENSIONS = %w(.aab .apk .ipa)
@@ -126,6 +143,7 @@ module Fastlane
         build_number = params[:build_number]
         version = params[:version]
         dsa_signature = params[:dsa_signature]
+        ed_signature = params[:ed_signature]
 
         if release_notes.length >= Constants::MAX_RELEASE_NOTES_LENGTH
           unless should_clip
@@ -180,25 +198,40 @@ module Fastlane
             File.delete zip_file
           end
           UI.message("Creating zip archive: #{zip_file}")
-          file = Actions::ZipAction.run(path: file, output_path: zip_file)
+          file = Actions::ZipAction.run(path: file, output_path: zip_file, symlinks: true)
         end
 
         UI.message("Starting release upload...")
         upload_details = Helper::AppcenterHelper.create_release_upload(api_token, owner_name, app_name, release_upload_body)
         if upload_details
-          upload_id = upload_details['upload_id']
-          upload_url = upload_details['upload_url']
+          upload_id = upload_details['id']
+          
+          UI.message("Setting Metadata...")
+          content_type = Constants::CONTENT_TYPES[File.extname(file)&.delete('.').downcase.to_sym] || "application/octet-stream"
+          set_metadata_url = "#{upload_details['upload_domain']}/upload/set_metadata/#{upload_details['package_asset_id']}?file_name=#{File.basename(file)}&file_size=#{File.size(file)}&token=#{upload_details['url_encoded_token']}&content_type=#{content_type}"
+          chunk_size = Helper::AppcenterHelper.set_release_upload_metadata(set_metadata_url, api_token, owner_name, app_name, upload_id, timeout)
+          UI.abort_with_message!("Upload aborted") unless chunk_size
 
           UI.message("Uploading release binary...")
-          uploaded = Helper::AppcenterHelper.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, timeout)
+          upload_url = "#{upload_details['upload_domain']}/upload/upload_chunk/#{upload_details['package_asset_id']}?token=#{upload_details['url_encoded_token']}"
+          uploaded = Helper::AppcenterHelper.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, content_type, chunk_size, timeout)
+          UI.abort_with_message!("Upload aborted") unless uploaded
 
-          if uploaded
-            release_id = uploaded['release_id']
+          UI.message("Finishing release...")
+          finish_url = "#{upload_details['upload_domain']}/upload/finished/#{upload_details['package_asset_id']}?token=#{upload_details['url_encoded_token']}"
+          finished = Helper::AppcenterHelper.finish_release_upload(finish_url, api_token, owner_name, app_name, upload_id, timeout)
+          UI.abort_with_message!("Upload aborted") unless finished
+
+          UI.message("Waiting for release to be ready...")
+          release_status_url = "v0.1/apps/#{owner_name}/#{app_name}/uploads/releases/#{upload_id}"
+          release_id = Helper::AppcenterHelper.poll_for_release_id(api_token, release_status_url)
+
+          if release_id.is_a? Integer
             release_url = Helper::AppcenterHelper.get_release_url(owner_type, owner_name, app_name, release_id)
             UI.message("Release '#{release_id}' committed: #{release_url}")
 
             release = Helper::AppcenterHelper.update_release(api_token, owner_name, app_name, release_id, release_notes)
-            Helper::AppcenterHelper.update_release_metadata(api_token, owner_name, app_name, release_id, dsa_signature)
+            Helper::AppcenterHelper.update_release_metadata(api_token, owner_name, app_name, release_id, dsa_signature, ed_signature)
 
             destinations_array = []
             if destinations == '*'
@@ -252,10 +285,11 @@ module Fastlane
         app_platform = params[:app_platform]
 
         platforms = {
-          Android: %w[Java React-Native Xamarin],
-          iOS: %w[Objective-C-Swift React-Native Xamarin],
+          Android: %w[Java React-Native Xamarin Unity],
+          iOS: %w[Objective-C-Swift React-Native Xamarin Unity],
           macOS: %w[Objective-C-Swift],
-          Windows: %w[UWP WPF WinForms Unity]
+          Windows: %w[UWP WPF WinForms Unity],
+          Custom: %w[Custom]
         }
 
         begin
@@ -284,6 +318,30 @@ module Fastlane
         end
       end
 
+      def self.add_app_to_distribution_group_if_needed(params)
+        return unless params[:destination_type] == 'group' && params[:owner_type] == 'organization' && params[:destinations] != '*'
+
+        app_distribution_groups = Helper::AppcenterHelper.fetch_distribution_groups(
+          api_token: params[:api_token],
+          owner_name: params[:owner_name],
+          app_name: params[:app_name]
+        )
+
+        group_names = app_distribution_groups.map { |g| g['name'] }
+        destination_names = params[:destinations].split(',').map(&:strip)
+
+        destination_names.each do |destination_name|
+          unless group_names.include? destination_name
+            Helper::AppcenterHelper.add_new_app_to_distribution_group(
+              api_token: params[:api_token],
+              owner_name: params[:owner_name],
+              app_name: params[:app_name],
+              destination_name: destination_name
+            )
+          end
+        end
+      end
+
       def self.run(params)
         values = params.values
         upload_build_only = params[:upload_build_only]
@@ -294,10 +352,10 @@ module Fastlane
 
         # if app found or successfully created
         if self.get_or_create_app(params)
+          self.add_app_to_distribution_group_if_needed(params)
           release = self.run_release_upload(params) unless upload_dsym_only || upload_mapping_only
           params[:version] = release['short_version'] if release
           params[:build_number] = release['version'] if release
-
           self.run_dsym_upload(params) unless upload_mapping_only || upload_build_only
           self.run_mapping_upload(params) unless upload_dsym_only || upload_build_only
         end
@@ -368,7 +426,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :app_os,
                                   env_name: "APPCENTER_APP_OS",
-                               description: "App OS. Used for new app creation, if app 'app_name' was not found",
+                               description: "App OS can be Android, iOS, macOS, Windows, Custom. Used for new app creation, if app 'app_name' was not found",
                                   optional: true,
                                       type: String),
 
@@ -577,7 +635,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :timeout,
                                        env_name: "APPCENTER_DISTRIBUTE_TIMEOUT",
-                                       description: "Request timeout in seconds",
+                                       description: "Request timeout in seconds applied to individual HTTP requests. Some commands use multiple HTTP requests, large file uploads are also split in multiple HTTP requests",
                                        optional: true,
                                        type: Integer),
 
@@ -586,7 +644,13 @@ module Fastlane
                                        description: "DSA signature of the macOS or Windows release for Sparkle update feed",
                                        optional: true,
                                        type: String),
-
+          
+          FastlaneCore::ConfigItem.new(key: :ed_signature,
+                                       env_name: "APPCENTER_DISTRIBUTE_ED_SIGNATURE",
+                                       description: "EdDSA signature of the macOS or Windows release for Sparkle update feed",
+                                       optional: true,
+                                       type: String),
+          
           FastlaneCore::ConfigItem.new(key: :strict,
                                        env_name: "APPCENTER_STRICT_MODE",
                                        description: "Strict mode, set to 'true' to fail early in case a potential error was detected",
