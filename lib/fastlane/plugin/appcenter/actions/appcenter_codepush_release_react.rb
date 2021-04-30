@@ -18,7 +18,7 @@ module Fastlane
         owner = params[:owner_name]
         token = params[:api_token]
         deployment = params[:deployment]
-        dev = paramss[:development]
+        dev = params[:development]
         description = params[:description]
         mandatory = params[:mandatory]
         version = params[:target_version]
@@ -141,7 +141,7 @@ module Fastlane
                                description: "Specifies path to write sourcemap to"),
           FastlaneCore::ConfigItem.new(key: :development,
                                       type: Boolean,
-                                  env_name: "APPCENTER_CODEPUH_DEVELOPMENT",
+                                  env_name: "APPCENTER_CODEPUSH_DEVELOPMENT",
                                   optional: true,
                              default_value: false,
                                description: "Specifies whether to generate a dev build")
