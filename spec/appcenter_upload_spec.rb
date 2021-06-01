@@ -1094,7 +1094,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end
 
       %w(version build_number mandatory_update).each do |only_field|
-        # Note: mandatory_update is used here to test case without either field
+        # NOTE: mandatory_update is used here to test case without either field
         it "raises an error when trying to upload a .#{ext} when specifying only #{only_field}" do
           expect do
             stub_poll_sleeper
