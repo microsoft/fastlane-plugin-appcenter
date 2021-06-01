@@ -73,7 +73,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
 
           begin
             response = connection.post(url) do |req|
@@ -91,7 +91,7 @@ module Fastlane
 
 
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
           
@@ -146,7 +146,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
 
           begin
             response = connection.post(url) do |req|
@@ -163,7 +163,7 @@ module Fastlane
           end
 
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
           
@@ -213,7 +213,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
 
           begin
             response = connection.post(url) do |req|
@@ -231,7 +231,7 @@ module Fastlane
           end
 
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
           
@@ -277,7 +277,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
 
           begin
             response = connection.patch(url) do |req|
@@ -294,7 +294,7 @@ module Fastlane
           end
 
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
           
@@ -337,7 +337,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
 
           begin
             response = connection.put do |req|
@@ -356,7 +356,7 @@ module Fastlane
           end
 
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
           
@@ -399,7 +399,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
   
           begin
             response = connection.post do |req|
@@ -416,7 +416,7 @@ module Fastlane
           end
 
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
           
@@ -462,7 +462,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
 
           begin
             response = connection.post do |req|
@@ -479,7 +479,7 @@ module Fastlane
           end
 
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
           
@@ -593,7 +593,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
 
           begin
             response = connection.patch(url) do |req|
@@ -611,7 +611,7 @@ module Fastlane
           end
 
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
           
@@ -652,7 +652,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
 
           begin
             response = connection.get(url) do |req|
@@ -669,7 +669,7 @@ module Fastlane
           end
           
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
           
@@ -714,7 +714,7 @@ module Fastlane
   
           # status == 0   - Faraday error
           # status == 429 - retryable error code from server
-          while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+          while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
 
             begin
               response = connection.get(url) do |req|
@@ -730,7 +730,7 @@ module Fastlane
             end
 
             # Pause before retrying
-            if status == 0 || status == 429
+            if (status == 0) || (status == 429)
               sleep(REQUEST_RETRY_INTERVAL)
             end
           
@@ -775,7 +775,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
 
           begin
             response = connection.get(url) do |req|
@@ -791,7 +791,7 @@ module Fastlane
           end
 
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
           
@@ -838,7 +838,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
 
           begin
             response = connection.put(url) do |req|
@@ -855,7 +855,7 @@ module Fastlane
           end
   
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
           
@@ -921,7 +921,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
 
           begin
             response = connection.patch(url) do |req|
@@ -938,7 +938,7 @@ module Fastlane
           end
 
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
           
@@ -989,7 +989,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
 
           begin
             response = connection.post(url) do |req|
@@ -1006,7 +1006,7 @@ module Fastlane
           end
 
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
           
@@ -1059,7 +1059,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
 
           begin
             response = connection.get(url) do |req|
@@ -1075,7 +1075,7 @@ module Fastlane
           end
 
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
           
@@ -1125,7 +1125,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
 
           begin
             response = connection.post(url) do |req|
@@ -1142,7 +1142,7 @@ module Fastlane
           end
 
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
           
@@ -1182,7 +1182,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
 
           begin
             response = connection.get(url) do |req|
@@ -1199,7 +1199,7 @@ module Fastlane
           end
 
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
         
@@ -1240,7 +1240,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
           begin
             response = connection.get(url) do |req|
               req.headers['X-API-Token'] = api_token
@@ -1256,7 +1256,7 @@ module Fastlane
           end
 
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
 
@@ -1297,7 +1297,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
           begin
             response = connection.get(url) do |req|
               req.headers['X-API-Token'] = api_token
@@ -1313,7 +1313,7 @@ module Fastlane
           end
 
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
 
@@ -1377,7 +1377,7 @@ module Fastlane
 
         # status == 0   - Faraday error
         # status == 429 - retryable error code from server
-        while retries <= MAX_REQUEST_RETRIES && status != 0 && status != 429
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
           begin
             response = connection.post(url) do |req|
               req.headers['X-API-Token'] = api_token
@@ -1393,7 +1393,7 @@ module Fastlane
           end
 
           # Pause before retrying
-          if status == 0 || status == 429
+          if (status == 0) || (status == 429)
             sleep(REQUEST_RETRY_INTERVAL)
           end
           
