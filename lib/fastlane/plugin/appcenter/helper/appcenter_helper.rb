@@ -15,7 +15,7 @@ module Fastlane
       MAX_REQUEST_RETRIES = 2
 
       # Delay between retries in seconds
-      REQUEST_RETRY_INTERVAL = 5
+      REQUEST_RETRY_INTERVAL = 0
 
       # basic utility method to check file types that App Center will accept,
       # accounting for file types that can and should be zip-compressed
@@ -68,34 +68,12 @@ module Fastlane
         UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body: #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-
-          begin
-            response = connection.post(url) do |req|
-              req.headers['X-API-Token'] = api_token
-              req.headers['internal-request-source'] = "fastlane"
-              req.body = body
-            end
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.post(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
           end
-
-
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-          
-          retries += 1
         end
 
         case status
@@ -141,33 +119,12 @@ module Fastlane
         UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-
-          begin
-            response = connection.post(url) do |req|
-              req.headers['X-API-Token'] = api_token
-              req.headers['internal-request-source'] = "fastlane"
-              req.body = body
-            end
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.post(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
           end
-
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-          
-          retries += 1
         end
 
         case status
@@ -208,34 +165,12 @@ module Fastlane
         UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-
-          begin
-            response = connection.post(url) do |req|
-              req.headers['X-API-Token'] = api_token
-              req.headers['internal-request-source'] = "fastlane"
-              req.body = body
-            end
-
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.post(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
           end
-
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-          
-          retries += 1
         end
 
         case status
@@ -272,35 +207,14 @@ module Fastlane
         UI.message("DEBUG: PATCH #{url}") if ENV['DEBUG']
         UI.message("DEBUG: PATCH body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-
-          begin
-            response = connection.patch(url) do |req|
-              req.headers['X-API-Token'] = api_token
-              req.headers['internal-request-source'] = "fastlane"
-              req.body = body
-            end
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.patch(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
           end
-
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-          
-          retries += 1
-        end  
-
+        end
+      
         case status
         when 0, 429
           if status == 0
@@ -332,35 +246,13 @@ module Fastlane
         log_type = "dSYM" if symbol_type == "Apple"
         log_type = "mapping" if symbol_type == "Android"
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-
-          begin
-            response = connection.put do |req|
-              req.headers['x-ms-blob-type'] = "BlockBlob"
-              req.headers['Content-Length'] = File.size(symbol).to_s
-              req.headers['internal-request-source'] = "fastlane"
-              req.body = Faraday::UploadIO.new(symbol, 'application/octet-stream') if symbol && File.exist?(symbol)
-            end
-
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.put do |req|
+            req.headers['x-ms-blob-type'] = "BlockBlob"
+            req.headers['Content-Length'] = File.size(symbol).to_s
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = Faraday::UploadIO.new(symbol, 'application/octet-stream') if symbol && File.exist?(symbol)
           end
-
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-          
-          retries += 1
         end
 
         case status
@@ -394,33 +286,11 @@ module Fastlane
         UI.message("DEBUG: POST #{set_metadata_url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body <data>\n") if ENV['DEBUG']
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-  
-          begin
-            response = connection.post do |req|
-              req.options.timeout = timeout
-              req.headers['internal-request-source'] = "fastlane"
-            end
-
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.post do |req|
+            req.options.timeout = timeout
+            req.headers['internal-request-source'] = "fastlane"
           end
-
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-          
-          retries += 1
         end
 
         case status
@@ -457,33 +327,11 @@ module Fastlane
 
         UI.message("DEBUG: POST #{finish_url}") if ENV['DEBUG']
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-
-          begin
-            response = connection.post do |req|
-              req.options.timeout = timeout
-              req.headers['internal-request-source'] = "fastlane"
-            end
-
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.post do |req|
+            req.options.timeout = timeout
+            req.headers['internal-request-source'] = "fastlane"
           end
-
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-          
-          retries += 1
         end
 
         case status
@@ -588,35 +436,13 @@ module Fastlane
         UI.message("DEBUG: PATCH #{url}") if ENV['DEBUG']
         UI.message("DEBUG: PATCH body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-
-          begin
-            response = connection.patch(url) do |req|
-              req.headers['X-API-Token'] = api_token
-              req.headers['internal-request-source'] = "fastlane"
-              req.body = body
-            end
-          
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.patch(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
           end
-
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-          
-          retries += 1
-        end  
+        end
 
         case status
         when 0, 429
@@ -647,33 +473,11 @@ module Fastlane
 
         UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-
-          begin
-            response = connection.get(url) do |req|
-              req.headers['X-API-Token'] = api_token
-              req.headers['internal-request-source'] = "fastlane"
-            end
-
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.get(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
           end
-          
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-          
-          retries += 1
         end
 
         case status
@@ -709,32 +513,11 @@ module Fastlane
         while true
           UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
 
-          retries = 0
-          status = 0
-  
-          # status == 0   - Faraday error
-          # status == 429 - retryable error code from server
-          while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-
-            begin
-              response = connection.get(url) do |req|
-                req.headers['X-API-Token'] = api_token
-                req.headers['internal-request-source'] = "fastlane"
-              end
-              status = response.status
-              message = response.body
-              UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
-            rescue Faraday::Error => e
-              status = 0
-              message = e.message
+          status, message, response = retry_429_and_error do 
+            response = connection.get(url) do |req|
+              req.headers['X-API-Token'] = api_token
+              req.headers['internal-request-source'] = "fastlane"
             end
-
-            # Pause before retrying
-            if (status == 0) || (status == 429)
-              sleep(REQUEST_RETRY_INTERVAL)
-            end
-          
-            retries += 1
           end
 
           case status
@@ -770,32 +553,11 @@ module Fastlane
 
         UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-
-          begin
-            response = connection.get(url) do |req|
-              req.headers['X-API-Token'] = api_token
-              req.headers['internal-request-source'] = "fastlane"
-            end
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.get(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
           end
-
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-          
-          retries += 1
         end
 
         case status
@@ -833,33 +595,12 @@ module Fastlane
         UI.message("DEBUG: PUT #{url}") if ENV['DEBUG']
         UI.message("DEBUG: PUT body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-
-          begin
-            response = connection.put(url) do |req|
-              req.headers['X-API-Token'] = api_token
-              req.headers['internal-request-source'] = "fastlane"
-              req.body = body
-            end
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.put(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
           end
-  
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-          
-          retries += 1
         end
 
         case status
@@ -916,33 +657,12 @@ module Fastlane
 
         connection = self.connection
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-
-          begin
-            response = connection.patch(url) do |req|
-              req.headers['X-API-Token'] = api_token
-              req.headers['internal-request-source'] = "fastlane"
-              req.body = body
-            end
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.patch(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
           end
-
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-          
-          retries += 1
         end
 
         case status
@@ -984,33 +704,12 @@ module Fastlane
         UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-
-          begin
-            response = connection.post(url) do |req|
-              req.headers['X-API-Token'] = api_token
-              req.headers['internal-request-source'] = "fastlane"
-              req.body = body
-            end
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.post(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
           end
-
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-          
-          retries += 1
         end
 
         case status
@@ -1054,32 +753,11 @@ module Fastlane
 
         UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-
-          begin
-            response = connection.get(url) do |req|
-              req.headers['X-API-Token'] = api_token
-              req.headers['internal-request-source'] = "fastlane"
-            end
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.get(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
           end
-
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-          
-          retries += 1
         end
 
         case status
@@ -1120,33 +798,12 @@ module Fastlane
         UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-
-          begin
-            response = connection.post(url) do |req|
-              req.headers['X-API-Token'] = api_token
-              req.headers['internal-request-source'] = "fastlane"
-              req.body = body
-            end
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.post(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
           end
-
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-          
-          retries += 1
         end
 
         case status
@@ -1177,33 +834,11 @@ module Fastlane
 
         UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-
-          begin
-            response = connection.get(url) do |req|
-              req.headers['X-API-Token'] = api_token
-              req.headers['internal-request-source'] = "fastlane"
-            end
-
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.get(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
           end
-
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-        
-          retries += 1
         end
 
         case status
@@ -1235,32 +870,11 @@ module Fastlane
 
         UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-          begin
-            response = connection.get(url) do |req|
-              req.headers['X-API-Token'] = api_token
-              req.headers['internal-request-source'] = "fastlane"
-            end
-
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.get(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
           end
-
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-
-          retries += 1
         end
 
         case status
@@ -1292,32 +906,11 @@ module Fastlane
 
         UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-          begin
-            response = connection.get(url) do |req|
-              req.headers['X-API-Token'] = api_token
-              req.headers['internal-request-source'] = "fastlane"
-            end
-
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.get(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
           end
-
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-
-          retries += 1
         end
 
        case status
@@ -1372,32 +965,12 @@ module Fastlane
         UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
-        retries = 0
-        status = 0
-
-        # status == 0   - Faraday error
-        # status == 429 - retryable error code from server
-        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
-          begin
-            response = connection.post(url) do |req|
-              req.headers['X-API-Token'] = api_token
-              req.headers['internal-request-source'] = "fastlane"
-              req.body = body
-            end
-            status = response.status
-            message = response.body
-            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
-          rescue Faraday::Error => e
-            status = 0
-            message = e.message
+        status, message, response = retry_429_and_error do 
+          response = connection.post(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
           end
-
-          # Pause before retrying
-          if (status == 0) || (status == 429)
-            sleep(REQUEST_RETRY_INTERVAL)
-          end
-          
-          retries += 1
         end
 
         case status
@@ -1420,6 +993,38 @@ module Fastlane
           UI.error("Error adding app to distribution group #{response.status}: #{response.body}")
         end
       end
+
+      def self.retry_429_and_error(&block)
+        retries = 0
+        status = 0
+
+        # status == 0   - Faraday error
+        # status == 429 - retryable error code from server
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
+          begin
+            # calling request sending logic
+            response = block.call
+
+            # checking reponse
+            status = response.status
+            message = response.body
+            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
+          rescue Faraday::Error => e
+            status = 0
+            message = e.message
+          end
+
+          # Pause before retrying
+          if (status == 0) || (status == 429)
+            sleep(REQUEST_RETRY_INTERVAL)
+          end
+          
+          retries += 1
+        end
+
+        return status, message, response
+      end
+
     end
   end
 end
