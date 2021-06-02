@@ -151,7 +151,7 @@ describe Fastlane::Actions::AppcenterFetchDevicesAction do
           distribution_group: 'Collaborators',
           response_codes: [429, -1, 200]
         )
-                                  
+
         default_group
       end
     end

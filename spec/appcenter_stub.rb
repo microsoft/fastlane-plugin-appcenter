@@ -46,7 +46,7 @@ end
 
 def stub_fetch_devices_chain(owner_name:, app_name:, distribution_group:, response_codes:)
   request = stub_request(:get, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups/#{ERB::Util.url_encode(distribution_group)}/devices/download_devices_list")
-        
+
   size = response_codes.length
   number = 0
   response_codes.each do |code|
