@@ -15,7 +15,7 @@ module Fastlane
       MAX_REQUEST_RETRIES = 2
 
       # Delay between retries in seconds
-      REQUEST_RETRY_INTERVAL = 0
+      REQUEST_RETRY_INTERVAL = 5
 
       # basic utility method to check file types that App Center will accept,
       # accounting for file types that can and should be zip-compressed
