@@ -67,14 +67,23 @@ module Fastlane
 
         UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body: #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
-        response = connection.post(url) do |req|
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = body
+
+        status, message, response = retry_429_and_error do 
+          response = connection.post(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
+          end
         end
 
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-        case response.status
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http exception creating release upload: #{message}")
+          else
+            UI.error("Retryable error creating release upload #{status}: #{message}")
+          end
+          false
         when 200...300
           response.body
         when 401
@@ -110,15 +119,22 @@ module Fastlane
         UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
-        response = connection.post(url) do |req|
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = body
+        status, message, response = retry_429_and_error do 
+          response = connection.post(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
+          end
         end
 
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
-        case response.status
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http exception creating mapping upload: #{message}")
+          else
+            UI.error("Retryable error creating mapping upload #{status}: #{message}")
+          end
+          false
         when 200...300
           response.body
         when 401
@@ -149,15 +165,22 @@ module Fastlane
         UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
-        response = connection.post(url) do |req|
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = body
+        status, message, response = retry_429_and_error do 
+          response = connection.post(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
+          end
         end
 
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
-        case response.status
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http exception creating dsym upload: #{message}")
+          else
+            UI.error("Retryable error creating dsym upload #{status}: #{message}")
+          end
+          false
         when 200...300
           response.body
         when 401
@@ -184,15 +207,22 @@ module Fastlane
         UI.message("DEBUG: PATCH #{url}") if ENV['DEBUG']
         UI.message("DEBUG: PATCH body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
-        response = connection.patch(url) do |req|
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = body
+        status, message, response = retry_429_and_error do 
+          response = connection.patch(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
+          end
         end
-
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
-        case response.status
+      
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http exception updating symbol upload: #{message}")
+          else
+            UI.error("Retryable error updating symbol upload #{status}: #{message}")
+          end
+          false
         when 200...300
           response.body
         when 401
@@ -213,19 +243,26 @@ module Fastlane
         UI.message("DEBUG: PUT #{upload_url}") if ENV['DEBUG']
         UI.message("DEBUG: PUT body <data>\n") if ENV['DEBUG']
 
-        response = connection.put do |req|
-          req.headers['x-ms-blob-type'] = "BlockBlob"
-          req.headers['Content-Length'] = File.size(symbol).to_s
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = Faraday::UploadIO.new(symbol, 'application/octet-stream') if symbol && File.exist?(symbol)
-        end
-
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
         log_type = "dSYM" if symbol_type == "Apple"
         log_type = "mapping" if symbol_type == "Android"
 
-        case response.status
+        status, message, response = retry_429_and_error do 
+          response = connection.put do |req|
+            req.headers['x-ms-blob-type'] = "BlockBlob"
+            req.headers['Content-Length'] = File.size(symbol).to_s
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = Faraday::UploadIO.new(symbol, 'application/octet-stream') if symbol && File.exist?(symbol)
+          end
+        end
+
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http exception updating symbol upload: #{message}")
+          else
+            UI.error("Retryable error updating symbol upload #{status}: #{message}")
+          end
+          false
         when 200...300
           self.update_symbol_upload(api_token, owner_name, app_name, symbol_upload_id, 'committed')
           UI.success("#{log_type} uploaded")
@@ -248,13 +285,22 @@ module Fastlane
 
         UI.message("DEBUG: POST #{set_metadata_url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body <data>\n") if ENV['DEBUG']
-        response = connection.post do |req|
-          req.options.timeout = timeout
-          req.headers['internal-request-source'] = "fastlane"
-        end
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
 
-        case response.status
+        status, message, response = retry_429_and_error do 
+          response = connection.post do |req|
+            req.options.timeout = timeout
+            req.headers['internal-request-source'] = "fastlane"
+          end
+        end
+
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http exception releasing upload metadata: #{message}")
+          else
+            UI.error("Retryable error releasing upload metadata #{status}: #{message}")
+          end
+          false
         when 200...300
           chunk_size = response.body['chunk_size']
           unless chunk_size.is_a? Integer
@@ -280,13 +326,22 @@ module Fastlane
         connection = self.connection(finish_url)
 
         UI.message("DEBUG: POST #{finish_url}") if ENV['DEBUG']
-        response = connection.post do |req|
-          req.options.timeout = timeout
-          req.headers['internal-request-source'] = "fastlane"
-        end
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
 
-        case response.status
+        status, message, response = retry_429_and_error do 
+          response = connection.post do |req|
+            req.options.timeout = timeout
+            req.headers['internal-request-source'] = "fastlane"
+          end
+        end
+
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http exception finishing release upload: #{message}")
+          else
+            UI.error("Retryable error finishing release upload #{status}: #{message}")
+          end
+          false
         when 200...300
           if response.body['error'] == false
             UI.message("Upload finished")
@@ -381,15 +436,22 @@ module Fastlane
         UI.message("DEBUG: PATCH #{url}") if ENV['DEBUG']
         UI.message("DEBUG: PATCH body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
-        response = connection.patch(url) do |req|
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = body
+        status, message, response = retry_429_and_error do 
+          response = connection.patch(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
+          end
         end
 
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
-        case response.status
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http exception updating release upload: #{message}")
+          else
+            UI.error("Retryable error updating release upload #{status}: #{message}")
+          end
+          false
         when 200...300
           response.body
         when 401
@@ -411,14 +473,21 @@ module Fastlane
 
         UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
 
-        response = connection.get(url) do |req|
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
+        status, message, response = retry_429_and_error do 
+          response = connection.get(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+          end
         end
 
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
-        case response.status
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http exception getting release: #{message}")
+          else
+            UI.error("Retryable error getting release: #{status}: #{message}")
+          end
+          false
         when 200...300
           release = response.body
           release
@@ -443,14 +512,22 @@ module Fastlane
 
         while true
           UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
-          response = connection.get(url) do |req|
-            req.headers['X-API-Token'] = api_token
-            req.headers['internal-request-source'] = "fastlane"
+
+          status, message, response = retry_429_and_error do 
+            response = connection.get(url) do |req|
+              req.headers['X-API-Token'] = api_token
+              req.headers['internal-request-source'] = "fastlane"
+            end
           end
 
-          UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
-          case response.status
+          case status
+          when 0, 429
+            if status == 0
+              UI.error("Faraday http exception polling for release id: #{message}")
+            else
+              UI.error("Retryable error polling for release id: #{status}: #{message}")
+            end
+            return false
           when 200...300
             case response.body['upload_status']
             when "readyToBePublished"
@@ -476,14 +553,21 @@ module Fastlane
 
         UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
 
-        response = connection.get(url) do |req|
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
+        status, message, response = retry_429_and_error do 
+          response = connection.get(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+          end
         end
 
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
-        case response.status
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http exception getting destination: #{message}")
+          else
+            UI.error("Retryable error getting destination: #{status}: #{message}")
+          end
+          false
         when 200...300
           destination = response.body
           destination
@@ -511,15 +595,22 @@ module Fastlane
         UI.message("DEBUG: PUT #{url}") if ENV['DEBUG']
         UI.message("DEBUG: PUT body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
-        response = connection.put(url) do |req|
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = body
+        status, message, response = retry_429_and_error do 
+          response = connection.put(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
+          end
         end
 
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
-        case response.status
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http exception updating release: #{message}")
+          else
+            UI.error("Retryable error updating release: #{status}: #{message}")
+          end
+          false
         when 200...300
           # get full release info
           release = self.get_release(api_token, owner_name, app_name, release_id)
@@ -565,15 +656,23 @@ module Fastlane
         UI.message("DEBUG: PATCH body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
         connection = self.connection
-        response = connection.patch(url) do |req|
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = body
+
+        status, message, response = retry_429_and_error do 
+          response = connection.patch(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
+          end
         end
 
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
-        case response.status
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http exception updating release metadata: #{message}")
+          else
+            UI.error("Retryable error updating release metadata: #{status}: #{message}")
+          end
+          false
         when 200...300
           UI.message("Release Metadata was successfully updated for release '#{release_id}'")
         when 404
@@ -605,15 +704,22 @@ module Fastlane
         UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
-        response = connection.post(url) do |req|
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = body
+        status, message, response = retry_429_and_error do 
+          response = connection.post(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
+          end
         end
 
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
-        case response.status
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http exception adding to destination: #{message}")
+          else
+            UI.error("Retryable error adding to destination: #{status}: #{message}")
+          end
+          false
         when 200...300
           # get full release info
           release = self.get_release(api_token, owner_name, app_name, release_id)
@@ -647,14 +753,21 @@ module Fastlane
 
         UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
 
-        response = connection.get(url) do |req|
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
+        status, message, response = retry_429_and_error do 
+          response = connection.get(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+          end
         end
 
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
-        case response.status
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http exception getting app: #{message}")
+          else
+            UI.error("Retryable error getting app: #{status}: #{message}")
+          end
+          false
         when 200...300
           UI.message("DEBUG: #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
           true
@@ -685,15 +798,22 @@ module Fastlane
         UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
-        response = connection.post(url) do |req|
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = body
+        status, message, response = retry_429_and_error do 
+          response = connection.post(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
+          end
         end
 
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
-        case response.status
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http exception creating app: #{message}")
+          else
+            UI.error("Retryable error creating app: #{status}: #{message}")
+          end
+          false
         when 200...300
           created = response.body
           UI.success("Created #{os}/#{platform} app with name \"#{created['name']}\" and display name \"#{created['display_name']}\" for #{owner_type} \"#{owner_name}\"")
@@ -714,14 +834,21 @@ module Fastlane
 
         UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
 
-        response = connection.get(url) do |req|
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
+        status, message, response = retry_429_and_error do 
+          response = connection.get(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+          end
         end
 
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
-        case response.status
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http fetching destribution groups: #{message}")
+          else
+            UI.error("Retryable error fetching destribution groups: #{status}: #{message}")
+          end
+          false
         when 200...300
           response.body
         when 401
@@ -743,14 +870,21 @@ module Fastlane
 
         UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
 
-        response = connection.get(url) do |req|
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
+        status, message, response = retry_429_and_error do 
+          response = connection.get(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+          end
         end
 
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
-        case response.status
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http fetching devices: #{message}")
+          else
+            UI.error("Retryable error fetching devices: #{status}: #{message}")
+          end
+          false
         when 200...300
           response.body
         when 401
@@ -772,26 +906,33 @@ module Fastlane
 
         UI.message("DEBUG: GET #{url}") if ENV['DEBUG']
 
-        response = connection.get(url) do |req|
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
+        status, message, response = retry_429_and_error do 
+          response = connection.get(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+          end
         end
 
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
-        case response.status
-        when 200...300
-          JSON.parse(response.body)
-        when 401
-          UI.user_error!("Auth Error, provided invalid token")
-          false
-        when 404
-          UI.error("Not found, invalid owner or application name")
-          false
-        else
-          UI.error("Error #{response.status}: #{response.body}")
-          false
-        end
+       case status
+       when 0, 429
+         if status == 0
+           UI.error("Faraday http fetching releases: #{message}")
+         else
+           UI.error("Retryable error fetching releases: #{status}: #{message}")
+         end
+         false
+       when 200...300
+         JSON.parse(response.body)
+       when 401
+         UI.user_error!("Auth Error, provided invalid token")
+         false
+       when 404
+         UI.error("Not found, invalid owner or application name")
+         false
+       else
+         UI.error("Error #{response.status}: #{response.body}")
+         false
+       end
       end
 
       def self.get_release_url(owner_type, owner_name, app_name, release_id)
@@ -824,17 +965,23 @@ module Fastlane
         UI.message("DEBUG: POST #{url}") if ENV['DEBUG']
         UI.message("DEBUG: POST body #{JSON.pretty_generate(body)}\n") if ENV['DEBUG']
 
-        response = connection.post(url) do |req|
-          req.headers['X-API-Token'] = api_token
-          req.headers['internal-request-source'] = "fastlane"
-          req.body = body
+        status, message, response = retry_429_and_error do 
+          response = connection.post(url) do |req|
+            req.headers['X-API-Token'] = api_token
+            req.headers['internal-request-source'] = "fastlane"
+            req.body = body
+          end
         end
 
-        UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
-
-        case response.status
+        case status
+        when 0, 429
+          if status == 0
+            UI.error("Faraday http adding to distribution group: #{message}")
+          else
+            UI.error("Retryable error adding to distribution group: #{status}: #{message}")
+          end
         when 200...300
-          created = response.body
+          response.body
           UI.success("Added new app #{app_name} to distribution group #{destination_name}")
         when 401
           UI.user_error!("Auth Error, provided invalid token")
@@ -846,6 +993,38 @@ module Fastlane
           UI.error("Error adding app to distribution group #{response.status}: #{response.body}")
         end
       end
+
+      def self.retry_429_and_error(&block)
+        retries = 0
+        status = 0
+
+        # status == 0   - Faraday error
+        # status == 429 - retryable error code from server
+        while ((status == 0) || (status == 429)) && (retries <= MAX_REQUEST_RETRIES)
+          begin
+            # calling request sending logic
+            response = block.call
+
+            # checking reponse
+            status = response.status
+            message = response.body
+            UI.message("DEBUG: #{status} #{JSON.pretty_generate(message)}\n") if ENV['DEBUG']
+          rescue Faraday::Error => e
+            status = 0
+            message = e.message
+          end
+
+          # Pause before retrying
+          if (status == 0) || (status == 429)
+            sleep(REQUEST_RETRY_INTERVAL)
+          end
+          
+          retries += 1
+        end
+
+        return status, message, response
+      end
+
     end
   end
 end
