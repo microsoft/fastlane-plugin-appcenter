@@ -83,7 +83,7 @@ lane :test_group_names do
     owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication",
     file: "./fastlane/app-release.apk",
-    destinations: "Group%20with%20space",
+    destinations: ENV["TEST_APPCENTER_DISTRIBUTE_GROUPS"],
     destination_type: "group"
   )
 
@@ -92,7 +92,7 @@ lane :test_group_names do
     owner_name: ENV["TEST_APPCENTER_OWNER_NAME"],
     app_name: "MyApplication",
     file: "./fastlane/app-release.apk",
-    destinations: "Group with space",
+    destinations: ENV["TEST_APPCENTER_DISTRIBUTE_GROUPS"],
     destination_type: "group"
   )
 end
