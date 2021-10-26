@@ -21,6 +21,8 @@ With [App Center](https://appcenter.ms) you can continuously build, test, releas
 
 `appcenter_upload` allows you to upload and [distribute](https://docs.microsoft.com/en-us/appcenter/distribution/uploading) apps to your testers on App Center as well as to upload .dSYM files to [collect detailed crash reports](https://docs.microsoft.com/en-us/appcenter/crashes/ios) in App Center.
 
+`appcenter_fetch_version_number` allows you to obtain the latest version number (short or full) for an app. This is useful for tasks such as getting the latest version of an app so that an increment action can take place on CI, or checking that an upload has been successful.
+
 ## Usage
 
 To get started, first, [obtain an API token](https://appcenter.ms/settings/apitokens) in App Center. The API Token is used to authenticate with the App Center API in each call.
@@ -29,7 +31,6 @@ To get started, first, [obtain an API token](https://appcenter.ms/settings/apito
 appcenter_fetch_devices(
   api_token: "<appcenter token>",
   owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
-  owner_type: "user", # Default is user - set to organization for appcenter organizations
   app_name: "<appcenter app name>",
   destinations: "*", # Default is 'Collaborators', use '*' for all distribution groups
   devices_file: "devices.txt" # Default. If you customize, the extension must be .txt
@@ -45,6 +46,21 @@ appcenter_upload(
   file: "<path to android build binary>",
   notify_testers: true # Set to false if you don't want to notify testers of your new release (default: `false`)
 )
+```
+
+```ruby
+appcenter_fetch_version_number(
+  api_token: "<appcenter token>",
+  owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
+  app_name: "<appcenter app name (as seen in app URL)>",
+  version: "a specific version to get the last release for" # optional, don't set this value to get the last upload of all versions
+)
+```
+
+The `appcenter_fetch_version_number` returns a hash that contains the id, the version number, and the build number. The version corresponds to the `short_version` and the build number to the `version` known by App Center for a given release:
+```ruby
+{"id"=>1, "version"=>"1.0.0", "build_number"=>"1.0.0.1234"} # iOS apps contain the full version plus build number due to the way that Apple use CFBundleVersion for this value
+{"id"=>588, "version"=>"1.2.0", "build_number"=>"1615"}
 ```
 
 ### Help
@@ -74,7 +90,6 @@ Here is the list of all existing parameters:
 | Key & Env Var | Description |
 |-----------------|--------------------|
 | `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
-| `owner_type` <br/> `APPCENTER_OWNER_TYPE` | Owner type, either 'user' or 'organization' (default: `user`) |
 | `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name, as found in the App's URL in App Center |
 | `destinations` <br/> `APPCENTER_DISTRIBUTE_DESTINATIONS` | Comma separated list of distribution group names. Default is 'Collaborators', use '*' for all distribution groups |
 | `devices_file` <br/> `FL_REGISTER_DEVICES_FILE` | File to save the devices list to. Same environment variable as _fastlane_'s `register_devices` action |
@@ -88,7 +103,7 @@ Here is the list of all existing parameters:
 | `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name as found in the App's URL in App Center |
 | `app_name` <br/> `APPCENTER_APP_NAME` | App name as found in the App's URL in App Center. If there is no app with such name, you will be prompted to create one |
 | `app_display_name` <br/> `APPCENTER_APP_DISPLAY_NAME` | App display name to use when creating a new app |
-| `app_os` <br/> `APPCENTER_APP_OS` | App OS. Used for new app creation, if app 'app_name' was not found |
+| `app_os` <br/> `APPCENTER_APP_OS` | App OS can be Android, iOS, macOS, Windows, Custom. Used for new app creation, if app 'app_name' was not found |
 | `app_platform` <br/> `APPCENTER_APP_PLATFORM` | App Platform. Used for new app creation, if app 'app_name' was not found |
 | `file` <br/> `APPCENTER_DISTRIBUTE_FILE` | File path to the release build to publish |
 | `upload_build_only` <br/> `APPCENTER_DISTRIBUTE_UPLOAD_BUILD_ONLY` | Flag to upload only the build to App Center. Skips uploading symbols or mapping (default: `false`) |
@@ -96,7 +111,7 @@ Here is the list of all existing parameters:
 | `upload_dsym_only` <br/> `APPCENTER_DISTRIBUTE_UPLOAD_DSYM_ONLY` | Flag to upload only the dSYM file to App Center (default: `false`) |
 | `mapping` <br/> `APPCENTER_DISTRIBUTE_ANDROID_MAPPING` | Path to your Android mapping.txt |
 | `upload_mapping_only` <br/> `APPCENTER_DISTRIBUTE_UPLOAD_ANDROID_MAPPING_ONLY` | Flag to upload only the mapping.txt file to App Center (default: `false`) |
-| `destinations` <br/> `APPCENTER_DISTRIBUTE_DESTINATIONS` | Comma separated list of destination names. Both distribution groups and stores are supported. All names are required to be of the same destination type (default: `Collaborators`) |
+| `destinations` <br/> `APPCENTER_DISTRIBUTE_DESTINATIONS` | Comma separated list of destination names, use '*' for all distribution groups if destination type is 'group'. Both distribution groups and stores are supported. All names are required to be of the same destination type (default: `Collaborators`) |
 | `destination_type` <br/> `APPCENTER_DISTRIBUTE_DESTINATION_TYPE` | Destination type of distribution destination. 'group' and 'store' are supported (default: `group`) |
 | `mandatory_update` <br/> `APPCENTER_DISTRIBUTE_MANDATORY_UPDATE` | Require users to update to this release. Ignored if destination type is 'store' (default: `false`) |
 | `notify_testers` <br/> `APPCENTER_DISTRIBUTE_NOTIFY_TESTERS` | Send email notification about release. Ignored if destination type is 'store' (default: `false`) |
@@ -105,10 +120,19 @@ Here is the list of all existing parameters:
 | `release_notes_link` <br/> `APPCENTER_DISTRIBUTE_RELEASE_NOTES_LINK` | Additional release notes link |
 | `build_number` <br/> `APPCENTER_DISTRIBUTE_BUILD_NUMBER` | The build number, required for macOS .pkg and .dmg builds, as well as Android ProGuard `mapping.txt` when using `upload_mapping_only` |
 | `version` <br/> `APPCENTER_DISTRIBUTE_VERSION` | The build version, required for .pkg, .dmg, .zip and .msi builds, as well as Android ProGuard `mapping.txt` when using `upload_mapping_only` |
-| `timeout` <br/> `APPCENTER_DISTRIBUTE_TIMEOUT` | Request timeout in seconds |
+| `timeout` <br/> `APPCENTER_DISTRIBUTE_TIMEOUT` | Request timeout in seconds applied to individual HTTP requests. Some commands use multiple HTTP requests, large file uploads are also split in multiple HTTP requests |
 | `dsa_signature` <br/> `APPCENTER_DISTRIBUTE_DSA_SIGNATURE` | DSA signature of the macOS or Windows release for Sparkle update feed |
+| `ed_signature` <br/> `APPCENTER_DISTRIBUTE_ED_SIGNATURE` | EdDSA signature of the macOS or Windows release for Sparkle update feed |
 | `strict` <br/> `APPCENTER_STRICT_MODE` | Strict mode, set to 'true' to fail early in case a potential error was detected |
 
+#### `appcenter_fetch_version_number`
+
+| Key & Env Var | Description |
+|-----------------|--------------------|
+| `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
+| `owner_name` <br/> `APPCENTER_OWNER_NAME` | Owner name, as found in the App's URL in App Center |
+| `app_name` <br/> `APPCENTER_APP_NAME` | App name as found in the App's URL in App Center. If there is no app with such name, you will be prompted to create one |
+| `version` <br/> `APPCENTER_APP_VERSION` | App version to get the last release for instead of the last release of all versions |
 
 ## Example
 
@@ -162,4 +186,4 @@ Check out [SECURITY.md](SECURITY.md) for any security concern with this project.
 
 ## Contact
 
-We're on Twitter as [@vsappcenter](https://www.twitter.com/vsappcenter). Additionally you can reach out to us on the [App Center](https://appcenter.ms/apps) portal by using the blue Intercom button on the bottom right to start a conversation.
+We're on Twitter as [@vsappcenter](https://www.twitter.com/vsappcenter). Additionally you can reach out to us on the [App Center](https://appcenter.ms/apps) portal. Open the "?" menu on the top right corner of screen, then use "Contact support" to file a support ticket. Our support team is there to answer your questions and help you solve your problems. 

@@ -1,22 +1,4 @@
-def stub_fetch_distribution_groups(owner_name:, app_name:)
-  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups")
-    .to_return(
-      status: 200,
-      headers: { 'Content-Type' => 'application/json' },
-      body: "[{\"name\": \"Collaborators\"}, {\"name\": \"test-group-1\"}, {\"name\": \"test group 2\"}]"
-    )
-end
-
-def stub_fetch_devices(owner_name:, app_name:, distribution_group:)
-  stub_request(:get, "https://api.appcenter.ms/v0.1/apps/#{owner_name}/#{app_name}/distribution_groups/#{ERB::Util.url_encode(distribution_group)}/devices/download_devices_list")
-    .to_return(
-      status: 200,
-      headers: { 'Content-Type' => 'text/csv; charset=utf-8' },
-      body: "Device ID\tDevice Name\n
-      1234567890abcdefghij1234567890abcdefghij\tDevice 1 - iPhone X\n
-      abcdefghij1234567890abcdefghij1234567890\tDevice 2 - iPhone XS\n"
-    )
-end
+require_relative 'appcenter_stub'
 
 def allow_devices_file(devices_file)
   allow(CSV).to receive(:open)
@@ -101,6 +83,79 @@ describe Fastlane::Actions::AppcenterFetchDevicesAction do
       end
     end
 
+    context "with valid token, owner name, app name, default group, 429 errors and exceptions" do
+      def default_group
+        Fastlane::FastFile.new.parse("
+          lane :test do
+            appcenter_fetch_devices(
+              api_token: 'xxx',
+              owner_name: 'owner',
+              app_name: 'app'
+            )
+          end").runner.execute(:test)
+      end
+
+      it "writes a devices file with a default name (429, 200)" do
+        allow_devices_file('devices.txt')
+        stub_fetch_devices_chain(
+          owner_name: 'owner',
+          app_name: 'app',
+          distribution_group: 'Collaborators',
+          response_codes: [429, 200]
+        )
+
+        default_group
+      end
+
+      it "writes a devices file with a default name (429, 429, 200)" do
+        allow_devices_file('devices.txt')
+        stub_fetch_devices_chain(
+          owner_name: 'owner',
+          app_name: 'app',
+          distribution_group: 'Collaborators',
+          response_codes: [429, 429, 200]
+        )
+
+        default_group
+      end
+
+      it "writes a devices file with a default name (exception, 200)" do
+        allow_devices_file('devices.txt')
+        stub_fetch_devices_chain(
+          owner_name: 'owner',
+          app_name: 'app',
+          distribution_group: 'Collaborators',
+          response_codes: [-1, 200]
+        )
+
+        default_group
+      end
+
+      it "writes a devices file with a default name (exception, 429, 200)" do
+        allow_devices_file('devices.txt')
+        stub_fetch_devices_chain(
+          owner_name: 'owner',
+          app_name: 'app',
+          distribution_group: 'Collaborators',
+          response_codes: [-1, 429, 200]
+        )
+
+        default_group
+      end
+
+      it "writes a devices file with a default name (429, exception, 200)" do
+        allow_devices_file('devices.txt')
+        stub_fetch_devices_chain(
+          owner_name: 'owner',
+          app_name: 'app',
+          distribution_group: 'Collaborators',
+          response_codes: [429, -1, 200]
+        )
+
+        default_group
+      end
+    end
+
     context "with valid token, owner name, app name, and all groups" do
       before(:each) do
         stub_fetch_distribution_groups(
@@ -125,6 +180,45 @@ describe Fastlane::Actions::AppcenterFetchDevicesAction do
       end
 
       it "writes a devices file with a default name" do
+        allow_devices_file('devices.txt')
+
+        Fastlane::FastFile.new.parse("
+          lane :test do
+            appcenter_fetch_devices(
+              api_token: 'xxx',
+              owner_name: 'owner',
+              app_name: 'app',
+              destinations: '*'
+            )
+          end").runner.execute(:test)
+      end
+    end
+
+    context "with valid token, owner name, app name, all groups, 429 errors and exceptions" do
+      it "writes a devices file with a default name" do
+        stub_fetch_distribution_groups_chain(
+          owner_name: 'owner',
+          app_name: 'app',
+          response_codes: [429, -1, 200]
+        )
+        stub_fetch_devices(
+          owner_name: 'owner',
+          app_name: 'app',
+          distribution_group: 'Collaborators'
+        )
+        stub_fetch_devices_chain(
+          owner_name: 'owner',
+          app_name: 'app',
+          distribution_group: 'test-group-1',
+          response_codes: [-1, -1, 200]
+        )
+        stub_fetch_devices_chain(
+          owner_name: 'owner',
+          app_name: 'app',
+          distribution_group: 'test group 2',
+          response_codes: [429, 429, 200]
+        )
+
         allow_devices_file('devices.txt')
 
         Fastlane::FastFile.new.parse("

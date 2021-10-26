@@ -9,6 +9,23 @@ module Fastlane
           windows: %w(.appx .appxbundle .appxupload .msix .msixbundle .msixupload .zip .msi),
           custom: %w(.zip)
       }
+      CONTENT_TYPES = {
+          apk: "application/vnd.android.package-archive",
+          aab: "application/vnd.android.package-archive",
+          msi: "application/x-msi",
+          plist: "application/xml",
+          aetx: "application/c-x509-ca-cert",
+          cer: "application/pkix-cert",
+          xap: "application/x-silverlight-app",
+          appx: "application/x-appx",
+          appxbundle: "application/x-appxbundle",
+          appxupload: "application/x-appxupload",
+          appxsym: "application/x-appxupload",
+          msix: "application/x-msix",
+          msixbundle: "application/x-msixbundle",
+          msixupload: "application/x-msixupload",
+          msixsym: "application/x-msixupload",
+      }
       ALL_SUPPORTED_EXTENSIONS = SUPPORTED_EXTENSIONS.values.flatten.sort!.uniq!
       STORE_ONLY_EXTENSIONS = %w(.aab)
       STORE_SUPPORTED_EXTENSIONS = %w(.aab .apk .ipa)
@@ -25,6 +42,13 @@ module Fastlane
     end
 
     class AppcenterUploadAction < Action
+      def self.is_apple_build(file)
+        return false unless file
+
+        file_ext = Helper::AppcenterHelper.file_extname_full(file)
+        ((Constants::SUPPORTED_EXTENSIONS[:ios] + Constants::SUPPORTED_EXTENSIONS[:mac])).include? file_ext
+      end
+
       # run whole upload process for dSYM files
       def self.run_dsym_upload(params)
         values = params.values
@@ -38,8 +62,9 @@ module Fastlane
 
         dsym_path = nil
         if dsym
-          # we can use dsym parameter only if build file is ipa
-          dsym_path = dsym if !file || File.extname(file) == '.ipa'
+          # we can use dsym parameter for all apple builds
+          self.optional_error("dsym parameter can only be used with Apple builds (ios, mac)") unless !file || self.is_apple_build(file)
+          dsym_path = dsym
         else
           # if dsym is not set, but build is ipa - check default path
           if file && File.exist?(file) && File.extname(file) == '.ipa'
@@ -121,6 +146,7 @@ module Fastlane
         build_number = params[:build_number]
         version = params[:version]
         dsa_signature = params[:dsa_signature]
+        ed_signature = params[:ed_signature]
 
         if release_notes.length >= Constants::MAX_RELEASE_NOTES_LENGTH
           unless should_clip
@@ -148,6 +174,7 @@ module Fastlane
           self.optional_error("Can't distribute #{file_ext} to groups, please use `destination_type: 'store'`") if Constants::STORE_ONLY_EXTENSIONS.include? file_ext
         else
           self.optional_error("Can't distribute #{file_ext} to stores, please use `destination_type: 'group'`") unless Constants::STORE_SUPPORTED_EXTENSIONS.include? file_ext
+          UI.user_error!("The combination of `destinations: '*'` and `destination_type: 'store'` is invalid, please use `destination_type: 'group'` or explicitly specify the destinations") if destinations == "*"
         end
 
         release_upload_body = nil
@@ -174,27 +201,57 @@ module Fastlane
             File.delete zip_file
           end
           UI.message("Creating zip archive: #{zip_file}")
-          file = Actions::ZipAction.run(path: file, output_path: zip_file)
+          file = Actions::ZipAction.run(path: file, output_path: zip_file, symlinks: true)
         end
 
         UI.message("Starting release upload...")
         upload_details = Helper::AppcenterHelper.create_release_upload(api_token, owner_name, app_name, release_upload_body)
         if upload_details
-          upload_id = upload_details['upload_id']
-          upload_url = upload_details['upload_url']
+          upload_id = upload_details['id']
+
+          UI.message("Setting Metadata...")
+          content_type = Constants::CONTENT_TYPES[File.extname(file)&.delete('.').downcase.to_sym] || "application/octet-stream"
+          set_metadata_url = "#{upload_details['upload_domain']}/upload/set_metadata/#{upload_details['package_asset_id']}?file_name=#{File.basename(file)}&file_size=#{File.size(file)}&token=#{upload_details['url_encoded_token']}&content_type=#{content_type}"
+          chunk_size = Helper::AppcenterHelper.set_release_upload_metadata(set_metadata_url, api_token, owner_name, app_name, upload_id, timeout)
+          UI.abort_with_message!("Upload aborted") unless chunk_size
 
           UI.message("Uploading release binary...")
-          uploaded = Helper::AppcenterHelper.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, timeout)
+          upload_url = "#{upload_details['upload_domain']}/upload/upload_chunk/#{upload_details['package_asset_id']}?token=#{upload_details['url_encoded_token']}"
+          uploaded = Helper::AppcenterHelper.upload_build(api_token, owner_name, app_name, file, upload_id, upload_url, content_type, chunk_size, timeout)
+          UI.abort_with_message!("Upload aborted") unless uploaded
 
-          if uploaded
-            release_id = uploaded['release_id']
+          UI.message("Finishing release...")
+          finish_url = "#{upload_details['upload_domain']}/upload/finished/#{upload_details['package_asset_id']}?token=#{upload_details['url_encoded_token']}"
+          finished = Helper::AppcenterHelper.finish_release_upload(finish_url, api_token, owner_name, app_name, upload_id, timeout)
+          UI.abort_with_message!("Upload aborted") unless finished
+
+          UI.message("Waiting for release to be ready...")
+          release_status_url = "v0.1/apps/#{owner_name}/#{app_name}/uploads/releases/#{upload_id}"
+          release_id = Helper::AppcenterHelper.poll_for_release_id(api_token, release_status_url)
+
+          if release_id.is_a? Integer
             release_url = Helper::AppcenterHelper.get_release_url(owner_type, owner_name, app_name, release_id)
             UI.message("Release '#{release_id}' committed: #{release_url}")
 
             release = Helper::AppcenterHelper.update_release(api_token, owner_name, app_name, release_id, release_notes)
-            Helper::AppcenterHelper.update_release_metadata(api_token, owner_name, app_name, release_id, dsa_signature)
+            Helper::AppcenterHelper.update_release_metadata(api_token, owner_name, app_name, release_id, dsa_signature, ed_signature)
 
-            destinations_array = destinations.split(',')
+            destinations_array = []
+            if destinations == '*'
+              UI.message("Looking up all distribution groups for #{owner_name}/#{app_name}")
+              distribution_groups = Helper::AppcenterHelper.fetch_distribution_groups(
+                api_token: api_token,
+                owner_name: owner_name,
+                app_name: app_name
+              )
+
+              UI.abort_with_message!("Failed to list distribution groups for #{owner_name}/#{app_name}") unless distribution_groups
+
+              destinations_array = distribution_groups.map {|h| h['name'] }
+            else
+              destinations_array = destinations.split(',').map(&:strip)
+            end
+
             destinations_array.each do |destination_name|
               destination = Helper::AppcenterHelper.get_destination(api_token, owner_name, app_name, destination_type, destination_name)
               if destination
@@ -231,10 +288,11 @@ module Fastlane
         app_platform = params[:app_platform]
 
         platforms = {
-          Android: %w[Java React-Native Xamarin],
-          iOS: %w[Objective-C-Swift React-Native Xamarin],
+          Android: %w[Java React-Native Xamarin Unity],
+          iOS: %w[Objective-C-Swift React-Native Xamarin Unity],
           macOS: %w[Objective-C-Swift],
-          Windows: %w[UWP WPF WinForms Unity]
+          Windows: %w[UWP WPF WinForms Unity],
+          Custom: %w[Custom]
         }
 
         begin
@@ -265,6 +323,30 @@ module Fastlane
         end
       end
 
+      def self.add_app_to_distribution_group_if_needed(params)
+        return unless params[:destination_type] == 'group' && params[:owner_type] == 'organization' && params[:destinations] != '*'
+
+        app_distribution_groups = Helper::AppcenterHelper.fetch_distribution_groups(
+          api_token: params[:api_token],
+          owner_name: params[:owner_name],
+          app_name: params[:app_name]
+        )
+
+        group_names = app_distribution_groups.map { |g| g['name'] }
+        destination_names = params[:destinations].split(',').map(&:strip)
+
+        destination_names.each do |destination_name|
+          unless group_names.include? destination_name
+            Helper::AppcenterHelper.add_new_app_to_distribution_group(
+              api_token: params[:api_token],
+              owner_name: params[:owner_name],
+              app_name: params[:app_name],
+              destination_name: destination_name
+            )
+          end
+        end
+      end
+
       def self.run(params)
         values = params.values
         upload_build_only = params[:upload_build_only]
@@ -280,10 +362,12 @@ module Fastlane
             UI.message("Release upload failed (#{exception.message}), retrying. Attempt# #{try}. #{next_interval} seconds until the next try.")
           end
           Retriable.retriable(tries: 60, on_retry: each_retry) do
+            self.add_app_to_distribution_group_if_needed(params)
             release = self.run_release_upload(params) unless upload_dsym_only || upload_mapping_only
             raise RetryableException unless release
           end
         when :got_app
+          self.add_app_to_distribution_group_if_needed(params)
           release = self.run_release_upload(params) unless upload_dsym_only || upload_mapping_only
         else
           return
@@ -361,7 +445,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :app_os,
                                   env_name: "APPCENTER_APP_OS",
-                               description: "App OS. Used for new app creation, if app 'app_name' was not found",
+                               description: "App OS can be Android, iOS, macOS, Windows, Custom. Used for new app creation, if app 'app_name' was not found",
                                   optional: true,
                                       type: String),
 
@@ -477,6 +561,7 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :mapping,
                                   env_name: "APPCENTER_DISTRIBUTE_ANDROID_MAPPING",
                                description: "Path to your Android mapping.txt",
+                               default_value: (defined? SharedValues::GRADLE_MAPPING_TXT_OUTPUT_PATH) && Actions.lane_context[SharedValues::GRADLE_MAPPING_TXT_OUTPUT_PATH] || nil,
                                   optional: true,
                                       type: String,
                               verify_block: proc do |value|
@@ -506,11 +591,10 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :destinations,
                                   env_name: "APPCENTER_DISTRIBUTE_DESTINATIONS",
-                               description: "Comma separated list of destination names. Both distribution groups and stores are supported. All names are required to be of the same destination type",
+                               description: "Comma separated list of destination names, use '*' for all distribution groups if destination type is 'group'. Both distribution groups and stores are supported. All names are required to be of the same destination type",
                              default_value: Actions.lane_context[SharedValues::APPCENTER_DISTRIBUTE_DESTINATIONS] || "Collaborators",
                                   optional: true,
                                       type: String),
-
 
           FastlaneCore::ConfigItem.new(key: :destination_type,
                                   env_name: "APPCENTER_DISTRIBUTE_DESTINATION_TYPE",
@@ -570,13 +654,19 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :timeout,
                                        env_name: "APPCENTER_DISTRIBUTE_TIMEOUT",
-                                       description: "Request timeout in seconds",
+                                       description: "Request timeout in seconds applied to individual HTTP requests. Some commands use multiple HTTP requests, large file uploads are also split in multiple HTTP requests",
                                        optional: true,
                                        type: Integer),
 
           FastlaneCore::ConfigItem.new(key: :dsa_signature,
                                        env_name: "APPCENTER_DISTRIBUTE_DSA_SIGNATURE",
                                        description: "DSA signature of the macOS or Windows release for Sparkle update feed",
+                                       optional: true,
+                                       type: String),
+
+          FastlaneCore::ConfigItem.new(key: :ed_signature,
+                                       env_name: "APPCENTER_DISTRIBUTE_ED_SIGNATURE",
+                                       description: "EdDSA signature of the macOS or Windows release for Sparkle update feed",
                                        optional: true,
                                        type: String),
 
@@ -622,6 +712,16 @@ module Fastlane
             destinations: "Testers,Public",
             destination_type: "group",
             dsym: "./app.dSYM.zip",
+            release_notes: "release notes",
+            notify_testers: false
+          )',
+          'appcenter_upload(
+            api_token: "...",
+            owner_name: "appcenter_owner",
+            app_name: "testing_ios_app",
+            file: "./app-release.ipa",
+            destinations: "*",
+            destination_type: "group",
             release_notes: "release notes",
             notify_testers: false
           )',

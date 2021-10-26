@@ -29,7 +29,7 @@ Naming/VariableNumber:
   Enabled: false
 
 # This is used a lot across the fastlane code base for config files
-Style/MethodMissingSuper:
+Lint/MissingSuper:
   Enabled: false
 
 Style/MissingRespondToMissing:
@@ -59,20 +59,16 @@ Style/TernaryParentheses:
 Style/EmptyMethod:
   Enabled: false
 
-# It's better to be more explicit about the type
-Style/BracesAroundHashParameters:
-  Enabled: false
-
 # specs sometimes have useless assignments, which is fine
 Lint/UselessAssignment:
   Exclude:
     - '**/spec/**/*'
 
 # We could potentially enable the 2 below:
-Layout/IndentFirstHashElement:
+Layout/FirstHashElementIndentation:
   Enabled: false
 
-Layout/AlignHash:
+Layout/HashAlignment:
   Enabled: false
 
 # HoundCI doesn't like this rule
@@ -88,7 +84,7 @@ Style/SymbolArray:
   Enabled: false
 
 # We still support Ruby 2.0.0
-Layout/IndentHeredoc:
+Layout/HeredocIndentation:
   Enabled: false
 
 # This cop would not work fine with rspec
@@ -97,7 +93,7 @@ Style/MixinGrouping:
     - '**/spec/**/*'
 
 # Sometimes we allow a rescue block that doesn't contain code
-Lint/HandleExceptions:
+Lint/SuppressedException:
   Enabled: false
 
 # Cop supports --auto-correct.
@@ -154,7 +150,7 @@ Metrics/ClassLength:
 
 
 # Configuration parameters: AllowURI, URISchemes.
-Metrics/LineLength:
+Layout/LineLength:
   Max: 370
 
 # Configuration parameters: CountKeywordArgs.
@@ -164,7 +160,7 @@ Metrics/ParameterLists:
 Metrics/PerceivedComplexity:
   Max: 18
 
-BlockNesting:
+Metrics/BlockNesting:
   Max: 4
 
 # Sometimes it's easier to read without guards
@@ -251,3 +247,12 @@ Style/IfInsideElse:
 # Sometimes we just want to 'collect'
 Style/CollectionMethods:
   Enabled: false
+
+Style/HashEachMethods:
+  Enabled: true
+
+Style/HashTransformKeys:
+  Enabled: true
+
+Style/HashTransformValues:
+  Enabled: true
