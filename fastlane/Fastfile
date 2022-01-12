@@ -32,7 +32,7 @@ lane :test_macos do
     api_token: ENV["TEST_APPCENTER_API_TOKEN"],
     owner_name: ENV["APPCENTER_OWNER_NAME"],
     app_name: ENV["APPCENTER_MACOS_APP_NAME"],
-    app_os: 'MacOS',
+    app_os: 'macOS',
     file: "./fastlane/macos-app.app.zip"
   )
 end
@@ -44,7 +44,7 @@ lane :test_macos_sparkle do
     app_name: ENV["APPCENTER_MACOS_APP_NAME"],
     destinations: ENV["TEST_APPCENTER_DISTRIBUTE_GROUP"],
     destination_type: "group",
-    app_os: 'MacOS',
+    app_os: 'macOS',
     file: "./fastlane/macos-app.app.zip",
     dsa_signature: "test_dsa_signature_value"
   )
