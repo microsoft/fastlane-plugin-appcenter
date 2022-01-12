@@ -955,7 +955,7 @@ module Fastlane
 
       # add new created app to existing distribution group
       def self.add_new_app_to_distribution_group(api_token:, owner_name:, app_name:, destination_name:)
-        url = URI.escape("/v0.1/orgs/#{owner_name}/distribution_groups/#{destination_name}/apps")
+        url = URI::Parser.new.escape("/v0.1/orgs/#{owner_name}/distribution_groups/#{destination_name}/apps")
         body = {
           apps: [
             { name: app_name }

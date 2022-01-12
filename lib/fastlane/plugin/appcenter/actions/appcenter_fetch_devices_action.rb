@@ -62,7 +62,7 @@ module Fastlane
                  col_sep: "\t") do |csv|
 
           devices.each do |device|
-            CSV.parse(device, { col_sep: "\t", headers: true }) do |row|
+            CSV.parse(device, col_sep: "\t", headers: true) do |row|
               csv << row
             end
           end
