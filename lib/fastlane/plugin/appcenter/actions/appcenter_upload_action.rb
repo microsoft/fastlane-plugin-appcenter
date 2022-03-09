@@ -205,7 +205,7 @@ module Fastlane
         upload_details = Helper::AppcenterHelper.create_release_upload(api_token, owner_name, app_name, release_upload_body)
         if upload_details
           upload_id = upload_details['id']
-          
+
           UI.message("Setting Metadata...")
           content_type = Constants::CONTENT_TYPES[File.extname(file)&.delete('.').downcase.to_sym] || "application/octet-stream"
           set_metadata_url = "#{upload_details['upload_domain']}/upload/set_metadata/#{upload_details['package_asset_id']}?file_name=#{File.basename(file)}&file_size=#{File.size(file)}&token=#{upload_details['url_encoded_token']}&content_type=#{content_type}"
@@ -243,12 +243,12 @@ module Fastlane
               )
 
               UI.abort_with_message!("Failed to list distribution groups for #{owner_name}/#{app_name}") unless distribution_groups
-              
+
               destinations_array = distribution_groups.map {|h| h['name'] }
             else
               destinations_array = destinations.split(',').map(&:strip)
             end
-            
+
             destinations_array.each do |destination_name|
               destination = Helper::AppcenterHelper.get_destination(api_token, owner_name, app_name, destination_type, destination_name)
               if destination
@@ -644,13 +644,13 @@ module Fastlane
                                        description: "DSA signature of the macOS or Windows release for Sparkle update feed",
                                        optional: true,
                                        type: String),
-          
+
           FastlaneCore::ConfigItem.new(key: :ed_signature,
                                        env_name: "APPCENTER_DISTRIBUTE_ED_SIGNATURE",
                                        description: "EdDSA signature of the macOS or Windows release for Sparkle update feed",
                                        optional: true,
                                        type: String),
-          
+
           FastlaneCore::ConfigItem.new(key: :strict,
                                        env_name: "APPCENTER_STRICT_MODE",
                                        description: "Strict mode, set to 'true' to fail early in case a potential error was detected",

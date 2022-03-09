@@ -27,6 +27,8 @@ With [App Center](https://appcenter.ms) you can continuously build, test, releas
 
 `appcenter_create_app` allows you to create an app without uploading a release for it.  Supports "create if not exists" semantics. This is useful for retrieving an app_secret before building an app.
 
+`appcenter_codepush_release_react` allows you to deploy app updates via CodePush.
+
 ## Usage
 
 To get started, first, [obtain an API token](https://appcenter.ms/settings/apitokens) in App Center. The API Token is used to authenticate with the App Center API in each call.
@@ -96,6 +98,15 @@ returns a hash of the newly created app with generated values.
 If the app already exists, action aborts with error.  
 
 If the 'error_on_create_existing' is set to false, an existing app will not error and instead return the app hash unchanged.
+
+```ruby
+appcenter_codepush_release_react(
+  api_token: "<appcenter token>",
+  owner_name: "<appcenter account name of the owner of the app (username or organization URL name)>",
+  app_name: "<appcenter app name (as seen in app URL)>",
+  deployment: "Staging"
+)
+```
 
 ### Help
 
@@ -169,7 +180,6 @@ Here is the list of all existing parameters:
 | `version` <br/> `APPCENTER_APP_VERSION` | App version to get the last release for instead of the last release of all versions |
 
 #### `appcenter_fetch_app`
-
 | Key & Env Var | Description |
 |-----------------|--------------------|
 | `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
@@ -177,7 +187,6 @@ Here is the list of all existing parameters:
 | `app_name` <br/> `APPCENTER_APP_NAME` | App name as found in the App's URL in App Center. If there is no app with such name, you will be prompted to create one |
 
 #### `appcenter_create_app`
-
 | Key & Env Var | Description |
 |-----------------|--------------------|
 | `api_token` <br/> `APPCENTER_API_TOKEN` | API Token for App Center |
@@ -187,6 +196,20 @@ Here is the list of all existing parameters:
 | `app_display_name` <br/> `APPCENTER_APP_DISPLAY_NAME` | App display name |
 | `app_os` <br/> `APPCENTER_APP_OS` | App OS. |
 | `app_platform` <br/> `APPCENTER_APP_PLATFORM` | App Platform. |
+
+#### `appcenter_codepush_release_react`
+| Key & Env Var | Description |
+| `deployment` <br/> `APPCENTER_CODEPUSH_DEPLOYMENT` | Name of deployment track (default: `Staging`) |
+| `target_version` <br/> `APPCENTER_CODEPUSH_TARGET_VERSION` | Target binary app version |
+| `mandatory` <br/> `APPCENTER_CODEPUSH_MANDATORY` | Specifies whether the update should be mandatory (default: `true`) |
+| `description` <br/> `APPCENTER_CODEPUSH_DESCRIPTION` | Description of CodePush release |
+| `dry_run` <br/> `APPCENTER_CODEPUSH_DRY_RUN` | Print command that would be run, don't run it (default: `false`) |
+| `disabled` <br/> `APPCENTER_CODEPUSH_DISABLED` | Specifies whether this release should not be immediately available for download (default: `false`) |
+| `no_duplicate_release_error` <br/> `APPCENTER_CODEPUSH_NO_DUPLICATE_ERROR` | Specifies whether to ignore errors if bundle is identical to the latest codepush release (default: `false`) |
+| `bundle_name` <br/> `APPCENTER_CODEPUSH_BUNDLE_NAME` | Specifies the name of the bundle file |
+| `output_dir` <br/> `APPCENTER_CODEPUSH_OUTPUT` | Specifies path to where the bundle and sourcemap should be written |
+| `sourcemap_output` <br/> `APPCENTER_CODEPUSH_SOURCEMAP_OUTPUT` | Specifies path to write sourcemaps to |
+| `development` <br/> `APPCENTER_CODEPUH_DEVELOPMENT` | Specifies whether to generate dev or release build (default: `false`) |
 
 ## Example
 
@@ -240,4 +263,4 @@ Check out [SECURITY.md](SECURITY.md) for any security concern with this project.
 
 ## Contact
 
-We're on Twitter as [@vsappcenter](https://www.twitter.com/vsappcenter). Additionally you can reach out to us on the [App Center](https://appcenter.ms/apps) portal. Open the "?" menu on the top right corner of screen, then use "Contact support" to file a support ticket. Our support team is there to answer your questions and help you solve your problems. 
+We're on Twitter as [@vsappcenter](https://www.twitter.com/vsappcenter). Additionally you can reach out to us on the [App Center](https://appcenter.ms/apps) portal. Open the "?" menu on the top right corner of screen, then use "Contact support" to file a support ticket. Our support team is there to answer your questions and help you solve your problems.
