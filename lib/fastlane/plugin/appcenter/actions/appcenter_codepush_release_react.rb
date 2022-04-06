@@ -19,6 +19,7 @@ module Fastlane
         token = params[:api_token]
         deployment = params[:deployment]
         dev = params[:development]
+        build_configuration_name = params[:build_configuration_name]
         description = params[:description]
         mandatory = params[:mandatory]
         version = params[:target_version]
@@ -39,6 +40,9 @@ module Fastlane
 
         command = base_executable + "codepush release-react --token #{token} --app #{owner}/#{app} --deployment-name #{deployment} --development #{dev} "
 
+        if build_configuration_name
+          command += "--build-configuration-name \"#{build_configuration_name}\" "
+        end
         if description
           command += "--description \"#{description}\" "
         end
@@ -118,6 +122,11 @@ module Fastlane
                                   env_name: "APPCENTER_CODEPUSH_DESCRIPTION",
                                   optional: true,
                                description: "Release description for CodePush"),
+          FastlaneCore::ConfigItem.new(key: :build_configuration_name,
+                                      type: String,
+                                  env_name: "APPCENTER_CODEPUSH_BUILD_CONFIGURATION_NAME",
+                                  optional: true,
+                               description: "Build configuration name (iOS only)"),
           FastlaneCore::ConfigItem.new(key: :dry_run,
                                       type: Boolean,
                                   env_name: "APPCENTER_CODEPUSH_DRY_RUN",
