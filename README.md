@@ -162,6 +162,7 @@ Here is the list of all existing parameters:
 | `output_dir` <br/> `APPCENTER_CODEPUSH_OUTPUT` | Specifies path to where the bundle and sourcemap should be written |
 | `sourcemap_output` <br/> `APPCENTER_CODEPUSH_SOURCEMAP_OUTPUT` | Specifies path to write sourcemaps to |
 | `development` <br/> `APPCENTER_CODEPUH_DEVELOPMENT` | Specifies whether to generate dev or release build (default: `false`) |
+| `private_key_path` <br/> `APPCENTER_CODEPUSH_PRIVATE_KEY_PATH` | Specifies path to private key that will be used for signing bundles" |
 
 ## Example
 
