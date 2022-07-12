@@ -11,7 +11,7 @@ module Fastlane
       }
       CONTENT_TYPES = {
           apk: "application/vnd.android.package-archive",
-          aab: "application/vnd.android.package-archive",
+          aab: "application/x-authorware-bin",
           msi: "application/x-msi",
           plist: "application/xml",
           aetx: "application/c-x509-ca-cert",
