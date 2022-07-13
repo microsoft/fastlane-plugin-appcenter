@@ -27,6 +27,7 @@ module Fastlane
         bundle = params[:bundle_name]
         output = params[:output_dir]
         sourcemap_output = params[:sourcemap_output]
+        private_key_path = params[:private_key_path]
         dry_run = params[:dry_run]
         use_local_appcenter_cli = params[:use_local_appcenter_cli]
 
@@ -61,6 +62,9 @@ module Fastlane
         end
         if sourcemap_output
           command += "--sourcemap-output #{sourcemap_output} "
+        end
+        if private_key_path
+          command += "--private-key-path #{private_key_path} "
         end
         if dry_run
           UI.message("Dry run!".red + " Would have run: " + command + "\n")
@@ -159,7 +163,11 @@ module Fastlane
                                   optional: true,
                              default_value: false,
                              description: "When true, the appcenter cli installed in the project directory is used"),
-
+          FastlaneCore::ConfigItem.new(key: :private_key_path,
+                                      type: String,
+                                  env_name: "APPCENTER_CODEPUSH_PRIVATE_KEY_PATH",
+                                  optional: true,
+                               description: "Path to private key that will be used for signing bundles")
         ]
       end
 
