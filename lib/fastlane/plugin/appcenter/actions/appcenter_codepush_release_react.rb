@@ -29,8 +29,16 @@ module Fastlane
         sourcemap_output = params[:sourcemap_output]
         private_key_path = params[:private_key_path]
         dry_run = params[:dry_run]
+        use_local_appcenter_cli = params[:use_local_appcenter_cli]
 
-        command = "appcenter codepush release-react --token #{token} --app #{owner}/#{app} --deployment-name #{deployment} --development #{dev} "
+        base_executable = "appcenter "
+
+        if use_local_appcenter_cli
+          base_executable = "npm exec " + base_executable
+        end
+
+        command = base_executable + "codepush release-react --token #{token} --app #{owner}/#{app} --deployment-name #{deployment} --development #{dev} "
+
         if description
           command += "--description \"#{description}\" "
         end
@@ -149,6 +157,12 @@ module Fastlane
                                   optional: true,
                              default_value: false,
                                description: "Specifies whether to generate a dev build"),
+          FastlaneCore::ConfigItem.new(key: :use_local_appcenter_cli,
+                                      type: Boolean,
+                                  env_name: "APPCENTER_CODEPUSH_USE_LOCAL_APPCENTER_CLI",
+                                  optional: true,
+                             default_value: false,
+                             description: "When true, the appcenter cli installed in the project directory is used"),
           FastlaneCore::ConfigItem.new(key: :private_key_path,
                                       type: String,
                                   env_name: "APPCENTER_CODEPUSH_PRIVATE_KEY_PATH",
