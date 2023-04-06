@@ -19,6 +19,7 @@ module Fastlane
         token = params[:api_token]
         deployment = params[:deployment]
         dev = params[:development]
+        build_configuration_name = params[:build_configuration_name]
         description = params[:description]
         mandatory = params[:mandatory]
         version = params[:target_version]
@@ -28,6 +29,7 @@ module Fastlane
         output = params[:output_dir]
         sourcemap_output = params[:sourcemap_output]
         private_key_path = params[:private_key_path]
+        use_hermes= params[:use_hermes]
         dry_run = params[:dry_run]
         use_local_appcenter_cli = params[:use_local_appcenter_cli]
 
@@ -39,6 +41,9 @@ module Fastlane
 
         command = base_executable + "codepush release-react --token #{token} --app #{owner}/#{app} --deployment-name #{deployment} --development #{dev} "
 
+        if build_configuration_name
+          command += "--build-configuration-name \"#{build_configuration_name}\" "
+        end
         if description
           command += "--description \"#{description}\" "
         end
@@ -65,6 +70,9 @@ module Fastlane
         end
         if private_key_path
           command += "--private-key-path #{private_key_path} "
+        end
+        if use_hermes
+          command += "--use-hermes "
         end
         if dry_run
           UI.message("Dry run!".red + " Would have run: " + command + "\n")
@@ -118,6 +126,11 @@ module Fastlane
                                   env_name: "APPCENTER_CODEPUSH_DESCRIPTION",
                                   optional: true,
                                description: "Release description for CodePush"),
+          FastlaneCore::ConfigItem.new(key: :build_configuration_name,
+                                      type: String,
+                                  env_name: "APPCENTER_CODEPUSH_BUILD_CONFIGURATION_NAME",
+                                  optional: true,
+                               description: "Build configuration name (iOS only)"),
           FastlaneCore::ConfigItem.new(key: :dry_run,
                                       type: Boolean,
                                   env_name: "APPCENTER_CODEPUSH_DRY_RUN",
@@ -167,7 +180,12 @@ module Fastlane
                                       type: String,
                                   env_name: "APPCENTER_CODEPUSH_PRIVATE_KEY_PATH",
                                   optional: true,
-                               description: "Path to private key that will be used for signing bundles")
+                               description: "Path to private key that will be used for signing bundles"),
+          FastlaneCore::ConfigItem.new(key: :use_hermes,
+                                      type: Boolean,
+                                  env_name: "APPCENTER_CODEPUSH_USE_HERMES",
+                                  optional: true,
+                              description: "Force using Hermes when generating sourcemaps")
         ]
       end
 
