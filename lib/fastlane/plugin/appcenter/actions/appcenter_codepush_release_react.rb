@@ -30,6 +30,8 @@ module Fastlane
         private_key_path = params[:private_key_path]
         dry_run = params[:dry_run]
         use_local_appcenter_cli = params[:use_local_appcenter_cli]
+        plist_file = params[:plist_file]
+        xcode_project_file = params[:xcode_project_file]
 
         base_executable = "appcenter "
 
@@ -65,6 +67,12 @@ module Fastlane
         end
         if private_key_path
           command += "--private-key-path #{private_key_path} "
+        end
+        if plist_file
+          command += "--plist-file #{plist_file} "
+        end
+        if xcode_project_file
+          command += "--xcode-project-file #{xcode_project_file} "
         end
         if dry_run
           UI.message("Dry run!".red + " Would have run: " + command + "\n")
@@ -163,6 +171,16 @@ module Fastlane
                                   optional: true,
                              default_value: false,
                              description: "When true, the appcenter cli installed in the project directory is used"),
+          FastlaneCore::ConfigItem.new(key: :plist_file,
+                                      type: String,
+                                  env_name: "APPCENTER_CODEPUSH_PLIST_FILE",
+                                  optional: true,
+                             description: "Path to the Info.plist"),
+          FastlaneCore::ConfigItem.new(key: :xcode_project_file,
+                                      type: String,
+                                  env_name: "APPCENTER_CODEPUSH_XCODE_PROJECT_FILE",
+                                  optional: true,
+                             description: "Path to the .pbxproj file"),
           FastlaneCore::ConfigItem.new(key: :private_key_path,
                                       type: String,
                                   env_name: "APPCENTER_CODEPUSH_PRIVATE_KEY_PATH",
