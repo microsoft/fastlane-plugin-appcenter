@@ -75,8 +75,8 @@ module Fastlane
         if xcode_project_file
           command += "--xcode-project-file #{xcode_project_file} "
         end
-        if use_hermes
-          command += "--use-hermes"
+        unless use_hermes.nil?
+          command += "--use-hermes #{use_hermes} "
         end
         if dry_run
           UI.message("Dry run!".red + " Would have run: " + command + "\n")
