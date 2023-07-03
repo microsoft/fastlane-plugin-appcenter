@@ -32,6 +32,7 @@ module Fastlane
         use_local_appcenter_cli = params[:use_local_appcenter_cli]
         plist_file = params[:plist_file]
         xcode_project_file = params[:xcode_project_file]
+        use_hermes = params[:use_hermes]
 
         base_executable = "appcenter "
 
@@ -73,6 +74,9 @@ module Fastlane
         end
         if xcode_project_file
           command += "--xcode-project-file #{xcode_project_file} "
+        end
+        unless use_hermes.nil?
+          command += "--use-hermes #{use_hermes} "
         end
         if dry_run
           UI.message("Dry run!".red + " Would have run: " + command + "\n")
@@ -185,7 +189,12 @@ module Fastlane
                                       type: String,
                                   env_name: "APPCENTER_CODEPUSH_PRIVATE_KEY_PATH",
                                   optional: true,
-                               description: "Path to private key that will be used for signing bundles")
+                               description: "Path to private key that will be used for signing bundles"),
+          FastlaneCore::ConfigItem.new(key: :use_hermes,
+                                      type: Boolean,
+                                  env_name: "APPCENTER_CODEPUSH_USE_HERMES",
+                                  optional: true,
+                               description: "Enable hermes and bypass automatic checks")
         ]
       end
 

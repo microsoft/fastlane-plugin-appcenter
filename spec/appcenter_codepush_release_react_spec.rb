@@ -20,6 +20,32 @@ describe Fastlane::Actions::AppcenterCodepushReleaseReactAction do
         )
       end").runner.execute(:test_codepush)
     end
+    it "can use a local appcenter_cli with use_hermes config true" do
+      allow(Fastlane::Actions::AppcenterCodepushReleaseReactAction).to receive(:sh).with(/npm exec/).and_return(nil)
+      Fastlane::FastFile.new.parse("lane :test_codepush do
+        appcenter_codepush_release_react(
+          api_token: 'an-api-token',
+          owner_name: 'owner',
+          app_name: 'app',
+          deployment: 'Staging',
+          use_hermes: true,
+          use_local_appcenter_cli: true
+        )
+      end").runner.execute(:test_codepush)
+    end
+    it "can use a local appcenter_cli with use_hermes use_hermes false" do
+      allow(Fastlane::Actions::AppcenterCodepushReleaseReactAction).to receive(:sh).with(/npm exec/).and_return(nil)
+      Fastlane::FastFile.new.parse("lane :test_codepush do
+        appcenter_codepush_release_react(
+          api_token: 'an-api-token',
+          owner_name: 'owner',
+          app_name: 'app',
+          deployment: 'Staging',
+          use_hermes: false,
+          use_local_appcenter_cli: true
+        )
+      end").runner.execute(:test_codepush)
+    end
   end
 end
 
