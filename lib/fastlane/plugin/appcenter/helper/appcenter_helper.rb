@@ -421,6 +421,7 @@ module Fastlane
           end
         end
         UI.message("Binary uploaded")
+        return true
       end
 
       # Commits or aborts the upload process for a release
