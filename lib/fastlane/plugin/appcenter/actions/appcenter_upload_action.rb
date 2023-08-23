@@ -327,6 +327,11 @@ module Fastlane
           app_name: params[:app_name]
         )
 
+        unless app_distribution_groups.is_a?(Array)
+          UI.error("Failed to fetch distribution groups for app #{params[:app_name]}.")
+          return
+        end
+
         group_names = app_distribution_groups.map { |g| g['name'] }
         destination_names = params[:destinations].split(',').map(&:strip)
 
