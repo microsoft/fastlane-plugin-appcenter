@@ -2291,7 +2291,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
             destination_type: 'group'
           })
         end").runner.execute(:test)
-      end.to raise_error(/Provided owner_name: 'owner' or app_name: 'appname with space' is not in a valid format. Please ensure no special characters or spaces./)
+      end.to raise_error("Provided owner_name: 'owner' or app_name: 'appname with space' is not in a valid format. Please ensure no special characters or spaces.")
     end
 
     it "Handles conflicting options of upload_build_only and upload_dysm_only" do
