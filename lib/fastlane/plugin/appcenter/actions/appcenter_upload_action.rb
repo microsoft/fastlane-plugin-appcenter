@@ -38,6 +38,9 @@ module Fastlane
       APPCENTER_BUILD_INFORMATION = :APPCENTER_BUILD_INFORMATION
     end
 
+    class RetryableException < StandardError
+    end
+
     class AppcenterUploadAction < Action
       def self.is_apple_build(file)
         return false unless file
@@ -205,7 +208,7 @@ module Fastlane
         upload_details = Helper::AppcenterHelper.create_release_upload(api_token, owner_name, app_name, release_upload_body)
         if upload_details
           upload_id = upload_details['id']
-          
+
           UI.message("Setting Metadata...")
           content_type = Constants::CONTENT_TYPES[File.extname(file)&.delete('.').downcase.to_sym] || "application/octet-stream"
           set_metadata_url = "#{upload_details['upload_domain']}/upload/set_metadata/#{upload_details['package_asset_id']}?file_name=#{File.basename(file)}&file_size=#{File.size(file)}&token=#{upload_details['url_encoded_token']}&content_type=#{content_type}"
@@ -243,12 +246,12 @@ module Fastlane
               )
 
               UI.abort_with_message!("Failed to list distribution groups for #{owner_name}/#{app_name}") unless distribution_groups
-              
+
               destinations_array = distribution_groups.map {|h| h['name'] }
             else
               destinations_array = destinations.split(',').map(&:strip)
             end
-            
+
             destinations_array.each do |destination_name|
               destination = Helper::AppcenterHelper.get_destination(api_token, owner_name, app_name, destination_type, destination_name)
               if destination
@@ -294,7 +297,7 @@ module Fastlane
 
         begin
           if Helper::AppcenterHelper.get_app(api_token, owner_name, app_name)
-            return true
+            return :got_app
           end
         rescue URI::InvalidURIError
           UI.user_error!("Provided owner_name: '#{owner_name}' or app_name: '#{app_name}' is not in a valid format. Please ensure no special characters or spaces.")
@@ -311,7 +314,9 @@ module Fastlane
             platform = platforms[os.to_sym].length == 1 ? platforms[os.to_sym][0] : UI.select("Select Platform", platforms[os.to_sym])
           end
 
-          Helper::AppcenterHelper.create_app(api_token, owner_type, owner_name, app_name, app_display_name, os, platform)
+          if Helper::AppcenterHelper.create_app(api_token, owner_type, owner_name, app_name, app_display_name, os, platform)
+            return :created_app
+          end
         else
           UI.error("Lane aborted")
           false
@@ -355,15 +360,29 @@ module Fastlane
 
         Options.strict_mode(params[:strict])
 
-        # if app found or successfully created
-        if self.get_or_create_app(params)
+        release = nil
+        case self.get_or_create_app(params)
+        when :created_app
+          each_retry = Proc.new do |exception, try, elapsed_time, next_interval|
+            UI.message("Release upload failed (#{exception.message}), retrying. Attempt# #{try}. #{next_interval} seconds until the next try.")
+          end
+          Retriable.retriable(tries: 60, on_retry: each_retry) do
+            self.add_app_to_distribution_group_if_needed(params)
+            release = self.run_release_upload(params) unless upload_dsym_only || upload_mapping_only
+            raise RetryableException unless release
+          end
+        when :got_app
           self.add_app_to_distribution_group_if_needed(params)
           release = self.run_release_upload(params) unless upload_dsym_only || upload_mapping_only
-          params[:version] = release['short_version'] if release
-          params[:build_number] = release['version'] if release
-          self.run_dsym_upload(params) unless upload_mapping_only || upload_build_only
-          self.run_mapping_upload(params) unless upload_dsym_only || upload_build_only
+        else
+          return
         end
+
+        params[:version] = release['short_version'] if release
+        params[:build_number] = release['version'] if release
+
+        self.run_dsym_upload(params) unless upload_mapping_only || upload_build_only
+        self.run_mapping_upload(params) unless upload_dsym_only || upload_build_only
 
         return values if Helper.test?
       end
@@ -649,13 +668,13 @@ module Fastlane
                                        description: "DSA signature of the macOS or Windows release for Sparkle update feed",
                                        optional: true,
                                        type: String),
-          
+
           FastlaneCore::ConfigItem.new(key: :ed_signature,
                                        env_name: "APPCENTER_DISTRIBUTE_ED_SIGNATURE",
                                        description: "EdDSA signature of the macOS or Windows release for Sparkle update feed",
                                        optional: true,
                                        type: String),
-          
+
           FastlaneCore::ConfigItem.new(key: :strict,
                                        env_name: "APPCENTER_STRICT_MODE",
                                        description: "Strict mode, set to 'true' to fail early in case a potential error was detected",
