@@ -133,6 +133,7 @@ module Fastlane
         owner_type = params[:owner_type]
         app_name = params[:app_name]
         destinations = params[:destinations]
+        destination_ids = params[:destination_ids]
         destination_type = params[:destination_type]
         mandatory_update = params[:mandatory_update]
         notify_testers = params[:notify_testers]
@@ -172,6 +173,7 @@ module Fastlane
         else
           self.optional_error("Can't distribute #{file_ext} to stores, please use `destination_type: 'group'`") unless Constants::STORE_SUPPORTED_EXTENSIONS.include? file_ext
           UI.user_error!("The combination of `destinations: '*'` and `destination_type: 'store'` is invalid, please use `destination_type: 'group'` or explicitly specify the destinations") if destinations == "*"
+          UI.user_error!("The combination of `destination_ids` and `destination_type: 'store'` is invalid, please use `destination_type: 'group'` or use `destinations`") unless destination_ids.to_s.strip.empty?
         end
 
         release_upload_body = nil
@@ -248,7 +250,12 @@ module Fastlane
             else
               destinations_array = destinations.split(',').map(&:strip)
             end
-            
+
+            destination_ids_array = []
+            unless destination_ids.to_s.empty?
+              destination_ids_array = destination_ids.split(',').map(&:strip)
+            end
+
             destinations_array.each do |destination_name|
               destination = Helper::AppcenterHelper.get_destination(api_token, owner_name, app_name, destination_type, destination_name)
               if destination
@@ -261,6 +268,17 @@ module Fastlane
                 end
               else
                 UI.error("#{destination_type} '#{destination_name}' was not found")
+              end
+            end
+
+            unless destination_ids_array.empty?
+              destination_ids_array.each do |destination_id|
+                distributed_release = Helper::AppcenterHelper.add_to_destination(api_token, owner_name, app_name, release_id, destination_type, destination_id, mandatory_update, notify_testers)
+                if distributed_release
+                  UI.success("Release '#{release_id}' (#{distributed_release['short_version']}) was successfully distributed to #{destination_type} \"#{destination_id}\"")
+                else
+                  UI.error("Release '#{release_id}' was not found for destination '#{destination_id}'")
+                end
               end
             end
 
@@ -582,6 +600,13 @@ module Fastlane
                                   optional: true,
                                       type: String),
 
+          FastlaneCore::ConfigItem.new(key: :destination_ids,
+                                  env_name: "APPCENTER_DISTRIBUTE_DESTINATION_IDS",
+                               description: "Comma separated list of destination ids, use '00000000-0000-0000-0000-000000000000' for distributing to the Collaborators group. Only distribution groups are supported",
+                             default_value: Actions.lane_context[SharedValues::APPCENTER_DISTRIBUTE_DESTINATION_IDS],
+                                  optional: true,
+                                      type: String),
+
           FastlaneCore::ConfigItem.new(key: :destination_type,
                                   env_name: "APPCENTER_DISTRIBUTE_DESTINATION_TYPE",
                                description: "Destination type of distribution destination. 'group' and 'store' are supported",
@@ -696,6 +721,17 @@ module Fastlane
             app_name: "testing_ios_app",
             file: "./app-release.ipa",
             destinations: "Testers,Public",
+            destination_type: "group",
+            dsym: "./app.dSYM.zip",
+            release_notes: "release notes",
+            notify_testers: false
+          )',
+          'appcenter_upload(
+            api_token: "...",
+            owner_name: "appcenter_owner",
+            app_name: "testing_ios_app",
+            file: "./app-release.ipa",
+            destination_ids: "00000000-0000-0000-0000-000000000000,12341234-1234-1234-1234-123412341234",
             destination_type: "group",
             dsym: "./app.dSYM.zip",
             release_notes: "release notes",
