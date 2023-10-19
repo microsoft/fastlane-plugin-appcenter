@@ -37,7 +37,7 @@ module Fastlane
         base_executable = "appcenter "
 
         if use_local_appcenter_cli
-          base_executable = "npm exec " + base_executable
+          base_executable = "npm exec -- " + base_executable
         end
 
         command = base_executable + "codepush release-react --token #{token} --app #{owner}/#{app} --deployment-name #{deployment} --development #{dev} "
