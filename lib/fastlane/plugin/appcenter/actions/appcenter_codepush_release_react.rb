@@ -33,6 +33,7 @@ module Fastlane
         plist_file = params[:plist_file]
         xcode_project_file = params[:xcode_project_file]
         use_hermes = params[:use_hermes]
+        extra_bundler_options = params[:extra_bundler_options]
 
         base_executable = "appcenter "
 
@@ -78,6 +79,10 @@ module Fastlane
         unless use_hermes.nil?
           command += "--use-hermes #{use_hermes} "
         end
+        if extra_bundler_options
+          command += extra_bundler_options.map { |option| "--extra-bundler-option='#{option}' " }.join
+        end
+
         if dry_run
           UI.message("Dry run!".red + " Would have run: " + command + "\n")
         else
@@ -174,17 +179,17 @@ module Fastlane
                                   env_name: "APPCENTER_CODEPUSH_USE_LOCAL_APPCENTER_CLI",
                                   optional: true,
                              default_value: false,
-                             description: "When true, the appcenter cli installed in the project directory is used"),
+                               description: "When true, the appcenter cli installed in the project directory is used"),
           FastlaneCore::ConfigItem.new(key: :plist_file,
                                       type: String,
                                   env_name: "APPCENTER_CODEPUSH_PLIST_FILE",
                                   optional: true,
-                             description: "Path to the Info.plist"),
+                               description: "Path to the Info.plist"),
           FastlaneCore::ConfigItem.new(key: :xcode_project_file,
                                       type: String,
                                   env_name: "APPCENTER_CODEPUSH_XCODE_PROJECT_FILE",
                                   optional: true,
-                             description: "Path to the .pbxproj file"),
+                               description: "Path to the .pbxproj file"),
           FastlaneCore::ConfigItem.new(key: :private_key_path,
                                       type: String,
                                   env_name: "APPCENTER_CODEPUSH_PRIVATE_KEY_PATH",
@@ -194,7 +199,12 @@ module Fastlane
                                       type: Boolean,
                                   env_name: "APPCENTER_CODEPUSH_USE_HERMES",
                                   optional: true,
-                               description: "Enable hermes and bypass automatic checks")
+                               description: "Enable hermes and bypass automatic checks"),
+          FastlaneCore::ConfigItem.new(key: :extra_bundler_options,
+                                      type: Array,
+                                  env_name: "APPCENTER_CODEPUSH_EXTRA_BUNDLER_OPTIONS",
+                                  optional: true,
+                               description: "Options that get passed to the react-native bundler"),
         ]
       end
 

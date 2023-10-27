@@ -46,6 +46,21 @@ describe Fastlane::Actions::AppcenterCodepushReleaseReactAction do
         )
       end").runner.execute(:test_codepush)
     end
+
+    it "can add extra bundler options" do
+      allow(Fastlane::Actions::AppcenterCodepushReleaseReactAction).to(
+        receive(:sh).with(/--extra-bundler-option='--reset-cache' --extra-bundler-option='--max-workers=1'/)
+      )
+
+      Fastlane::FastFile.new.parse("lane :test_codepush do
+        appcenter_codepush_release_react(
+          api_token: 'an-api-token',
+          owner_name: 'owner',
+          app_name: 'app',
+          deployment: 'Staging',
+          extra_bundler_options: ['--reset-cache', '--max-workers=1'],
+        )
+      end").runner.execute(:test_codepush)
+    end
   end
 end
-
