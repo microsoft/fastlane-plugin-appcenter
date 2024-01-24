@@ -379,7 +379,7 @@ module Fastlane
                 req.options.timeout = timeout
                 req.headers['internal-request-source'] = "fastlane"
                 req.headers['Content-Length'] = chunk.length.to_s
-                req.headers['Content-Type'] = 'application/octet-stream'
+                req.headers['Content-Type'] = content_type
                 req.body = chunk
               end
               UI.message("DEBUG: #{response.status} #{JSON.pretty_generate(response.body)}\n") if ENV['DEBUG']
@@ -421,6 +421,7 @@ module Fastlane
           end
         end
         UI.message("Binary uploaded")
+        return true
       end
 
       # Commits or aborts the upload process for a release

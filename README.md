@@ -209,7 +209,9 @@ Here is the list of all existing parameters:
 | `bundle_name` <br/> `APPCENTER_CODEPUSH_BUNDLE_NAME` | Specifies the name of the bundle file |
 | `output_dir` <br/> `APPCENTER_CODEPUSH_OUTPUT` | Specifies path to where the bundle and sourcemap should be written |
 | `sourcemap_output` <br/> `APPCENTER_CODEPUSH_SOURCEMAP_OUTPUT` | Specifies path to write sourcemaps to |
-| `development` <br/> `APPCENTER_CODEPUH_DEVELOPMENT` | Specifies whether to generate dev or release build (default: `false`) |
+| `development` <br/> `APPCENTER_CODEPUSH_DEVELOPMENT` | Specifies whether to generate dev or release build (default: `false`) |
+| `private_key_path` <br/> `APPCENTER_CODEPUSH_PRIVATE_KEY_PATH` | Specifies path to private key that will be used for signing bundles |
+| `extra_bundler_options` <br/> `APPCENTER_CODEPUSH_EXTRA_BUNDLER_OPTIONS` | A list of extra options that get passed to the react-native bundler |
 
 ## Example
 

@@ -2279,6 +2279,37 @@ describe Fastlane::Actions::AppcenterUploadAction do
       end.to raise_error("The combination of `destinations: '*'` and `destination_type: 'store'` is invalid, please use `destination_type: 'group'` or explicitly specify the destinations")
     end
 
+    it "destination_ids for store type" do
+      expect do
+        stub_poll_sleeper
+        stub_check_app(200)
+        stub_create_release_upload(200)
+        stub_set_release_upload_metadata(200, "ipa_file_empty.ipa")
+        stub_upload_build(200)
+        stub_finish_release_upload(200)
+        stub_poll_for_release_id(200)
+        stub_update_release_upload(200, 'uploadFinished')
+        stub_update_release(200, "No changelog given")
+        stub_add_to_destination(200)
+        stub_get_release(200)
+        stub_create_dsym_upload(200)
+        stub_upload_dsym(200)
+        stub_update_dsym_upload(200, "committed")
+
+        Fastlane::FastFile.new.parse("lane :test do
+          appcenter_upload({
+            api_token: 'xxx',
+            owner_name: 'owner',
+            app_name: 'app',
+            ipa: './spec/fixtures/appfiles/ipa_file_empty.ipa',
+            dsym: './spec/fixtures/symbols/Themoji.dSYM.zip',
+            destination_ids: '12341234-1234-1234-1234-123412341234',
+            destination_type: 'store'
+          })
+        end").runner.execute(:test)
+      end.to raise_error("The combination of `destination_ids` and `destination_type: 'store'` is invalid, please use `destination_type: 'group'` or use `destinations`")
+    end
+
     it "Handles invalid app name error" do
       expect do
         Fastlane::FastFile.new.parse("lane :test do
@@ -2291,7 +2322,7 @@ describe Fastlane::Actions::AppcenterUploadAction do
             destination_type: 'group'
           })
         end").runner.execute(:test)
-      end.to raise_error(/Please ensure no special characters or spaces in the app_name./)
+      end.to raise_error("Provided owner_name: 'owner' or app_name: 'appname with space' is not in a valid format. Please ensure no special characters or spaces.")
     end
 
     it "Handles conflicting options of upload_build_only and upload_dysm_only" do

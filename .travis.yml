@@ -1,4 +1,4 @@
 # os: osx # enable this if you need macOS support
 language: ruby
 rvm:
-  - 3.0.3
+  - 3.1.3
