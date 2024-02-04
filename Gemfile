@@ -1,4 +1,5 @@
 source 'https://rubygems.org'
 
-gemspec
+gem 'faraday', '1.5.1'
 
+gemspec
