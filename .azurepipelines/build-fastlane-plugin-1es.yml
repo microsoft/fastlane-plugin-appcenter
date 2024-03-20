@@ -1,0 +1,64 @@
+trigger:
+- master
+
+pr:
+- master
+
+resources:
+  repositories:
+  - repository: 1ESPipelineTemplates
+    type: git
+    name: 1ESPipelineTemplates/1ESPipelineTemplates
+    ref: refs/tags/release
+name: $(Build.SourceBranchName)_$(date:yyyyMMdd)$(rev:.r)
+
+extends:
+  ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
+    template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  ${{ else }}:
+    template: v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates
+  parameters:
+    pool:
+      name: 1ES-PT-CBL-Mariner-2.0-Gen2
+      os: linux
+    customBuildTags:
+    - ES365AIMigrationTooling-BulkMigrated
+    sdl:
+      sourceAnalysisPool: 1ES-PT-Windows-2022
+    stages:
+    - stage: Stage
+      jobs:
+      - job: HostJob
+        templateContext:
+          outputs:
+          - output: pipelineArtifact
+            displayName: "Publish Artifact: artifacts"
+            path: '$(Build.ArtifactStagingDirectory)/npm'
+            artifactName: npm
+            
+        steps:
+        - task: UseRubyVersion@0
+          displayName: 'Use Ruby 3.1.3'
+          inputs:
+            versionSpec: 3.1.3
+
+        - task: DownloadSecureFile@1
+          displayName: 'Download secure file'
+          inputs:
+            secureFile: 'fastlane_gem_credentials'
+
+        - bash: |
+          gem install bundler
+          bundle install --retry=3 --jobs=4
+          workingDirectory: '$(System.DefaultWorkingDirectory)/repo_artifact'
+          displayName: 'Bundle install'
+
+        - task: ArchiveFiles@2
+          inputs:
+            rootFolderOrFile: '$(System.DefaultWorkingDirectory)/repo_artifact'
+            includeRootFolder: false
+            archiveType: 'tar'
+            archiveFile: '$(Build.ArtifactStagingDirectory)/npm/$(Build.BuildId).tgz'
+            replaceExistingArchive: true
+            verbose: true
+          displayName: 'Prepare release artifact'
