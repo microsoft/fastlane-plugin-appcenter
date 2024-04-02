@@ -48,8 +48,8 @@ extends:
             secureFile: 'fastlane_gem_credentials'
 
         - bash: |
-          gem install bundler
-          bundle install --retry=3 --jobs=4
+            gem install bundler
+            bundle install --retry=3 --jobs=4
           workingDirectory: '$(System.DefaultWorkingDirectory)/repo_artifact'
           displayName: 'Bundle install'
 
