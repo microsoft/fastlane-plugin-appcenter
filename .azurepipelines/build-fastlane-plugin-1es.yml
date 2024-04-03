@@ -38,9 +38,9 @@ extends:
             
         steps:
         - task: UseRubyVersion@0
-          displayName: 'Use Ruby 3.2.1'
+          displayName: 'Use Ruby 3.1.x'
           inputs:
-            versionSpec: 3.2.1
+            versionSpec: '3.1.x'
 
         - bash: |
             gem install bundler
