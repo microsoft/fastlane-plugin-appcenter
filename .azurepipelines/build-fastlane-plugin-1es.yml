@@ -63,7 +63,7 @@ extends:
            displayName: Run APIScan
            inputs:
              softwareFolder: $(Build.ArtifactStagingDirectory)/npm
-             softwareName: 'fastlane-plugin-appcenter'
+             softwareName: 'fastlane-plugin-appcenter-1ES'
              softwareVersionNum: '$(Build.BuildId)'
              isLargeApp: false
              toolVersion: 'Latest'
