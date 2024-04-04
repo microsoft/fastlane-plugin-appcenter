@@ -16,7 +16,7 @@ extends:
   ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
     template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
   ${{ else }}:
-    template: v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates
+    template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
   parameters:
     pool:
       name: Azure Pipelines
