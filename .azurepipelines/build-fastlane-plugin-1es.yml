@@ -46,12 +46,12 @@ extends:
         - bash: |
             gem install bundler
             bundle install --retry=3 --jobs=4
-          workingDirectory: '$(System.DefaultWorkingDirectory)/repo_artifact'
+          workingDirectory: '$(System.DefaultWorkingDirectory)'
           displayName: 'Bundle install'
 
         - task: ArchiveFiles@2
           inputs:
-            rootFolderOrFile: '$(System.DefaultWorkingDirectory)/repo_artifact'
+            rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
             includeRootFolder: false
             archiveType: 'tar'
             archiveFile: '$(Build.ArtifactStagingDirectory)/npm/$(Build.BuildId).tgz'
