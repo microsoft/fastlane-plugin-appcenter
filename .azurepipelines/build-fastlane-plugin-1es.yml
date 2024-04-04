@@ -60,13 +60,13 @@ extends:
           displayName: 'Prepare release artifact'
 
         - task: APIScan@2
-            displayName: Run APIScan
-            inputs:
-              softwareFolder: $(Build.ArtifactStagingDirectory)/npm
-              softwareName: 'fastlane-plugin-appcenter-1ES'
-              softwareVersionNum: '$(Build.BuildId)'
-              isLargeApp: false
-              toolVersion: 'Latest'
-            condition: and(succeeded(), ne(variables['DisableAPIScan'], 'true'))
-            env:
-              AzureServicesAuthConnectionString: runAs=App;AppId=$(ApiScanClientId);KeyVaultCertificateSecretIdentifier=$(KeyVaultCertificateSecretIdentifier)
+          displayName: Run APIScan
+          inputs:
+            softwareFolder: $(Build.ArtifactStagingDirectory)/npm
+            softwareName: 'fastlane-plugin-appcenter-1ES'
+            softwareVersionNum: '$(Build.BuildId)'
+            isLargeApp: false
+            toolVersion: 'Latest'
+          condition: and(succeeded(), ne(variables['DisableAPIScan'], 'true'))
+          env:
+            AzureServicesAuthConnectionString: runAs=App;AppId=$(ApiScanClientId);KeyVaultCertificateSecretIdentifier=$(KeyVaultCertificateSecretIdentifier)
