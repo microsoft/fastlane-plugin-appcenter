@@ -48,7 +48,7 @@ extends:
             bundle install --retry=3 --jobs=4
             rake build
           workingDirectory: '$(System.DefaultWorkingDirectory)'
-          displayName: 'Bundle install'
+          displayName: 'Rake build'
 
     - stage: APIScan
       dependsOn: Stage
