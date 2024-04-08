@@ -34,7 +34,7 @@ extends:
           outputs:
           - output: pipelineArtifact
             displayName: "Publish Artifact: artifacts"
-            path: '$(Build.ArtifactStagingDirectory)/gem'
+            path: '$(System.DefaultWorkingDirectory)/pkg'
             artifactName: gem
             
         steps:
