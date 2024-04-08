@@ -78,7 +78,7 @@ extends:
           displayName: 'Run APIScan'
           inputs:
             softwareFolder: '$(Agent.BuildDirectory)\gem'
-            softwareName: 'appcenter-cli'
+            softwareName: 'fastlane-plugin-appcenter'
             softwareVersionNum: '$(Build.BuildId)'
             isLargeApp: false
             toolVersion: 'Latest'
