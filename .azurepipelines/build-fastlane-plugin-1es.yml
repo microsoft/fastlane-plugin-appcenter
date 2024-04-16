@@ -10,7 +10,7 @@ resources:
     type: git
     name: 1ESPipelineTemplates/1ESPipelineTemplates
     ref: refs/tags/release
-name: $(Build.SourceBranchName)_$(date:yyyyMMdd)$(rev:.r)
+name: ${{ replace(variables['Build.SourceBranchName'], '/', '-') }}_$(date:yyyyMMdd)$(rev:.r)
 
 extends:
   ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
