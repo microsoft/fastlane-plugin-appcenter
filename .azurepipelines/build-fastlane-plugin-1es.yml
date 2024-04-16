@@ -1,0 +1,88 @@
+trigger:
+- master
+
+pr:
+- master
+
+resources:
+  repositories:
+  - repository: 1ESPipelineTemplates
+    type: git
+    name: 1ESPipelineTemplates/1ESPipelineTemplates
+    ref: refs/tags/release
+name: ${{ replace(variables['Build.SourceBranchName'], '/', '-') }}_$(date:yyyyMMdd)$(rev:.r)
+
+extends:
+  ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
+    template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  ${{ else }}:
+    template: v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates
+  parameters:
+    pool:
+      name: Azure Pipelines
+      image: macos-latest
+      os: macOS
+    customBuildTags:
+    - ES365AIMigrationTooling-BulkMigrated
+    sdl:
+      sourceAnalysisPool: 1ES-PT-Windows-2022
+    stages:
+    - stage: Stage
+      jobs:
+      - job: HostJob
+        templateContext:
+          outputs:
+          - output: pipelineArtifact
+            displayName: "Publish Artifact: artifacts"
+            path: '$(System.DefaultWorkingDirectory)/pkg'
+            artifactName: gem
+            
+        steps:
+        - task: UseRubyVersion@0
+          displayName: 'Use Ruby 3.1.x'
+          inputs:
+            versionSpec: '3.1.x'
+
+        - bash: |
+            gem install bundler
+            bundle install --retry=3 --jobs=4
+            rake build
+          workingDirectory: '$(System.DefaultWorkingDirectory)'
+          displayName: 'Rake build'
+
+    - stage: APIScan
+      dependsOn: Stage
+      pool:
+        name: 1ES-PT-Windows-2022
+        os: windows
+      variables:
+        "agent.source.skip": true
+      jobs:
+      - job: APIScan
+        steps:
+
+        - task: DownloadPipelineArtifact@2
+          displayName: Download Pipeline Artifacts for APIScan
+          inputs:
+            artifactName: gem
+            targetPath: '$(Agent.BuildDirectory)/gem'
+
+        - task: AzureKeyVault@2
+          inputs:
+            azureSubscription: 'AC - Dev Infra & Build Pool'
+            KeyVaultName: 'mobile-center-sdk'
+            SecretsFilter: 'appcenter-sdk-managed-identity-clientid'
+            RunAsPreJob: false
+            
+        - task: APIScan@2
+          displayName: 'Run APIScan'
+          inputs:
+            softwareFolder: '$(Agent.BuildDirectory)\gem'
+            softwareName: 'fastlane-plugin-appcenter'
+            softwareVersionNum: '$(Build.BuildId)'
+            isLargeApp: false
+            toolVersion: 'Latest'
+            verbosityLevel: verbose
+          condition: and(succeeded(), ne(variables['DisableAPIScan'], 'true'))
+          env:
+            AzureServicesAuthConnectionString: 'runAs=App;AppId=$(appcenter-sdk-managed-identity-clientid)'
